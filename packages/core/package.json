@@ -1,0 +1,80 @@
+{
+  "name": "@autotranslate/core",
+  "version": "0.0.0",
+  "description": "Framework-agnostic core: config, types, runtime, hashing, ICU, validation.",
+  "license": "MIT",
+  "author": "Tamim Bin Hakim <tamimbinhakim.work@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tamimbinhakim/autotranslate.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/tamimbinhakim/autotranslate/tree/main/packages/core#readme",
+  "bugs": "https://github.com/tamimbinhakim/autotranslate/issues",
+  "keywords": [
+    "i18n",
+    "l10n",
+    "translation",
+    "ai",
+    "typescript"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./config": {
+      "types": "./dist/config.d.ts",
+      "import": "./dist/config.js",
+      "require": "./dist/config.cjs"
+    },
+    "./locale": {
+      "types": "./dist/locale.d.ts",
+      "import": "./dist/locale.js",
+      "require": "./dist/locale.cjs"
+    },
+    "./icu": {
+      "types": "./dist/icu.d.ts",
+      "import": "./dist/icu.js",
+      "require": "./dist/icu.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:ci": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^3.0.0",
+    "@vitest/coverage-v8": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

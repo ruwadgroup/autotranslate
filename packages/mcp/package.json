@@ -1,0 +1,66 @@
+{
+  "name": "@autotranslate/mcp",
+  "version": "0.0.0",
+  "description": "MCP server: extract & translate from agentic tools (Claude Code, etc.).",
+  "license": "MIT",
+  "author": "Tamim Bin Hakim <tamimbinhakim.work@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tamimbinhakim/autotranslate.git",
+    "directory": "packages/mcp"
+  },
+  "homepage": "https://github.com/tamimbinhakim/autotranslate/tree/main/packages/mcp#readme",
+  "bugs": "https://github.com/tamimbinhakim/autotranslate/issues",
+  "keywords": [
+    "i18n",
+    "mcp",
+    "claude-code",
+    "translation"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "autotranslate-mcp": "./dist/index.cjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:ci": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@autotranslate/core": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.27.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

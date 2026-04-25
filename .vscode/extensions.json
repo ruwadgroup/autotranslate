@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "biomejs.biome",
+    "esbenp.prettier-vscode",
+    "vitest.explorer",
+    "ms-vscode.vscode-typescript-next",
+    "editorconfig.editorconfig"
+  ]
+}

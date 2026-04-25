@@ -1,0 +1,59 @@
+{
+  "name": "autotranslate",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Automated, AI-powered i18n for any React framework. Code is the source of truth.",
+  "license": "MIT",
+  "author": "Tamim Bin Hakim <tamimbinhakim.work@gmail.com>",
+  "homepage": "https://github.com/tamimbinhakim/autotranslate#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tamimbinhakim/autotranslate.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tamimbinhakim/autotranslate/issues"
+  },
+  "type": "module",
+  "packageManager": "pnpm@10.12.4",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "test": "turbo run test",
+    "test:ci": "turbo run test -- --run",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write . && prettier --write \"**/*.{md,yml,yaml,json}\" --ignore-path .gitignore",
+    "format:check": "biome format . && prettier --check \"**/*.{md,yml,yaml,json}\" --ignore-path .gitignore",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "changeset": "changeset",
+    "version": "changeset version && pnpm install --lockfile-only",
+    "release": "turbo run build --filter=./packages/* && changeset publish",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.8",
+    "@changesets/cli": "^2.29.7",
+    "@commitlint/cli": "^19.6.1",
+    "@commitlint/config-conventional": "^19.6.0",
+    "@types/node": "^22.10.5",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.3.0",
+    "prettier": "^3.4.2",
+    "turbo": "^2.5.4",
+    "typescript": "^5.7.2",
+    "vitest": "^3.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json}": [
+      "biome check --write --no-errors-on-unmatched"
+    ],
+    "*.{md,yml,yaml}": [
+      "prettier --write"
+    ]
+  }
+}

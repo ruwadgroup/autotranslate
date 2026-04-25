@@ -1,0 +1,105 @@
+{
+  "name": "@autotranslate/providers",
+  "version": "0.0.0",
+  "description": "AI & MT translation providers (Vercel AI SDK, DeepL, Google, custom, stub).",
+  "license": "MIT",
+  "author": "Tamim Bin Hakim <tamimbinhakim.work@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tamimbinhakim/autotranslate.git",
+    "directory": "packages/providers"
+  },
+  "homepage": "https://github.com/tamimbinhakim/autotranslate/tree/main/packages/providers#readme",
+  "bugs": "https://github.com/tamimbinhakim/autotranslate/issues",
+  "keywords": [
+    "i18n",
+    "translation",
+    "ai",
+    "deepl",
+    "google-translate",
+    "openai"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./ai": {
+      "types": "./dist/ai.d.ts",
+      "import": "./dist/ai.js",
+      "require": "./dist/ai.cjs"
+    },
+    "./deepl": {
+      "types": "./dist/deepl.d.ts",
+      "import": "./dist/deepl.js",
+      "require": "./dist/deepl.cjs"
+    },
+    "./google": {
+      "types": "./dist/google.d.ts",
+      "import": "./dist/google.js",
+      "require": "./dist/google.cjs"
+    },
+    "./stub": {
+      "types": "./dist/stub.d.ts",
+      "import": "./dist/stub.js",
+      "require": "./dist/stub.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:ci": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@autotranslate/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "ai": ">=4.0.0",
+    "@ai-sdk/anthropic": "*",
+    "@ai-sdk/google": "*",
+    "@ai-sdk/openai": "*"
+  },
+  "peerDependenciesMeta": {
+    "ai": {
+      "optional": true
+    },
+    "@ai-sdk/anthropic": {
+      "optional": true
+    },
+    "@ai-sdk/google": {
+      "optional": true
+    },
+    "@ai-sdk/openai": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

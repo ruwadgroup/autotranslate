@@ -1,0 +1,82 @@
+{
+  "name": "@autotranslate/next",
+  "version": "0.0.0",
+  "description": "Next.js plugin, middleware, and server helpers for autotranslate.",
+  "license": "MIT",
+  "author": "Tamim Bin Hakim <tamimbinhakim.work@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tamimbinhakim/autotranslate.git",
+    "directory": "packages/next"
+  },
+  "homepage": "https://github.com/tamimbinhakim/autotranslate/tree/main/packages/next#readme",
+  "bugs": "https://github.com/tamimbinhakim/autotranslate/issues",
+  "keywords": [
+    "i18n",
+    "next.js",
+    "translation",
+    "ai",
+    "rsc",
+    "middleware"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./plugin": {
+      "types": "./dist/plugin.d.ts",
+      "import": "./dist/plugin.js",
+      "require": "./dist/plugin.cjs"
+    },
+    "./middleware": {
+      "types": "./dist/middleware.d.ts",
+      "import": "./dist/middleware.js",
+      "require": "./dist/middleware.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:ci": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@autotranslate/core": "workspace:*",
+    "@autotranslate/react": "workspace:*"
+  },
+  "peerDependencies": {
+    "next": ">=15.0.0",
+    "react": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "next": "^16.2.4",
+    "react": "^19.0.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

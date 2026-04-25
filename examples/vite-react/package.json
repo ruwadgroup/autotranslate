@@ -1,0 +1,31 @@
+{
+  "name": "@autotranslate/example-vite-react",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Example: Vite + React SPA with autotranslate.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --noEmit",
+    "test": "echo \"no tests yet\"",
+    "clean": "rm -rf dist .turbo node_modules"
+  },
+  "dependencies": {
+    "@autotranslate/core": "workspace:*",
+    "@autotranslate/react": "workspace:*",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
+  },
+  "devDependencies": {
+    "@autotranslate/cli": "workspace:*",
+    "@autotranslate/vite": "workspace:*",
+    "@types/node": "^22.10.5",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "typescript": "~6.0.2",
+    "vite": "^8.0.10"
+  }
+}
