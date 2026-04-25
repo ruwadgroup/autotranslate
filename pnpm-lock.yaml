@@ -363,8 +363,8 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
       vite:
-        specifier: ^6.0.0
-        version: 6.4.2(@types/node@22.19.17)(jiti@2.6.1)(lightningcss@1.32.0)(yaml@2.8.3)
+        specifier: ^8.0.10
+        version: 8.0.10(@types/node@22.19.17)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.8.3)
       vitest:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@22.19.17)(happy-dom@16.8.1)(jiti@2.6.1)(lightningcss@1.32.0)(yaml@2.8.3)
