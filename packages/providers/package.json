@@ -93,7 +93,7 @@
     "@types/node": "^22.10.5",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
-    "vitest": "^3.0.0"
+    "vitest": "^4.1.5"
   },
   "engines": {
     "node": ">=20.0.0"
