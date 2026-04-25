@@ -17,6 +17,11 @@ jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
+    # CodeQL upload requires code scanning to be enabled, which on private
+    # repositories needs GitHub Advanced Security. Skip on private repos so
+    # the check doesn't show as a red herring on every PR. Re-enables
+    # automatically once the repo is made public.
+    if: ${{ !github.event.repository.private }}
     strategy:
       fail-fast: false
       matrix:
