@@ -50,7 +50,7 @@
   "dependencies": {
     "@autotranslate/core": "workspace:*",
     "@autotranslate/providers": "workspace:*",
-    "commander": "^12.1.0",
+    "commander": "^14.0.3",
     "chalk": "^5.4.1",
     "ora": "^8.1.1",
     "cli-progress": "^3.12.0",
