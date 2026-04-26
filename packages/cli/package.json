@@ -52,7 +52,7 @@
     "@autotranslate/providers": "workspace:*",
     "commander": "^14.0.3",
     "chalk": "^5.4.1",
-    "ora": "^8.1.1",
+    "ora": "^9.4.0",
     "cli-progress": "^3.12.0",
     "@babel/parser": "^7.26.3",
     "@babel/traverse": "^7.26.4",
