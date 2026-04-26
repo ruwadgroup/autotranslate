@@ -101,7 +101,9 @@ export function C() {
     expect(meta?.description).toBe('The sign-out button');
   });
 
-  it('produces canonically identical keys for whitespace variants', () => {
+  it('produces identical keys when only line breaks differ (matching JSX runtime)', () => {
+    // React's JSX runtime collapses a newline + indentation between content
+    // to a single space. Both forms below render `'Hello world'` at runtime.
     const a = extractFile(
       FILE,
       `import { T } from '@autotranslate/react'; const x = <T>Hello world</T>;`,
@@ -109,9 +111,51 @@ export function C() {
     const b = extractFile(
       FILE,
       `import { T } from '@autotranslate/react';
-const x = <T>Hello   world</T>;`,
+const x = (
+  <T>
+    Hello
+    world
+  </T>
+);`,
     );
     expect(Object.keys(a.messages)[0]).toBe(Object.keys(b.messages)[0]);
+  });
+
+  it('preserves internal multi-space (matching JSX runtime)', () => {
+    // `<T>Hello   world</T>` keeps the three spaces literally at runtime,
+    // so the extractor must too — different whitespace, different key.
+    const a = extractFile(
+      FILE,
+      `import { T } from '@autotranslate/react'; const x = <T>Hello world</T>;`,
+    );
+    const b = extractFile(
+      FILE,
+      `import { T } from '@autotranslate/react'; const x = <T>Hello   world</T>;`,
+    );
+    expect(Object.keys(a.messages)[0]).not.toBe(Object.keys(b.messages)[0]);
+  });
+
+  it('matches React JSX whitespace rules — text lines between elements have no implicit padding', () => {
+    // React's JSX runtime turns the trailing `\n  .\n` into '.', not ' . '.
+    // The extractor must agree so the canonical key matches at runtime.
+    const { messages } = extractFile(
+      FILE,
+      `
+import { T, Var } from '@autotranslate/react';
+const x = (
+  <T>
+    Hello, <Var name="name">{n}</Var>
+    .
+  </T>
+);
+      `,
+    );
+    const tree = Object.values(messages)[0];
+    expect(tree).toEqual([
+      { type: 'text', value: 'Hello, ' },
+      { type: 'var', name: 'name' },
+      { type: 'text', value: '.' },
+    ]);
   });
 
   it('walks tag wrappers inside <T>', () => {

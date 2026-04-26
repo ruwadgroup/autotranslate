@@ -33,10 +33,11 @@ function nodeToTreeNode(
 ): TranslationNode | TranslationNode[] | null {
   switch (node.type) {
     case 'JSXText': {
-      // JSX collapses surrounding whitespace; the runtime sees the same
-      // text via `Children.forEach` → match that normalization here.
-      const value = node.value.replace(/\s+/g, ' ');
-      if (value === '' || value === ' ') return null;
+      // Normalize JSX text the same way React's JSX runtime does so the
+      // canonical key matches what `serializeChildren` computes at runtime.
+      // Mirrors `@babel/types`'s `cleanJSXElementLiteralChild`.
+      const value = normalizeJSXText(node.value);
+      if (value === '') return null;
       return { type: 'text', value };
     }
     case 'JSXExpressionContainer': {
@@ -200,6 +201,32 @@ function jsxNameToString(node: t.JSXOpeningElement['name']): string {
     return `${node.namespace.name}:${node.name.name}`;
   }
   return 'Unknown';
+}
+
+/**
+ * Match React's JSX-runtime whitespace handling: drop whitespace-only lines,
+ * collapse tabs to spaces, trim leading whitespace on continuation lines and
+ * trailing whitespace on non-final lines, then join with single spaces.
+ */
+function normalizeJSXText(value: string): string {
+  const lines = value.split(/\r\n|\r|\n/);
+  let lastNonEmpty = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i]!.trim() !== '') lastNonEmpty = i;
+  }
+  if (lastNonEmpty === -1) return '';
+  let out = '';
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i]!.replace(/\t/g, ' ');
+    const isFirst = i === 0;
+    const isLastNonEmpty = i === lastNonEmpty;
+    if (!isFirst) line = line.replace(/^ +/, '');
+    if (!isLastNonEmpty) line = line.replace(/ +$/, '');
+    if (line === '') continue;
+    if (!isLastNonEmpty) line += ' ';
+    out += line;
+  }
+  return out;
 }
 
 function mergeText(nodes: TranslationNode[]): StructuredMessage {
