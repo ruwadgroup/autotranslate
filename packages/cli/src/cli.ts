@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import { Command } from 'commander';
 import { check } from './commands/check';
 import { extract } from './commands/extract';
+import { generateTypes, relativeFromCwd } from './commands/generate-types';
 import { init } from './commands/init';
 import { translate } from './commands/translate';
 import { ConfigNotFoundError, loadConfig } from './config-loader';
@@ -65,6 +66,20 @@ program
         chalk.dim(`(${stats.cached} cached, ${stats.overridden} overridden)`),
       );
     }
+  });
+
+program
+  .command('generate-types')
+  .description('Emit a .d.ts that augments @autotranslate/react with the literal catalog keys.')
+  .action(async () => {
+    const resolved = await loadConfig();
+    const result = await generateTypes(resolved);
+    console.log(
+      chalk.green('✓'),
+      'wrote',
+      chalk.cyan(relativeFromCwd(result.path, resolved.cwd)),
+      chalk.dim(`(${result.keyCount} keys)`),
+    );
   });
 
 program
