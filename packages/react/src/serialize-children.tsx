@@ -14,6 +14,70 @@ import {
 } from './markers';
 
 /**
+ * Identify which translation marker (if any) `type` represents.
+ *
+ * Reference equality (`type === Var`) works inside the same module copy,
+ * but Next.js / RSC renders a server component containing a client one
+ * by wrapping the type in a `React.lazy` thunk (`{_payload, _init}`).
+ * Once resolved, the `_result` is the module's function — usually a
+ * different instance than the one we imported here. Comparing on
+ * `displayName` keeps the check copy-safe.
+ */
+function markerKindOf(type: unknown): string | null {
+  if (typeof type === 'function') {
+    if (type === Var) return 'Var';
+    if (type === Plural) return 'Plural';
+    if (type === Branch) return 'Branch';
+    if (type === Num) return 'Num';
+    if (type === Currency) return 'Currency';
+    if (type === DateTime) return 'DateTime';
+    if (type === RelativeTime) return 'RelativeTime';
+    const name = (type as { displayName?: string; name?: string }).displayName;
+    if (name && MARKER_NAMES.has(name)) return name;
+  }
+  if (type && typeof type === 'object') {
+    const resolved = resolveLazy(type);
+    if (resolved && typeof resolved === 'function') {
+      const name = (resolved as { displayName?: string; name?: string }).displayName;
+      if (name && MARKER_NAMES.has(name)) return name;
+    }
+  }
+  return null;
+}
+
+const MARKER_NAMES: ReadonlySet<string> = new Set([
+  'Var',
+  'Plural',
+  'Branch',
+  'Num',
+  'Currency',
+  'DateTime',
+  'RelativeTime',
+]);
+
+interface LazyLike {
+  readonly _payload?: { readonly _status?: number; readonly _result?: unknown };
+  readonly _init?: (payload: unknown) => unknown;
+}
+
+/**
+ * Best-effort synchronous resolve of a `React.lazy`-shaped wrapper. Returns
+ * `null` if the wrapper isn't ready (we never trigger Suspense from inside
+ * the serializer — falling through to the tag-node path is the safe degrade).
+ */
+function resolveLazy(type: object): unknown {
+  const lazy = type as LazyLike;
+  if (!lazy._payload || !lazy._init) return null;
+  // React.lazy payload status: 0 = pending, 1 = fulfilled, 2 = rejected.
+  if (lazy._payload._status === 1) return lazy._payload._result;
+  try {
+    return lazy._init(lazy._payload);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Per-tree state collected during serialization. Slots and tag elements are
  * keyed by stable identifiers so the renderer can reconstruct React content
  * for the translated tree without re-walking the source.
@@ -106,13 +170,14 @@ function walk(children: ReactNode, state: WriterState): StructuredMessage {
       out.push(...inner);
       return;
     }
-    if (child.type === Var) {
+    const kind = markerKindOf(child.type);
+    if (kind === 'Var') {
       const name = (props.name as string | undefined) ?? 'value';
       out.push({ type: 'var', name });
       state.varSlots.set(name, (props.children as ReactNode) ?? null);
       return;
     }
-    if (child.type === Plural) {
+    if (kind === 'Plural') {
       const name = (props.name as string | undefined) ?? 'count';
       const value = Number(props.value);
       const forms: { -readonly [K in PluralCategory]?: StructuredMessage } = {};
@@ -129,7 +194,7 @@ function walk(children: ReactNode, state: WriterState): StructuredMessage {
       state.pluralSlots.set(name, { value, forms: runtimeForms });
       return;
     }
-    if (child.type === Branch) {
+    if (kind === 'Branch') {
       const name = (props.name as string | undefined) ?? 'branch';
       const branchValue = props.branch;
       const value =
@@ -154,7 +219,7 @@ function walk(children: ReactNode, state: WriterState): StructuredMessage {
       state.branchSlots.set(name, { value, cases: runtimeCases });
       return;
     }
-    const formatPrefix = isFormatMarker(child.type);
+    const formatPrefix = formatPrefixOf(kind);
     if (formatPrefix) {
       // Treat formatter components as opaque variable slots. The slot value
       // is the original React element so the formatter can re-render itself
@@ -197,15 +262,10 @@ function getDisplayName(element: ReactElement): string {
   return 'Component';
 }
 
-const FORMAT_MARKER_TYPES: ReadonlyMap<unknown, string> = new Map<unknown, string>([
-  [Num, FORMAT_MARKER_PREFIX.Num ?? 'num'],
-  [Currency, FORMAT_MARKER_PREFIX.Currency ?? 'currency'],
-  [DateTime, FORMAT_MARKER_PREFIX.DateTime ?? 'dt'],
-  [RelativeTime, FORMAT_MARKER_PREFIX.RelativeTime ?? 'rel'],
-]);
-
-function isFormatMarker(type: unknown): string | null {
-  return FORMAT_MARKER_TYPES.get(type) ?? null;
+function formatPrefixOf(kind: string | null): string | null {
+  if (kind === null) return null;
+  const prefix = FORMAT_MARKER_PREFIX[kind];
+  return prefix ?? null;
 }
 
 /** Key used in `tagSlots` and the parallel renderer counter. */

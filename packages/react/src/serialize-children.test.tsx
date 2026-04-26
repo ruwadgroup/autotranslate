@@ -1,3 +1,4 @@
+import { createElement } from 'react';
 import { describe, expect, it } from 'vitest';
 import { Branch, Currency, DateTime, Num, Plural, RelativeTime, Var } from './markers';
 import { serializeChildren } from './serialize-children';
@@ -138,5 +139,37 @@ describe('serializeChildren', () => {
       { type: 'text', value: ' visitors / ' },
       { type: 'var', name: 'seen' },
     ]);
+  });
+
+  it('recognizes markers wrapped in a React.lazy-shaped reference (Next.js RSC)', () => {
+    // Server components rendering client components produce element trees
+    // where `child.type` is a `React.lazy`-shaped wrapper rather than the
+    // marker function itself. Identity comparison fails — the serializer
+    // must fall back to displayName via the resolved payload.
+    const lazyVar = {
+      $$typeof: Symbol.for('react.lazy'),
+      _payload: { _status: 1, _result: Var },
+      _init: () => Var,
+    } as unknown as typeof Var;
+    const lazyNum = {
+      $$typeof: Symbol.for('react.lazy'),
+      _payload: { _status: 1, _result: Num },
+      _init: () => Num,
+    } as unknown as typeof Num;
+
+    const { tree, varSlots } = serializeChildren([
+      createElement(lazyVar, { name: 'name' }, 'Ada'),
+      ' has ',
+      createElement(lazyNum, { value: 42 }),
+      ' apples',
+    ]);
+
+    expect(tree).toEqual([
+      { type: 'var', name: 'name' },
+      { type: 'text', value: ' has ' },
+      { type: 'var', name: 'num_0' },
+      { type: 'text', value: ' apples' },
+    ]);
+    expect(varSlots.get('name')).toBe('Ada');
   });
 });
