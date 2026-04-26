@@ -1,18 +1,149 @@
-import type { Provider } from './types';
+import type { CatalogEntry, Locale } from '@autotranslate/core';
+import { restorePlaceholders, shieldPlaceholders, UnsupportedICUError } from './placeholder-shield';
+import type { Provider, TranslationItem } from './types';
 
 export interface GoogleProviderOptions {
+  /** Google Cloud API key — see https://cloud.google.com/docs/authentication/api-keys . */
   readonly apiKey: string;
-  readonly projectId?: string;
+  /**
+   * Override the API endpoint. Defaults to the Translation v2 base. Use
+   * `https://translate.googleapis.com/language/translate/v2` for the public
+   * (free, rate-limited) endpoint.
+   */
+  readonly endpoint?: string;
+  /**
+   * Optional locale-tag override (`zh-Hans` → `zh-CN`, etc.). Most BCP-47
+   * tags pass through unchanged.
+   */
+  readonly localeMap?: Readonly<Record<string, string>>;
+  /** `fetch` implementation. Falls back to `globalThis.fetch`. */
+  readonly fetch?: typeof globalThis.fetch;
 }
 
+const DEFAULT_ENDPOINT = 'https://translation.googleapis.com/language/translate/v2';
+const MAX_TEXTS_PER_REQUEST = 128;
+
 /**
- * Placeholder Google Cloud Translation provider — landing in v0.5 per the
- * roadmap. Throws on construction so the failure surface is at config-load
- * time, not at first translation request.
+ * Google Cloud Translation v2 provider.
+ *
+ * Same scope as the DeepL provider: plain-string entries only, with ICU
+ * placeholders shielded behind opaque sentinels. Format is `text` (not
+ * `html`) — string-typed catalog entries from `useT` rarely contain markup.
  */
-export function createGoogleProvider(_options: GoogleProviderOptions): Provider {
+export function createGoogleProvider(options: GoogleProviderOptions): Provider {
+  const {
+    apiKey,
+    endpoint = DEFAULT_ENDPOINT,
+    localeMap,
+    fetch: fetchImpl = globalThis.fetch,
+  } = options;
+  if (!apiKey) {
+    throw new Error('Google provider requires an `apiKey`.');
+  }
+
+  return {
+    name: 'google',
+    signature: 'google:v2',
+    async translate(request) {
+      if (request.items.length === 0) return { translations: {} };
+      assertStringEntriesOnly(request.items);
+
+      const shielded = request.items.map((item) => ({
+        item,
+        ...shieldPlaceholders(item.source as string),
+      }));
+
+      const target = mapLocale(request.target, localeMap);
+      const source = mapLocale(request.source, localeMap);
+
+      const translations: Record<string, CatalogEntry> = {};
+      for (const batch of chunk(shielded, MAX_TEXTS_PER_REQUEST)) {
+        const body = {
+          q: batch.map((b) => b.text),
+          target,
+          source,
+          format: 'text' as const,
+        };
+        const url = `${endpoint}?key=${encodeURIComponent(apiKey)}`;
+        const response = await fetchImpl(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'User-Agent': 'autotranslate-google/0.0.0',
+          },
+          body: JSON.stringify(body),
+          ...(request.signal ? { signal: request.signal } : {}),
+        });
+
+        if (!response.ok) {
+          const text = await safeReadText(response);
+          throw new Error(
+            `Google Translate responded ${response.status} ${response.statusText}: ${text.slice(0, 200)}`,
+          );
+        }
+
+        const json = (await response.json()) as GoogleResponse;
+        const translated = json.data?.translations;
+        if (!Array.isArray(translated)) {
+          throw new Error('Google response did not include a data.translations array.');
+        }
+        if (translated.length !== batch.length) {
+          throw new Error(
+            `Google returned ${translated.length} translations for ${batch.length} inputs.`,
+          );
+        }
+        for (let i = 0; i < batch.length; i++) {
+          const entry = batch[i];
+          const out = translated[i];
+          if (!entry || !out) continue;
+          translations[entry.item.key] = restorePlaceholders(out.translatedText, entry.slots);
+        }
+      }
+      return { translations };
+    },
+  };
+}
+
+interface GoogleResponse {
+  readonly data?: {
+    readonly translations?: ReadonlyArray<{ readonly translatedText: string }>;
+  };
+}
+
+function assertStringEntriesOnly(items: ReadonlyArray<TranslationItem>): void {
+  const structured = items.filter((i) => typeof i.source !== 'string');
+  if (structured.length === 0) return;
+  const sample = structured
+    .slice(0, 3)
+    .map((i) => i.key)
+    .join(', ');
   throw new Error(
-    "@autotranslate/providers/google is planned for v0.5 and isn't implemented yet. " +
-      'Use the `ai`, `stub`, or `custom` provider for now.',
+    `Google provider only handles plain-string entries; ` +
+      `${structured.length} structured tree(s) (${sample}${structured.length > 3 ? ', …' : ''}) ` +
+      `must use the \`ai\` provider.`,
   );
 }
+
+function mapLocale(locale: Locale, override: Readonly<Record<string, string>> | undefined): string {
+  if (override?.[locale]) return override[locale] as string;
+  return locale;
+}
+
+async function safeReadText(response: Response): Promise<string> {
+  try {
+    return await response.text();
+  } catch {
+    return '';
+  }
+}
+
+function chunk<T>(items: ReadonlyArray<T>, size: number): T[][] {
+  if (size <= 0) return [items.slice()];
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    out.push(items.slice(i, i + size));
+  }
+  return out;
+}
+
+export { UnsupportedICUError };
