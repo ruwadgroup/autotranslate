@@ -27,7 +27,8 @@ export default defineConfig({
   content: ['src/**/*.{ts,tsx}'],
   instruction:
     'You are translating UI copy for a Next.js example app. ' +
-    'Keep the tone friendly, concise, and modern. Preserve product nouns ' +
-    '("Next.js", "Vercel", "React") verbatim.',
+    'Keep the tone friendly, concise, and modern. ' +
+    'Never translate these product names — keep them verbatim, exactly as written: ' +
+    '"autotranslate", "Next.js", "Vercel", "React", "GitHub", "i18n", "CLI", "AI", "JSON".',
   provider,
 });
