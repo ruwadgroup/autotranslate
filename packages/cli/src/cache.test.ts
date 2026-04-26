@@ -11,7 +11,8 @@ describe('cacheFilePath', () => {
     const c = cacheFilePath('/out', { source: 'en', target: 'fr', providerSignature: 'stub' });
     expect(a).toBe(b);
     expect(a).not.toBe(c);
-    expect(a.startsWith('/out/.cache/')).toBe(true);
+    // Use posix-style includes to be cross-platform (Windows uses backslashes).
+    expect(a.replace(/\\/g, '/')).toMatch(/\/out\/\.cache\/[a-f0-9]+\.json$/);
   });
 });
 
