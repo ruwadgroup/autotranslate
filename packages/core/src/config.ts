@@ -27,6 +27,30 @@ const aiProviderSchema = z.object({
   options: z.record(z.string(), z.unknown()).optional(),
 });
 
+const deeplProviderSchema = z.object({
+  name: z.literal('deepl'),
+  /** API key from https://www.deepl.com/your-account/keys . */
+  apiKey: z.string().min(1),
+  /** Override the API endpoint (use `https://api-free.deepl.com/...` on free tier). */
+  endpoint: z.string().url().optional(),
+  /** Pass-through formality preference (DE/FR/IT/etc.). */
+  formality: z.enum(['default', 'more', 'less', 'prefer_more', 'prefer_less']).optional(),
+  /** Translator-facing context, sent verbatim. */
+  context: z.string().optional(),
+  /** Override the BCP-47 → DeepL locale mapping. */
+  localeMap: z.record(z.string(), z.string()).optional(),
+});
+
+const googleProviderSchema = z.object({
+  name: z.literal('google'),
+  /** Google Cloud API key. */
+  apiKey: z.string().min(1),
+  /** Override the API endpoint. Defaults to the Translation v2 base. */
+  endpoint: z.string().url().optional(),
+  /** Override the BCP-47 → Google locale mapping. */
+  localeMap: z.record(z.string(), z.string()).optional(),
+});
+
 const customProviderSchema = z.object({
   name: z.literal('custom'),
   /** Free-form options passed through to the user-supplied `translateFn`. */
@@ -39,11 +63,15 @@ const customProviderSchema = z.object({
  *
  * - `stub` — identity provider, optionally pseudo-localized.
  * - `ai`   — Vercel AI SDK provider; requires `model`.
+ * - `deepl` — DeepL Pro / Free; plain-string entries only.
+ * - `google` — Google Cloud Translation v2; plain-string entries only.
  * - `custom` — user-supplied `translateFn`, wired in code.
  */
 export const providerConfigSchema = z.discriminatedUnion('name', [
   stubProviderSchema,
   aiProviderSchema,
+  deeplProviderSchema,
+  googleProviderSchema,
   customProviderSchema,
 ]);
 
@@ -95,6 +123,8 @@ export const autotranslateConfigSchema = z
 export type ProviderConfig = z.infer<typeof providerConfigSchema>;
 export type StubProviderConfig = z.infer<typeof stubProviderSchema>;
 export type AIProviderConfig = z.infer<typeof aiProviderSchema>;
+export type DeepLProviderConfig = z.infer<typeof deeplProviderSchema>;
+export type GoogleProviderConfig = z.infer<typeof googleProviderSchema>;
 export type CustomProviderConfig = z.infer<typeof customProviderSchema>;
 
 /** Output type after parsing — defaults applied, all fields populated. */

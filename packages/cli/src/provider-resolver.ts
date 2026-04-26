@@ -22,6 +22,24 @@ export async function resolveProvider(resolved: ResolvedConfig): Promise<Provide
         ...(provider.apiKey ? { apiKey: provider.apiKey } : {}),
       });
     }
+    case 'deepl': {
+      const { createDeepLProvider } = await import('@autotranslate/providers/deepl');
+      return createDeepLProvider({
+        apiKey: provider.apiKey,
+        ...(provider.endpoint ? { endpoint: provider.endpoint } : {}),
+        ...(provider.formality ? { formality: provider.formality } : {}),
+        ...(provider.context ? { context: provider.context } : {}),
+        ...(provider.localeMap ? { localeMap: provider.localeMap } : {}),
+      });
+    }
+    case 'google': {
+      const { createGoogleProvider } = await import('@autotranslate/providers/google');
+      return createGoogleProvider({
+        apiKey: provider.apiKey,
+        ...(provider.endpoint ? { endpoint: provider.endpoint } : {}),
+        ...(provider.localeMap ? { localeMap: provider.localeMap } : {}),
+      });
+    }
     case 'custom':
       throw new Error(
         "provider.name === 'custom' isn't supported via the CLI. Pass `provider` to " +
