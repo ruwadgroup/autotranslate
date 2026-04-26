@@ -23,12 +23,15 @@
     "react-dom": "^19.2.5"
   },
   "devDependencies": {
+    "@ai-sdk/openai": "^3.0.0",
     "@autotranslate/cli": "workspace:*",
     "@autotranslate/vite": "workspace:*",
     "@types/node": "^22.10.5",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "ai": "^6.0.0",
+    "dotenv": "^16.4.7",
     "typescript": "^5.9.3",
     "vite": "^8.0.10"
   }

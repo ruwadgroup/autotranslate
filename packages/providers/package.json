@@ -72,7 +72,7 @@
     "zod": "^3.24.1"
   },
   "peerDependencies": {
-    "ai": ">=4.0.0",
+    "ai": ">=5.0.0 <7.0.0",
     "@ai-sdk/anthropic": "*",
     "@ai-sdk/google": "*",
     "@ai-sdk/openai": "*"
@@ -93,7 +93,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
-    "ai": "^4.0.0",
+    "ai": "^6.0.0",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
     "vitest": "^4.1.5"
