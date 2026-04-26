@@ -28,9 +28,13 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./client": {
+      "types": "./client.d.ts"
+    },
     "./package.json": "./package.json"
   },
   "files": [
+    "client.d.ts",
     "dist",
     "README.md",
     "CHANGELOG.md",
@@ -46,7 +50,8 @@
     "clean": "rm -rf dist .turbo *.tsbuildinfo"
   },
   "dependencies": {
-    "@autotranslate/core": "workspace:*"
+    "@autotranslate/core": "workspace:*",
+    "jiti": "^2.4.2"
   },
   "peerDependencies": {
     "vite": ">=5.0.0"

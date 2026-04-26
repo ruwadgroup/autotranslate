@@ -376,6 +376,9 @@ importers:
       '@autotranslate/core':
         specifier: workspace:*
         version: link:../core
+      jiti:
+        specifier: ^2.4.2
+        version: 2.6.1
     devDependencies:
       '@types/node':
         specifier: ^22.10.5
