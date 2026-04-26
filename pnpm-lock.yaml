@@ -63,6 +63,9 @@ importers:
         specifier: 19.2.5
         version: 19.2.5(react@19.2.5)
     devDependencies:
+      '@ai-sdk/openai':
+        specifier: ^3.0.0
+        version: 3.0.53(zod@3.25.76)
       '@autotranslate/cli':
         specifier: workspace:*
         version: link:../../packages/cli
@@ -78,6 +81,12 @@ importers:
       '@types/react-dom':
         specifier: ^19
         version: 19.2.3(@types/react@19.2.14)
+      ai:
+        specifier: ^6.0.0
+        version: 6.0.168(zod@3.25.76)
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.6.1
       tailwindcss:
         specifier: ^4
         version: 4.2.4

@@ -9,7 +9,11 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "echo \"no tests yet\"",
-    "clean": "rm -rf .next .turbo node_modules"
+    "clean": "rm -rf .next .turbo node_modules",
+    "extract": "autotranslate extract",
+    "translate": "autotranslate translate",
+    "i18n": "autotranslate extract && autotranslate translate",
+    "i18n:check": "autotranslate check"
   },
   "dependencies": {
     "@autotranslate/core": "workspace:*",
@@ -20,11 +24,14 @@
     "react-dom": "19.2.5"
   },
   "devDependencies": {
+    "@ai-sdk/openai": "^3.0.0",
     "@autotranslate/cli": "workspace:*",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^22.10.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "ai": "^6.0.0",
+    "dotenv": "^16.4.7",
     "tailwindcss": "^4",
     "typescript": "^5.7.2"
   }
