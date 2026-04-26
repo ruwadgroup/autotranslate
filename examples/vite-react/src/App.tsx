@@ -1,11 +1,19 @@
+import { Plural, T, useT, Var } from '@autotranslate/react';
 import { useState } from 'react';
 import heroImg from './assets/hero.png';
 import reactLogo from './assets/react.svg';
 import viteLogo from './assets/vite.svg';
 import './App.css';
 
-function App() {
+interface AppProps {
+  readonly locale: string;
+  readonly locales: ReadonlyArray<string>;
+  readonly onChangeLocale: (locale: string) => void;
+}
+
+function App({ locale, locales, onChangeLocale }: AppProps) {
   const [count, setCount] = useState(0);
+  const t = useT();
 
   return (
     <>
@@ -16,85 +24,84 @@ function App() {
           <img src={viteLogo} className="vite" alt="Vite logo" />
         </div>
         <div>
-          <h1>Get started</h1>
+          <h1>
+            <T>Get started</T>
+          </h1>
           <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
+            <T>
+              Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
+            </T>
           </p>
         </div>
-        <button type="button" className="counter" onClick={() => setCount((count) => count + 1)}>
-          Count is {count}
+        <label style={{ display: 'block', marginBottom: '1rem' }}>
+          {t('Language')}{' '}
+          <select
+            value={locale}
+            onChange={(event) => onChangeLocale(event.target.value)}
+            aria-label={t('Language')}
+          >
+            {locales.map((tag) => (
+              <option key={tag} value={tag}>
+                {tag}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button type="button" className="counter" onClick={() => setCount((c) => c + 1)}>
+          <T>
+            Count is <Var name="count">{count}</Var>
+          </T>
         </button>
+        <p>
+          <T>
+            You have <Plural value={count} one="1 click" other="# clicks" /> so far.
+          </T>
+        </p>
       </section>
 
-      <div className="ticks"></div>
+      <div className="ticks" />
 
       <section id="next-steps">
         <div id="docs">
           <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
+            <use href="/icons.svg#documentation-icon" />
           </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
+          <h2>
+            <T>Documentation</T>
+          </h2>
+          <p>
+            <T>Your questions, answered</T>
+          </p>
           <ul>
             <li>
               <a href="https://vite.dev/" target="_blank" rel="noopener">
                 <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
+                <T>Explore Vite</T>
               </a>
             </li>
             <li>
               <a href="https://react.dev/" target="_blank" rel="noopener">
                 <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
+                <T>Learn more</T>
               </a>
             </li>
           </ul>
         </div>
         <div id="social">
           <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
+            <use href="/icons.svg#social-icon" />
           </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank" rel="noopener">
-                <svg className="button-icon" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank" rel="noopener">
-                <svg className="button-icon" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank" rel="noopener">
-                <svg className="button-icon" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank" rel="noopener">
-                <svg className="button-icon" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
+          <h2>
+            <T>Connect with us</T>
+          </h2>
+          <p>
+            <T>Join the Vite community</T>
+          </p>
         </div>
       </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+      <div className="ticks" />
+      <section id="spacer" />
     </>
   );
 }
