@@ -10,7 +10,11 @@
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "test": "echo \"no tests yet\"",
-    "clean": "rm -rf dist .turbo node_modules"
+    "clean": "rm -rf dist .turbo node_modules",
+    "extract": "autotranslate extract",
+    "translate": "autotranslate translate",
+    "i18n": "autotranslate extract && autotranslate translate",
+    "i18n:check": "autotranslate check"
   },
   "dependencies": {
     "@autotranslate/core": "workspace:*",
@@ -25,7 +29,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
-    "typescript": "~6.0.2",
+    "typescript": "^5.9.3",
     "vite": "^8.0.10"
   }
 }
