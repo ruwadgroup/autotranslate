@@ -76,6 +76,19 @@ export const autotranslateConfigSchema = z
      * (tone, audience, brand voice).
      */
     instruction: z.string().optional(),
+    /**
+     * Path to a TS / JS file exporting a nested string dictionary (the
+     * default export). The CLI flattens it into dot-paths and merges it into
+     * the source catalog. `useTranslations(ns)` reads from these keys.
+     *
+     * ```ts
+     * // src/dictionary.ts
+     * export default {
+     *   dashboard: { title: 'Dashboard', greeting: 'Welcome, {name}!' },
+     * };
+     * ```
+     */
+    dictionary: z.string().min(1).optional(),
   })
   .strict();
 

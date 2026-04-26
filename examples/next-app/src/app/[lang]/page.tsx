@@ -5,6 +5,7 @@ import Hero from '@/components/Hero';
 import LinkButton from '@/components/LinkButton';
 import LocaleCard from '@/components/LocaleCard';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
+import StatsCard from '@/components/StatsCard';
 
 const SUPPORTED_LOCALES = ['en', 'es', 'fr', 'ja'] as const;
 type Locale = (typeof SUPPORTED_LOCALES)[number];
@@ -40,6 +41,14 @@ export default async function Home({ params }: { readonly params: Promise<{ lang
         <Hero />
 
         <LocaleCard lang={lang} />
+
+        <StatsCard
+          status="shipped"
+          visitors={1234}
+          revenue={12_499}
+          lastUpdated={new Date(Date.now() - 1000 * 60 * 60 * 3)}
+          nextRelease={new Date('2026-05-15T00:00:00Z')}
+        />
 
         <div className="flex flex-col gap-3 sm:flex-row">
           <LinkButton href="https://github.com/tamimbinhakim/autotranslate" variant="primary">

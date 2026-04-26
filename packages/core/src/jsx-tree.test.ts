@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  type BranchNode,
   canonicalize,
   canonicalKey,
   isStructured,
@@ -61,6 +62,18 @@ describe('canonicalKey', () => {
     expect(canonicalKey([text('Hi')])).not.toBe(canonicalKey([text('Hello')]));
     expect(canonicalKey([variable('a')])).not.toBe(canonicalKey([variable('b')]));
   });
+
+  it('mixes context into the hash', () => {
+    const tree: StructuredMessage = [text('Submit')];
+    expect(canonicalKey(tree, 'navbar')).not.toBe(canonicalKey(tree));
+    expect(canonicalKey(tree, 'navbar')).not.toBe(canonicalKey(tree, 'form button'));
+    expect(canonicalKey(tree, 'navbar')).toBe(canonicalKey(tree, 'navbar'));
+  });
+
+  it('is identical with empty context and no context', () => {
+    const tree: StructuredMessage = [text('Submit')];
+    expect(canonicalKey(tree, '')).toBe(canonicalKey(tree));
+  });
 });
 
 describe('isStructured', () => {
@@ -114,5 +127,22 @@ describe('renderTreeToString', () => {
     };
     const tree: StructuredMessage = [plural];
     expect(renderTreeToString(tree, 'en', {})).toBe(' items');
+  });
+
+  it('selects the right branch case', () => {
+    const branch: BranchNode = {
+      type: 'branch',
+      name: 'status',
+      cases: {
+        pending: [text('Pending')],
+        shipped: [text('Shipped')],
+        default: [text('Unknown')],
+      },
+    };
+    const tree: StructuredMessage = [branch];
+    expect(renderTreeToString(tree, 'en', { status: 'pending' })).toBe('Pending');
+    expect(renderTreeToString(tree, 'en', { status: 'shipped' })).toBe('Shipped');
+    expect(renderTreeToString(tree, 'en', { status: 'mystery' })).toBe('Unknown');
+    expect(renderTreeToString(tree, 'en', {})).toBe('Unknown');
   });
 });

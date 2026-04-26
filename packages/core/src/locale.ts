@@ -146,6 +146,131 @@ function languageOf(tag: string): string {
   return (dash === -1 ? tag : tag.slice(0, dash)).toLowerCase();
 }
 
+/**
+ * Display name for `locale`, expressed in `displayLocale` (defaulting to
+ * `locale` itself, which yields the native autonym — `Français` for `fr`).
+ *
+ * Returns the input tag unchanged on platforms missing `Intl.DisplayNames`
+ * or for malformed tags.
+ */
+export function getLocaleName(locale: Locale, displayLocale?: Locale): string {
+  if (typeof Intl?.DisplayNames !== 'function') return locale;
+  try {
+    const name = new Intl.DisplayNames([displayLocale ?? locale], { type: 'language' }).of(locale);
+    return name ?? locale;
+  } catch {
+    return locale;
+  }
+}
+
+/**
+ * Detailed properties for a locale tag.
+ */
+export interface LocaleProperties {
+  readonly tag: Locale;
+  readonly languageCode: string;
+  readonly regionCode?: string;
+  readonly scriptCode?: string;
+  readonly name: string;
+  readonly nativeName: string;
+  readonly direction: LocaleDirection;
+  readonly emoji?: string;
+}
+
+/**
+ * Resolve descriptive metadata for `locale`. Useful for building locale
+ * switchers without re-deriving each field.
+ */
+export function getLocaleProperties(locale: Locale): LocaleProperties {
+  let parsed: Intl.Locale;
+  try {
+    parsed = new Intl.Locale(locale);
+  } catch {
+    return {
+      tag: locale,
+      languageCode: locale,
+      name: locale,
+      nativeName: locale,
+      direction: 'ltr',
+    };
+  }
+  const languageCode = parsed.language ?? locale;
+  const regionCode = parsed.region;
+  const scriptCode = parsed.script;
+  const properties: LocaleProperties = {
+    tag: parsed.toString(),
+    languageCode,
+    ...(regionCode ? { regionCode } : {}),
+    ...(scriptCode ? { scriptCode } : {}),
+    name: getLocaleName(locale, 'en'),
+    nativeName: getLocaleName(locale, locale),
+    direction: getDirection(locale),
+  };
+  const emoji = regionCode ? regionCodeToEmoji(regionCode) : undefined;
+  return emoji ? { ...properties, emoji } : properties;
+}
+
+/**
+ * Flag emoji from a locale's region (e.g. `en-US` → `🇺🇸`). Returns
+ * `undefined` when no region is present or it can't be resolved.
+ */
+export function getLocaleEmoji(locale: Locale): string | undefined {
+  let parsed: Intl.Locale;
+  try {
+    parsed = new Intl.Locale(locale);
+  } catch {
+    return undefined;
+  }
+  const region = parsed.region;
+  if (!region) return undefined;
+  return regionCodeToEmoji(region);
+}
+
+function regionCodeToEmoji(region: string): string | undefined {
+  if (region.length !== 2) return undefined;
+  const upper = region.toUpperCase();
+  const a = upper.charCodeAt(0);
+  const b = upper.charCodeAt(1);
+  if (a < 65 || a > 90 || b < 65 || b > 90) return undefined;
+  // Regional Indicator Symbol Letter A starts at U+1F1E6 (= 'A' + 0x1F1A5).
+  return String.fromCodePoint(0x1f1a5 + a, 0x1f1a5 + b);
+}
+
+/**
+ * Return `true` if both tags share the same primary language subtag
+ * (e.g. `en` and `en-US`).
+ */
+export function isSameLanguage(a: Locale, b: Locale): boolean {
+  return languageOf(a) === languageOf(b);
+}
+
+/**
+ * Pick the best supported locale from a user's ordered preference list.
+ * Mirrors `matchLocale` but accepts a list of candidates instead of HTTP
+ * signals — useful in client code (`navigator.languages`).
+ */
+export function determineLocale(
+  preferred: ReadonlyArray<Locale>,
+  supported: ReadonlyArray<Locale>,
+  defaultLocale: Locale,
+): Locale {
+  if (supported.length === 0) return defaultLocale;
+  const exact = new Map<string, Locale>();
+  const byLanguage = new Map<string, Locale>();
+  for (const tag of supported) {
+    exact.set(tag.toLowerCase(), tag);
+    const lang = languageOf(tag);
+    if (!byLanguage.has(lang)) byLanguage.set(lang, tag);
+  }
+  for (const candidate of preferred) {
+    if (!candidate) continue;
+    const lower = candidate.toLowerCase();
+    const hit = exact.get(lower) ?? byLanguage.get(languageOf(lower));
+    if (hit) return hit;
+  }
+  return defaultLocale;
+}
+
 export interface AcceptLanguageEntry {
   readonly tag: string;
   readonly q: number;

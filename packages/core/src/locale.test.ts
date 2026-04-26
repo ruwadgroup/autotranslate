@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  determineLocale,
   getDirection,
+  getLocaleEmoji,
+  getLocaleName,
+  getLocaleProperties,
+  isSameLanguage,
   isValidLocale,
   matchLocale,
   parseAcceptLanguage,
@@ -112,5 +117,72 @@ describe('matchLocale', () => {
         supported,
       }),
     ).toBe('en');
+  });
+});
+
+describe('getLocaleName', () => {
+  it('returns a display name', () => {
+    expect(getLocaleName('en', 'en')).toMatch(/english/i);
+    expect(getLocaleName('fr', 'en')).toMatch(/french/i);
+  });
+
+  it('returns the autonym when no display locale is given', () => {
+    // `Français` in French; some platforms title-case the first letter.
+    expect(getLocaleName('fr').toLowerCase()).toContain('français');
+  });
+});
+
+describe('getLocaleEmoji', () => {
+  it.each([
+    ['en-US', '🇺🇸'],
+    ['fr-FR', '🇫🇷'],
+    ['ja-JP', '🇯🇵'],
+  ])('%s → %s', (tag, expected) => {
+    expect(getLocaleEmoji(tag)).toBe(expected);
+  });
+
+  it('returns undefined when no region is present', () => {
+    expect(getLocaleEmoji('en')).toBeUndefined();
+  });
+});
+
+describe('isSameLanguage', () => {
+  it.each([
+    ['en', 'en-US', true],
+    ['en-GB', 'en-US', true],
+    ['en', 'fr', false],
+    ['zh-Hans', 'zh-Hant', true],
+  ])('isSameLanguage(%s, %s) === %s', (a, b, expected) => {
+    expect(isSameLanguage(a, b)).toBe(expected);
+  });
+});
+
+describe('getLocaleProperties', () => {
+  it('resolves region + direction + autonym', () => {
+    const props = getLocaleProperties('fr-FR');
+    expect(props.tag).toBe('fr-FR');
+    expect(props.languageCode).toBe('fr');
+    expect(props.regionCode).toBe('FR');
+    expect(props.direction).toBe('ltr');
+    expect(props.emoji).toBe('🇫🇷');
+    expect(props.nativeName.toLowerCase()).toContain('français');
+  });
+
+  it('marks rtl languages', () => {
+    expect(getLocaleProperties('ar').direction).toBe('rtl');
+  });
+});
+
+describe('determineLocale', () => {
+  it('returns the first supported preference', () => {
+    expect(determineLocale(['de', 'fr', 'en'], ['en', 'fr'], 'en')).toBe('fr');
+  });
+
+  it('falls back to language match', () => {
+    expect(determineLocale(['fr-FR'], ['fr-CA', 'en'], 'en')).toBe('fr-CA');
+  });
+
+  it('returns the default when nothing matches', () => {
+    expect(determineLocale(['ja'], ['en', 'fr'], 'en')).toBe('en');
   });
 });

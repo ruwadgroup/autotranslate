@@ -1,4 +1,9 @@
-import { type CatalogEntry, canonicalKey, type Manifest } from '@autotranslate/core';
+import {
+  applyContextToKey,
+  type CatalogEntry,
+  canonicalKey,
+  type Manifest,
+} from '@autotranslate/core';
 import { parse } from '@babel/parser';
 import _traverse from '@babel/traverse';
 import type * as t from '@babel/types';
@@ -14,16 +19,24 @@ export interface FileExtraction {
   readonly manifest: Manifest;
 }
 
+interface MessageHints {
+  readonly context?: string;
+  readonly description?: string;
+  readonly maxChars?: number;
+}
+
 /**
  * Walk a TypeScript / JSX file and extract translatable messages.
  *
  * Two patterns are recognized:
  *
  * 1. **`<T>...</T>` JSX blocks** — the children are linearized to a
- *    `StructuredMessage` and hashed via `canonicalKey`.
- * 2. **`useT()` literal calls** — any `t('literal')` call, where `t` is
- *    bound to a `useT()` invocation in the same file, is extracted with
- *    the literal as both the key and the source.
+ *    `StructuredMessage` and hashed via `canonicalKey` (mixing in `context`
+ *    when present so distinct uses of the same copy stay distinct).
+ * 2. **`useT()` literal calls** — any `t('literal', { $context?, $maxChars? })`
+ *    call, where `t` is bound to a `useT()` invocation in the same file, is
+ *    extracted with the literal as the source. `$context` is suffixed onto
+ *    the key (`Submit@@navbar`).
  */
 export function extractFile(filePath: string, source: string): FileExtraction {
   const ast = parse(source, {
@@ -45,7 +58,9 @@ export function extractFile(filePath: string, source: string): FileExtraction {
   };
 
   traverse(ast, {
-    // First: track names bound to useT(). e.g. `const t = useT();`
+    // First: track names bound to useT(). e.g. `const t = useT();`.
+    // `useTranslations(ns)` is intentionally excluded — those callers feed
+    // off the user-authored dictionary, not from string-literal scanning.
     VariableDeclarator(path) {
       const init = path.node.init;
       if (
@@ -64,15 +79,15 @@ export function extractFile(filePath: string, source: string): FileExtraction {
       if (opening.name.type !== 'JSXIdentifier' || opening.name.name !== 'T') return;
       const tree = jsxChildrenToTree(path.node.children);
       if (tree.length === 0) return;
-      const key = canonicalKey(tree);
-      messages[key] = tree;
       const meta = readJSXMeta(opening);
+      const key = canonicalKey(tree, meta.context);
+      messages[key] = tree;
       const existing = manifest[key];
       manifest[key] = mergeMeta(existing, meta);
       recordOccurrence(key, path.node.loc?.start.line);
     },
 
-    // t('literal')
+    // t('literal', { $context?, $maxChars? })
     CallExpression(path) {
       const callee = path.node.callee;
       if (callee.type !== 'Identifier' || !tBindingNames.has(callee.name)) return;
@@ -80,28 +95,68 @@ export function extractFile(filePath: string, source: string): FileExtraction {
       if (!arg || arg.type !== 'StringLiteral') return;
       const literal = arg.value;
       if (literal === '') return;
-      messages[literal] = literal;
-      recordOccurrence(literal, path.node.loc?.start.line);
+      const meta = readCallHints(path.node.arguments[1]);
+      const key = applyContextToKey(literal, meta.context);
+      messages[key] = literal;
+      const existing = manifest[key];
+      manifest[key] = mergeMeta(existing, meta);
+      recordOccurrence(key, path.node.loc?.start.line);
     },
   });
 
   return { messages, manifest };
 }
 
-function readJSXMeta(opening: t.JSXOpeningElement): { context?: string; description?: string } {
-  const meta: { context?: string; description?: string } = {};
+function readJSXMeta(opening: t.JSXOpeningElement): MessageHints {
+  const meta: { context?: string; description?: string; maxChars?: number } = {};
   for (const attr of opening.attributes) {
     if (attr.type !== 'JSXAttribute' || attr.name.type !== 'JSXIdentifier') continue;
     const name = attr.name.name;
-    if (name !== 'context' && name !== 'description') continue;
     const value = attr.value;
-    if (value?.type === 'StringLiteral') {
-      meta[name] = value.value;
-    } else if (
-      value?.type === 'JSXExpressionContainer' &&
-      value.expression.type === 'StringLiteral'
-    ) {
-      meta[name] = value.expression.value;
+    if (name === 'context' || name === 'description') {
+      const literal = readStringLiteralAttr(value);
+      if (literal !== undefined) meta[name] = literal;
+    } else if (name === 'maxChars') {
+      const num = readNumberAttr(value);
+      if (num !== undefined) meta.maxChars = num;
+    }
+  }
+  return meta;
+}
+
+function readStringLiteralAttr(value: t.JSXAttribute['value']): string | undefined {
+  if (value?.type === 'StringLiteral') return value.value;
+  if (value?.type === 'JSXExpressionContainer' && value.expression.type === 'StringLiteral') {
+    return value.expression.value;
+  }
+  return undefined;
+}
+
+function readNumberAttr(value: t.JSXAttribute['value']): number | undefined {
+  if (value?.type === 'JSXExpressionContainer' && value.expression.type === 'NumericLiteral') {
+    return value.expression.value;
+  }
+  return undefined;
+}
+
+function readCallHints(arg: t.CallExpression['arguments'][number] | undefined): MessageHints {
+  if (!arg || arg.type !== 'ObjectExpression') return {};
+  const meta: { context?: string; description?: string; maxChars?: number } = {};
+  for (const prop of arg.properties) {
+    if (prop.type !== 'ObjectProperty' || prop.computed) continue;
+    const key = prop.key;
+    let name: string | undefined;
+    if (key.type === 'Identifier') name = key.name;
+    else if (key.type === 'StringLiteral') name = key.value;
+    if (!name) continue;
+    if (name === '$context' || name === '$description') {
+      const value = prop.value;
+      if (value.type === 'StringLiteral') {
+        meta[name === '$context' ? 'context' : 'description'] = value.value;
+      }
+    } else if (name === '$maxChars') {
+      const value = prop.value;
+      if (value.type === 'NumericLiteral') meta.maxChars = value.value;
     }
   }
   return meta;
@@ -109,11 +164,12 @@ function readJSXMeta(opening: t.JSXOpeningElement): { context?: string; descript
 
 function mergeMeta(
   existing: Manifest[string] | undefined,
-  incoming: { context?: string; description?: string },
+  incoming: MessageHints,
 ): Manifest[string] {
   return {
     ...existing,
     ...(incoming.context ? { context: incoming.context } : {}),
     ...(incoming.description ? { description: incoming.description } : {}),
+    ...(incoming.maxChars !== undefined ? { maxChars: incoming.maxChars } : {}),
   };
 }

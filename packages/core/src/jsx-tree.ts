@@ -28,6 +28,17 @@ export interface PluralNode {
 }
 
 /**
+ * Status / discriminator branch. Like `PluralNode`, but the selector is a
+ * free-form string value (e.g. `'pending' | 'shipped' | 'delivered'`) and
+ * the case names are user-defined. The `default` case is the fallback.
+ */
+export interface BranchNode {
+  readonly type: 'branch';
+  readonly name: string;
+  readonly cases: { readonly [caseName: string]: StructuredMessage };
+}
+
+/**
  * HTML element or simple component wrapper inside a `<T>` tree (e.g. `<a>`,
  * `<strong>`). Component trees are flattened into tag nodes so translators
  * see structure without prop noise.
@@ -38,7 +49,7 @@ export interface TagNode {
   readonly children: StructuredMessage;
 }
 
-export type TranslationNode = TextNode | VarNode | PluralNode | TagNode;
+export type TranslationNode = TextNode | VarNode | PluralNode | BranchNode | TagNode;
 
 export type StructuredMessage = ReadonlyArray<TranslationNode>;
 
@@ -80,9 +91,13 @@ export const TREE_KEY_PREFIX = 't.';
 /**
  * Stable canonical key for a structured message. Identical trees produce
  * identical keys regardless of authoring whitespace or prop order.
+ *
+ * `context`, when supplied, mixes into the hash so two identical trees with
+ * different translator-facing contexts get distinct keys.
  */
-export function canonicalKey(tree: StructuredMessage): string {
-  return `${TREE_KEY_PREFIX}${shortHash(canonicalize(tree))}`;
+export function canonicalKey(tree: StructuredMessage, context?: string): string {
+  const canonical = context ? `${canonicalize(tree)}ctx:${context}` : canonicalize(tree);
+  return `${TREE_KEY_PREFIX}${shortHash(canonical)}`;
 }
 
 /**
@@ -126,6 +141,13 @@ function renderNode(
       if (!branch) return '';
       const replacement = Number.isFinite(num) ? String(num) : '';
       return renderTreeToString(branch, locale, params).replace(/#/g, replacement);
+    }
+    case 'branch': {
+      const raw = params[node.name];
+      const key = raw === undefined || raw === null ? 'default' : String(raw);
+      const branch = node.cases[key] ?? node.cases.default;
+      if (!branch) return '';
+      return renderTreeToString(branch, locale, params);
     }
     case 'tag':
       return renderTreeToString(node.children, locale, params);

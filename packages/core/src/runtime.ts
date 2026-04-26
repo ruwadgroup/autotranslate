@@ -3,6 +3,13 @@ import type { StructuredMessage } from './jsx-tree';
 import { renderTreeToString } from './jsx-tree';
 import type { Catalog, CatalogEntry, Locale } from './types';
 
+/**
+ * Separator joining a literal `useT` key to its `$context` hint when both are
+ * present. Identical strings used in different contexts get distinct catalog
+ * entries via this suffix (e.g. `Submit@@form button`).
+ */
+export const CONTEXT_KEY_SEPARATOR = '@@';
+
 export interface TranslatorOptions {
   readonly locale: Locale;
   readonly catalog: Catalog;
@@ -17,6 +24,39 @@ export interface TranslatorOptions {
    * unset, the key itself is returned.
    */
   readonly onMissing?: (key: string, locale: Locale) => string;
+}
+
+/**
+ * Reserved option keys consumed by the translator itself (translator hints
+ * for the AI provider) rather than passed through as ICU placeholders.
+ */
+const RESERVED_OPTIONS: ReadonlySet<string> = new Set(['$context', '$description', '$maxChars']);
+
+function splitParams(params: Readonly<Record<string, unknown>> | undefined): {
+  readonly args: Record<string, unknown>;
+  readonly context: string | undefined;
+} {
+  if (!params) return { args: {}, context: undefined };
+  const args: Record<string, unknown> = {};
+  let context: string | undefined;
+  for (const k of Object.keys(params)) {
+    if (k === '$context') {
+      const v = params[k];
+      if (typeof v === 'string' && v !== '') context = v;
+      continue;
+    }
+    if (RESERVED_OPTIONS.has(k)) continue;
+    args[k] = params[k];
+  }
+  return { args, context };
+}
+
+/**
+ * Compose a lookup key from a literal `useT` key and an optional `$context`
+ * hint. Mirrors the suffix the CLI extractor writes into the catalog.
+ */
+export function applyContextToKey(key: string, context: string | undefined): string {
+  return context ? `${key}${CONTEXT_KEY_SEPARATOR}${context}` : key;
 }
 
 export interface Translator {
@@ -56,10 +96,13 @@ export function createTranslator(options: TranslatorOptions): Translator {
       return Array.isArray(entry) ? entry : undefined;
     },
     t(key, params) {
-      const entry = lookup(key);
-      const args = params ?? {};
+      const { args, context } = splitParams(params);
+      const lookupKey = applyContextToKey(key, context);
+      // Try the context-suffixed key first, then the bare key as a fallback —
+      // the catalog may not yet have a context-specific translation.
+      const entry = lookup(lookupKey) ?? (context ? lookup(key) : undefined);
       if (entry === undefined) {
-        return onMissing ? onMissing(key, locale) : key;
+        return onMissing ? onMissing(lookupKey, locale) : key;
       }
       if (typeof entry === 'string') {
         return formatICU(entry, locale, args);

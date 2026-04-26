@@ -3,6 +3,7 @@ import { relative, resolve } from 'node:path';
 import type { CatalogEntry, Manifest } from '@autotranslate/core';
 import fg from 'fast-glob';
 import { localeCatalogPath, writeCatalog, writeManifest } from '../catalog';
+import { extractDictionary } from '../extract/dictionary';
 import { extractFile } from '../extract/extractor';
 import type { ExtractResult, ResolvedConfig } from '../types';
 
@@ -28,6 +29,14 @@ export async function extract(resolved: ResolvedConfig): Promise<ExtractResult> 
     const result = extractFile(display, source);
     Object.assign(messages, result.messages);
     for (const [key, meta] of Object.entries(result.manifest)) {
+      manifest[key] = mergeMeta(manifest[key], meta);
+    }
+  }
+
+  if (config.dictionary) {
+    const dict = await extractDictionary(cwd, config.dictionary);
+    Object.assign(messages, dict.messages);
+    for (const [key, meta] of Object.entries(dict.manifest)) {
       manifest[key] = mergeMeta(manifest[key], meta);
     }
   }

@@ -109,6 +109,7 @@ export function pseudoLocalizeTree(tree: StructuredMessage): StructuredMessage {
 }
 
 type PluralForms = Extract<TranslationNode, { type: 'plural' }>['forms'];
+type BranchCases = Extract<TranslationNode, { type: 'branch' }>['cases'];
 
 function pseudoNode(node: TranslationNode): TranslationNode {
   switch (node.type) {
@@ -126,6 +127,14 @@ function pseudoNode(node: TranslationNode): TranslationNode {
             pseudoLocalizeTree(v as StructuredMessage),
           ]),
         ) as PluralForms,
+      };
+    case 'branch':
+      return {
+        type: 'branch',
+        name: node.name,
+        cases: Object.fromEntries(
+          Object.entries(node.cases).map(([k, v]) => [k, pseudoLocalizeTree(v)]),
+        ) as BranchCases,
       };
     case 'tag':
       return { type: 'tag', tag: node.tag, children: pseudoLocalizeTree(node.children) };

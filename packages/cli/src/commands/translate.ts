@@ -1,8 +1,14 @@
 import { resolve } from 'node:path';
-import type { CatalogEntry, Locale } from '@autotranslate/core';
+import type { CatalogEntry, Locale, Manifest } from '@autotranslate/core';
 import type { Provider, TranslationItem } from '@autotranslate/providers';
 import { type CacheFile, cacheFilePath, contentHash, readCache, writeCache } from '../cache';
-import { type CatalogFile, localeCatalogPath, readCatalog, writeCatalog } from '../catalog';
+import {
+  type CatalogFile,
+  localeCatalogPath,
+  readCatalog,
+  readManifest,
+  writeCatalog,
+} from '../catalog';
 import { resolveProvider } from '../provider-resolver';
 import type { LocaleStats, ResolvedConfig, TranslateResult, TranslateStats } from '../types';
 
@@ -30,6 +36,7 @@ export async function translate(
   const provider = options.provider ?? (await resolveProvider(resolved));
   const sourcePath = resolve(outDir, `${config.source}.json`);
   const sourceCatalog = await readCatalog(sourcePath);
+  const manifest = await readManifest(outDir);
   const sourceKeys = Object.keys(sourceCatalog);
 
   const targets = options.only
@@ -51,7 +58,7 @@ export async function translate(
       outDir,
       overrides: config.overrides,
       instruction: config.instruction,
-      manifest: undefined,
+      manifest,
     });
   }
 
@@ -67,12 +74,21 @@ interface TranslateLocaleArgs {
   readonly outDir: string;
   readonly overrides: ResolvedConfig['config']['overrides'];
   readonly instruction: string | undefined;
-  readonly manifest: undefined; // hook for future per-key context
+  readonly manifest: Manifest;
 }
 
 async function translateLocale(args: TranslateLocaleArgs): Promise<TranslateStats> {
-  const { provider, target, source, sourceCatalog, sourceKeys, outDir, overrides, instruction } =
-    args;
+  const {
+    provider,
+    target,
+    source,
+    sourceCatalog,
+    sourceKeys,
+    outDir,
+    overrides,
+    instruction,
+    manifest,
+  } = args;
 
   const cachePath = cacheFilePath(outDir, {
     source,
@@ -111,7 +127,15 @@ async function translateLocale(args: TranslateLocaleArgs): Promise<TranslateStat
       continue;
     }
 
-    items.push({ key, source: sourceEntry });
+    const meta = manifest[key];
+    const item: { -readonly [K in keyof TranslationItem]: TranslationItem[K] } = {
+      key,
+      source: sourceEntry,
+    };
+    if (meta?.context) item.context = meta.context;
+    if (meta?.description) item.description = meta.description;
+    if (typeof meta?.maxChars === 'number') item.maxChars = meta.maxChars;
+    items.push(item);
   }
 
   let fetched = 0;

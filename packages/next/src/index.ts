@@ -64,3 +64,23 @@ export async function getT(locale: Locale, options: GetTOptions = {}): Promise<T
     ...(fallback ? { fallback } : {}),
   });
 }
+
+/**
+ * Dictionary-mode server helper. Returns a `(key, params?) => string`
+ * function that prefixes lookups with `namespace`. Mirrors the client
+ * `useTranslations(ns)` hook.
+ *
+ * ```ts
+ * const t = await getTranslations(locale, 'dashboard');
+ * t('title'); // → catalog['dashboard.title']
+ * ```
+ */
+export async function getTranslations(
+  locale: Locale,
+  namespace?: string,
+  options: GetTOptions = {},
+): Promise<(key: string, params?: Readonly<Record<string, unknown>>) => string> {
+  const translator = await getT(locale, options);
+  const prefix = namespace ? `${namespace}.` : '';
+  return (key, params) => translator.t(`${prefix}${key}`, params);
+}

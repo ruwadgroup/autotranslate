@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Plural, Var } from './markers';
+import { Branch, Currency, DateTime, Num, Plural, RelativeTime, Var } from './markers';
 import { serializeChildren } from './serialize-children';
 
 describe('serializeChildren', () => {
@@ -73,5 +73,70 @@ describe('serializeChildren', () => {
       </>,
     );
     expect(tree).toEqual([{ type: 'text', value: 'Hello world' }]);
+  });
+
+  it('captures Branch cases and the default fallback', () => {
+    const { tree, branchSlots } = serializeChildren(
+      <Branch
+        branch="shipped"
+        pending={<>Pending</>}
+        shipped={<>On its way</>}
+        delivered={<>Arrived</>}
+      >
+        Unknown
+      </Branch>,
+    );
+    expect(tree).toEqual([
+      {
+        type: 'branch',
+        name: 'branch',
+        cases: {
+          default: [{ type: 'text', value: 'Unknown' }],
+          pending: [{ type: 'text', value: 'Pending' }],
+          shipped: [{ type: 'text', value: 'On its way' }],
+          delivered: [{ type: 'text', value: 'Arrived' }],
+        },
+      },
+    ]);
+    const slot = branchSlots.get('branch');
+    expect(slot?.value).toBe('shipped');
+    expect(Object.keys(slot?.cases ?? {}).sort()).toEqual(
+      ['default', 'delivered', 'pending', 'shipped'].sort(),
+    );
+  });
+
+  it('serializes formatter components as auto-named var slots', () => {
+    const { tree, varSlots } = serializeChildren(
+      <>
+        Total: <Currency currency="USD">{42.5}</Currency> on{' '}
+        <DateTime>{new Date('2026-01-01')}</DateTime>, viewed <Num>{1234}</Num> times
+      </>,
+    );
+    expect(tree).toEqual([
+      { type: 'text', value: 'Total: ' },
+      { type: 'var', name: 'currency#0' },
+      { type: 'text', value: ' on ' },
+      { type: 'var', name: 'dt#0' },
+      { type: 'text', value: ', viewed ' },
+      { type: 'var', name: 'num#0' },
+      { type: 'text', value: ' times' },
+    ]);
+    expect(varSlots.has('currency#0')).toBe(true);
+    expect(varSlots.has('dt#0')).toBe(true);
+    expect(varSlots.has('num#0')).toBe(true);
+  });
+
+  it('honors an explicit name on formatter components', () => {
+    const { tree } = serializeChildren(
+      <>
+        <Num name="amount">{42}</Num> visitors /{' '}
+        <RelativeTime name="seen">{Date.now()}</RelativeTime>
+      </>,
+    );
+    expect(tree).toEqual([
+      { type: 'var', name: 'amount' },
+      { type: 'text', value: ' visitors / ' },
+      { type: 'var', name: 'seen' },
+    ]);
   });
 });

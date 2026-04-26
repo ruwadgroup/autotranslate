@@ -34,6 +34,8 @@ export interface MessageMeta {
   readonly context?: string;
   /** End-user description for tooling and editors. */
   readonly description?: string;
+  /** Hard cap on translation length (passed to AI providers as guidance). */
+  readonly maxChars?: number;
   /** Source locations where the key was extracted from. */
   readonly occurrences?: ReadonlyArray<MessageOccurrence>;
   /** Locale-specific manual overrides applied after machine translation. */
@@ -54,6 +56,7 @@ export type Manifest = Record<string, MessageMeta>;
 // Re-export structured-tree types so consumers of the main entry don't need a
 // deep import. Implementations live in `./jsx-tree`.
 export type {
+  BranchNode,
   PluralNode,
   StructuredMessage,
   TagNode,

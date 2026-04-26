@@ -125,4 +125,78 @@ const x = <T>Hello   world</T>;`,
       { type: 'tag', tag: 'a', children: [{ type: 'text', value: 'docs' }] },
     ]);
   });
+
+  it('extracts <Branch> cases and the children fallback', () => {
+    const { messages } = extractFile(
+      FILE,
+      `import { T, Branch } from '@autotranslate/react';
+const x = <T><Branch branch={status} pending={<>Pending review</>} shipped={<>Shipped</>}>Status unknown</Branch></T>;`,
+    );
+    const tree = Object.values(messages)[0];
+    expect(tree).toEqual([
+      {
+        type: 'branch',
+        name: 'branch',
+        cases: {
+          default: [{ type: 'text', value: 'Status unknown' }],
+          pending: [{ type: 'text', value: 'Pending review' }],
+          shipped: [{ type: 'text', value: 'Shipped' }],
+        },
+      },
+    ]);
+  });
+
+  it('extracts formatter components as auto-named var nodes', () => {
+    const { messages } = extractFile(
+      FILE,
+      `import { T, Num, Currency, DateTime } from '@autotranslate/react';
+const x = <T>You bought <Num>{qty}</Num> for <Currency currency="USD">{price}</Currency> on <DateTime>{when}</DateTime>.</T>;`,
+    );
+    const tree = Object.values(messages)[0];
+    expect(tree).toEqual([
+      { type: 'text', value: 'You bought ' },
+      { type: 'var', name: 'num#0' },
+      { type: 'text', value: ' for ' },
+      { type: 'var', name: 'currency#0' },
+      { type: 'text', value: ' on ' },
+      { type: 'var', name: 'dt#0' },
+      { type: 'text', value: '.' },
+    ]);
+  });
+
+  it('produces distinct keys for <T> with different context props', () => {
+    const a = extractFile(
+      FILE,
+      `import { T } from '@autotranslate/react'; const x = <T>Submit</T>;`,
+    );
+    const b = extractFile(
+      FILE,
+      `import { T } from '@autotranslate/react'; const x = <T context="navbar">Submit</T>;`,
+    );
+    const keyA = Object.keys(a.messages)[0];
+    const keyB = Object.keys(b.messages)[0];
+    expect(keyA).not.toBe(keyB);
+  });
+
+  it('captures maxChars and disambiguates t() by $context', () => {
+    const { messages, manifest } = extractFile(
+      FILE,
+      `
+import { useT } from '@autotranslate/react';
+export function C() {
+  const t = useT();
+  return (
+    <>
+      <button>{t('Submit', { $context: 'navbar', $maxChars: 12 })}</button>
+      <span>{t('Submit')}</span>
+    </>
+  );
+}
+      `,
+    );
+    expect(messages.Submit).toBe('Submit');
+    expect(messages['Submit@@navbar']).toBe('Submit');
+    expect(manifest['Submit@@navbar']?.context).toBe('navbar');
+    expect(manifest['Submit@@navbar']?.maxChars).toBe(12);
+  });
 });

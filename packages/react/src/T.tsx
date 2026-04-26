@@ -34,12 +34,22 @@ export interface TProps {
  *
  * On miss, renders `children` verbatim.
  */
-export function T({ children }: TProps): ReactElement {
+export function T({ children, context }: TProps): ReactElement {
   const { locale, catalog, fallback } = useTranslationContext();
   const serialized = useMemo(() => serializeChildren(children), [children]);
-  const key = useMemo(() => canonicalKey(serialized.tree), [serialized.tree]);
+  const key = useMemo(() => canonicalKey(serialized.tree, context), [serialized.tree, context]);
+  // Bare key (no context) so a context-flavored copy can fall back to the
+  // generic translation when the catalog hasn't received a per-context one yet.
+  const bareKey = useMemo(
+    () => (context ? canonicalKey(serialized.tree) : key),
+    [serialized.tree, context, key],
+  );
 
-  const entry = catalog[key] ?? fallback?.[key];
+  const entry =
+    catalog[key] ??
+    (context ? catalog[bareKey] : undefined) ??
+    fallback?.[key] ??
+    (context ? fallback?.[bareKey] : undefined);
   if (!Array.isArray(entry)) {
     return <Fragment>{children}</Fragment>;
   }
@@ -79,6 +89,8 @@ function renderNode(
       return serialized.varSlots.get(node.name) ?? `{${node.name}}`;
     case 'plural':
       return renderPlural(node.forms, node.name, serialized, locale, state);
+    case 'branch':
+      return renderBranch(node.cases, node.name, serialized, locale, state, poundReplacement);
     case 'tag':
       return renderTag(node, serialized, locale, state, poundReplacement);
   }
@@ -99,6 +111,21 @@ function renderPlural(
   if (!branch) return null;
   const replacement = Number.isFinite(slot.value) ? String(slot.value) : '';
   return renderTree(branch, serialized, locale, state, replacement);
+}
+
+function renderBranch(
+  cases: { readonly [caseName: string]: StructuredMessage },
+  slotName: string,
+  serialized: SerializedTree,
+  locale: string,
+  state: RenderState,
+  poundReplacement: string | null,
+): ReactNode {
+  const slot = serialized.branchSlots.get(slotName);
+  if (!slot) return null;
+  const branch = cases[slot.value] ?? cases.default;
+  if (!branch) return null;
+  return renderTree(branch, serialized, locale, state, poundReplacement);
 }
 
 function renderTag(

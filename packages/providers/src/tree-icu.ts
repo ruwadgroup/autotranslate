@@ -1,4 +1,5 @@
 import type {
+  BranchNode,
   PluralNode,
   StructuredMessage,
   TagNode,
@@ -39,6 +40,19 @@ function nodeToICU(node: TranslationNode): string {
         if (branch) arms.push(`${cat} {${treeToICU(branch)}}`);
       }
       return `{${node.name}, plural, ${arms.join(' ')}}`;
+    }
+    case 'branch': {
+      // Map BranchNode → ICU `select`. Our `default` case is ICU's `other`
+      // (which `select` requires). Identifier-only case names are emitted
+      // unquoted; anything else is bracket-keyed.
+      const arms: string[] = [];
+      const otherTree = node.cases.default ?? [];
+      for (const [name, branch] of Object.entries(node.cases)) {
+        if (name === 'default') continue;
+        arms.push(`${name} {${treeToICU(branch)}}`);
+      }
+      arms.push(`other {${treeToICU(otherTree)}}`);
+      return `{${node.name}, select, ${arms.join(' ')}}`;
     }
     case 'tag':
       return `<${node.tag}>${treeToICU(node.children)}</${node.tag}>`;
@@ -93,6 +107,16 @@ function elementToNode(el: MessageFormatElement): TranslationNode {
         forms[key] = elementsToTree(branch.value);
       }
       return { type: 'plural', name: el.value, forms } satisfies PluralNode;
+    }
+
+    case TYPE.select: {
+      const cases: { [caseName: string]: StructuredMessage } = {};
+      for (const [key, branch] of Object.entries(el.options)) {
+        // ICU `select` requires `other` — map it to our `default`.
+        const caseName = key === 'other' ? 'default' : key;
+        cases[caseName] = elementsToTree(branch.value);
+      }
+      return { type: 'branch', name: el.value, cases } satisfies BranchNode;
     }
 
     case TYPE.tag:

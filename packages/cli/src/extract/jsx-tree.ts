@@ -9,15 +9,28 @@ import type * as t from '@babel/types';
  * for the canonical hash to match between extraction and runtime.
  */
 export function jsxChildrenToTree(children: ReadonlyArray<t.Node>): StructuredMessage {
+  const state: ExtractState = { formatCount: new Map() };
+  return childrenToTree(children, state);
+}
+
+interface ExtractState {
+  /** Per-formatter occurrence counter. Mirrors the runtime serializer. */
+  readonly formatCount: Map<string, number>;
+}
+
+function childrenToTree(children: ReadonlyArray<t.Node>, state: ExtractState): StructuredMessage {
   const out: TranslationNode[] = [];
   for (const child of children) {
-    const node = nodeToTreeNode(child);
+    const node = nodeToTreeNode(child, state);
     if (node) out.push(...(Array.isArray(node) ? node : [node]));
   }
   return mergeText(out);
 }
 
-function nodeToTreeNode(node: t.Node): TranslationNode | TranslationNode[] | null {
+function nodeToTreeNode(
+  node: t.Node,
+  state: ExtractState,
+): TranslationNode | TranslationNode[] | null {
   switch (node.type) {
     case 'JSXText': {
       // JSX collapses surrounding whitespace; the runtime sees the same
@@ -44,27 +57,49 @@ function nodeToTreeNode(node: t.Node): TranslationNode | TranslationNode[] | nul
       return null;
     }
     case 'JSXFragment':
-      return jsxChildrenToTree(node.children) as TranslationNode[];
+      return childrenToTree(node.children, state) as TranslationNode[];
     case 'JSXElement':
-      return elementToTreeNode(node);
+      return elementToTreeNode(node, state);
     default:
       return null;
   }
 }
 
-function elementToTreeNode(el: t.JSXElement): TranslationNode | null {
+const FORMAT_MARKERS: Readonly<Record<string, string>> = {
+  Num: 'num',
+  Currency: 'currency',
+  DateTime: 'dt',
+  RelativeTime: 'rel',
+};
+
+function elementToTreeNode(el: t.JSXElement, state: ExtractState): TranslationNode | null {
   const opening = el.openingElement;
   const tag = jsxNameToString(opening.name);
   if (tag === 'Var') return varNode(opening);
-  if (tag === 'Plural') return pluralNode(opening, el);
+  if (tag === 'Plural') return pluralNode(opening, el, state);
+  if (tag === 'Branch') return branchNode(opening, el, state);
+  const formatPrefix = FORMAT_MARKERS[tag];
+  if (formatPrefix) return formatNode(opening, formatPrefix, state);
   // HTML element / unknown component → tag node. We strip props from the
   // canonical form because translators shouldn't translate `href`/`onClick`
   // and we don't want them affecting the hash.
   return {
     type: 'tag',
     tag,
-    children: jsxChildrenToTree(el.children),
+    children: childrenToTree(el.children, state),
   };
+}
+
+function formatNode(
+  opening: t.JSXOpeningElement,
+  prefix: string,
+  state: ExtractState,
+): TranslationNode {
+  const explicit = readStringAttribute(opening, 'name');
+  const occurrence = state.formatCount.get(prefix) ?? 0;
+  state.formatCount.set(prefix, occurrence + 1);
+  const name = explicit ?? `${prefix}#${occurrence}`;
+  return { type: 'var', name };
 }
 
 function varNode(opening: t.JSXOpeningElement): TranslationNode {
@@ -74,18 +109,45 @@ function varNode(opening: t.JSXOpeningElement): TranslationNode {
 
 const PLURAL_FORMS: ReadonlyArray<PluralCategory> = ['zero', 'one', 'two', 'few', 'many', 'other'];
 
-function pluralNode(opening: t.JSXOpeningElement, _el: t.JSXElement): TranslationNode {
+function pluralNode(
+  opening: t.JSXOpeningElement,
+  _el: t.JSXElement,
+  state: ExtractState,
+): TranslationNode {
   const name = readStringAttribute(opening, 'name') ?? 'count';
   const forms: { -readonly [K in PluralCategory]?: StructuredMessage } = {};
   for (const cat of PLURAL_FORMS) {
     const value = readJSXAttribute(opening, cat);
     if (value === undefined) continue;
-    forms[cat] = readBranch(value);
+    forms[cat] = readBranch(value, state);
   }
   return { type: 'plural', name, forms };
 }
 
-function readBranch(value: t.JSXAttribute['value']): StructuredMessage {
+const BRANCH_RESERVED: ReadonlySet<string> = new Set(['branch', 'name', 'key', 'ref']);
+
+function branchNode(
+  opening: t.JSXOpeningElement,
+  el: t.JSXElement,
+  state: ExtractState,
+): TranslationNode {
+  const name = readStringAttribute(opening, 'name') ?? 'branch';
+  const cases: { [caseName: string]: StructuredMessage } = {};
+  for (const attr of opening.attributes) {
+    if (attr.type !== 'JSXAttribute' || attr.name.type !== 'JSXIdentifier') continue;
+    const propName = attr.name.name;
+    if (BRANCH_RESERVED.has(propName)) continue;
+    cases[propName] = readBranch(attr.value, state);
+  }
+  // Children → default fallback case.
+  const childTree = childrenToTree(el.children, state);
+  if (childTree.length > 0) {
+    cases.default = childTree;
+  }
+  return { type: 'branch', name, cases };
+}
+
+function readBranch(value: t.JSXAttribute['value'], state: ExtractState): StructuredMessage {
   if (!value) return [];
   if (value.type === 'StringLiteral') {
     return [{ type: 'text', value: value.value }];
@@ -97,7 +159,7 @@ function readBranch(value: t.JSXAttribute['value']): StructuredMessage {
     }
     if (expr.type === 'JSXElement' || expr.type === 'JSXFragment') {
       const children = expr.type === 'JSXFragment' ? expr.children : [expr];
-      return jsxChildrenToTree(children);
+      return childrenToTree(children, state);
     }
   }
   return [];

@@ -22,9 +22,10 @@ export {
   TREE_KEY_PREFIX,
 } from './jsx-tree';
 export type { Translator, TranslatorOptions } from './runtime';
-export { createTranslator } from './runtime';
+export { applyContextToKey, CONTEXT_KEY_SEPARATOR, createTranslator } from './runtime';
 
 export type {
+  BranchNode,
   Catalog,
   CatalogEntry,
   Locale,

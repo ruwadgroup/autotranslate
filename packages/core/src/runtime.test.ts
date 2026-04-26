@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { canonicalKey, type StructuredMessage } from './jsx-tree';
-import { createTranslator } from './runtime';
+import { applyContextToKey, CONTEXT_KEY_SEPARATOR, createTranslator } from './runtime';
 
 describe('createTranslator', () => {
   it('returns translated strings', () => {
@@ -78,5 +78,40 @@ describe('createTranslator', () => {
     expect(t.raw('tree')).toBe(tree);
     expect(t.raw('str')).toBe('plain');
     expect(t.raw('missing')).toBeUndefined();
+  });
+
+  it('disambiguates by $context option', () => {
+    const t = createTranslator({
+      locale: 'es',
+      catalog: {
+        Submit: 'Enviar',
+        [`Submit${CONTEXT_KEY_SEPARATOR}navbar`]: 'Enviar (nav)',
+      },
+    });
+    expect(t.t('Submit')).toBe('Enviar');
+    expect(t.t('Submit', { $context: 'navbar' })).toBe('Enviar (nav)');
+    // Falls back to the bare entry when no context-specific translation exists.
+    expect(t.t('Submit', { $context: 'unmapped' })).toBe('Enviar');
+  });
+
+  it('strips reserved $-prefixed options before ICU formatting', () => {
+    const t = createTranslator({
+      locale: 'en',
+      catalog: { greeting: 'Hello, {name}!' },
+    });
+    expect(
+      t.t('greeting', { name: 'Ada', $context: 'home', $maxChars: 30, $description: 'hi' }),
+    ).toBe('Hello, Ada!');
+  });
+});
+
+describe('applyContextToKey', () => {
+  it('appends the context with the separator', () => {
+    expect(applyContextToKey('Submit', 'navbar')).toBe(`Submit${CONTEXT_KEY_SEPARATOR}navbar`);
+  });
+
+  it('returns the bare key when context is empty / undefined', () => {
+    expect(applyContextToKey('Submit', undefined)).toBe('Submit');
+    expect(applyContextToKey('Submit', '')).toBe('Submit');
   });
 });

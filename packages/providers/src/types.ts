@@ -13,6 +13,8 @@ export interface TranslationItem {
   readonly context?: string;
   /** End-user description for the translator. */
   readonly description?: string;
+  /** Soft length budget (characters). Passed through as guidance to AI providers. */
+  readonly maxChars?: number;
 }
 
 /**

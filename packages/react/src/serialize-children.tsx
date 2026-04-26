@@ -1,7 +1,17 @@
 import type { StructuredMessage, TranslationNode } from '@autotranslate/core';
 import type { PluralCategory } from '@autotranslate/core/locale';
 import { Children, Fragment, isValidElement, type ReactElement, type ReactNode } from 'react';
-import { Plural, Var } from './markers';
+import {
+  BRANCH_RESERVED_PROPS,
+  Branch,
+  Currency,
+  DateTime,
+  FORMAT_MARKER_PREFIX,
+  Num,
+  Plural,
+  RelativeTime,
+  Var,
+} from './markers';
 
 /**
  * Per-tree state collected during serialization. Slots and tag elements are
@@ -19,6 +29,11 @@ export interface SerializedTree {
    */
   readonly pluralSlots: ReadonlyMap<string, PluralSlot>;
   /**
+   * `<Branch name>` slot data. The renderer reads `value` and looks up the
+   * matching case (or `default`).
+   */
+  readonly branchSlots: ReadonlyMap<string, BranchSlot>;
+  /**
    * Tag elements keyed by `${tag}#${index}` so the renderer can clone the
    * original element (with its props) when rendering the translated tree.
    */
@@ -30,6 +45,11 @@ export interface PluralSlot {
   readonly forms: { readonly [K in PluralCategory]?: ReactNode };
 }
 
+export interface BranchSlot {
+  readonly value: string;
+  readonly cases: { readonly [caseName: string]: ReactNode };
+}
+
 /**
  * Walk React children, building both the canonical message tree and the
  * runtime slot maps the renderer needs to reconstitute React content.
@@ -38,14 +58,17 @@ export function serializeChildren(children: ReactNode): SerializedTree {
   const state: WriterState = {
     varSlots: new Map(),
     pluralSlots: new Map(),
+    branchSlots: new Map(),
     tagSlots: new Map(),
     tagCount: new Map(),
+    formatCount: new Map(),
   };
   const tree = walk(children, state);
   return {
     tree,
     varSlots: state.varSlots,
     pluralSlots: state.pluralSlots,
+    branchSlots: state.branchSlots,
     tagSlots: state.tagSlots,
   };
 }
@@ -53,8 +76,12 @@ export function serializeChildren(children: ReactNode): SerializedTree {
 interface WriterState {
   readonly varSlots: Map<string, ReactNode>;
   readonly pluralSlots: Map<string, PluralSlot>;
+  readonly branchSlots: Map<string, BranchSlot>;
   readonly tagSlots: Map<string, ReactElement>;
   readonly tagCount: Map<string, number>;
+  /** Per-formatter counter — keeps `Num`/`Currency`/`DateTime`/`RelativeTime`
+   * slot names stable across serializer runs and matched in the extractor. */
+  readonly formatCount: Map<string, number>;
 }
 
 function walk(children: ReactNode, state: WriterState): StructuredMessage {
@@ -102,6 +129,44 @@ function walk(children: ReactNode, state: WriterState): StructuredMessage {
       state.pluralSlots.set(name, { value, forms: runtimeForms });
       return;
     }
+    if (child.type === Branch) {
+      const name = (props.name as string | undefined) ?? 'branch';
+      const branchValue = props.branch;
+      const value =
+        branchValue === undefined || branchValue === null ? 'default' : String(branchValue);
+      const cases: { [caseName: string]: StructuredMessage } = {};
+      const runtimeCases: { [caseName: string]: ReactNode } = {};
+      // The default branch is the children prop; all other props (besides
+      // reserved ones) are named cases.
+      const childrenProp = (props.children as ReactNode | undefined) ?? null;
+      if (childrenProp != null && childrenProp !== false) {
+        cases.default = walk(childrenProp, state);
+        runtimeCases.default = childrenProp;
+      }
+      for (const propName of Object.keys(props)) {
+        if (BRANCH_RESERVED_PROPS.has(propName)) continue;
+        const caseValue = props[propName] as ReactNode | undefined;
+        if (caseValue === undefined) continue;
+        cases[propName] = walk(caseValue, state);
+        runtimeCases[propName] = caseValue;
+      }
+      out.push({ type: 'branch', name, cases });
+      state.branchSlots.set(name, { value, cases: runtimeCases });
+      return;
+    }
+    const formatPrefix = isFormatMarker(child.type);
+    if (formatPrefix) {
+      // Treat formatter components as opaque variable slots. The slot value
+      // is the original React element so the formatter can re-render itself
+      // (it owns its own locale + Intl logic).
+      const explicit = (props.name as string | undefined) ?? null;
+      const occurrence = state.formatCount.get(formatPrefix) ?? 0;
+      state.formatCount.set(formatPrefix, occurrence + 1);
+      const name = explicit ?? `${formatPrefix}#${occurrence}`;
+      out.push({ type: 'var', name });
+      state.varSlots.set(name, child);
+      return;
+    }
 
     // HTML element / unknown component → tag node. We key by tag-name +
     // occurrence index so the renderer can clone the right element when the
@@ -128,6 +193,17 @@ function getDisplayName(element: ReactElement): string {
     return (type as { displayName?: string }).displayName ?? 'Component';
   }
   return 'Component';
+}
+
+const FORMAT_MARKER_TYPES: ReadonlyMap<unknown, string> = new Map<unknown, string>([
+  [Num, FORMAT_MARKER_PREFIX.Num ?? 'num'],
+  [Currency, FORMAT_MARKER_PREFIX.Currency ?? 'currency'],
+  [DateTime, FORMAT_MARKER_PREFIX.DateTime ?? 'dt'],
+  [RelativeTime, FORMAT_MARKER_PREFIX.RelativeTime ?? 'rel'],
+]);
+
+function isFormatMarker(type: unknown): string | null {
+  return FORMAT_MARKER_TYPES.get(type) ?? null;
 }
 
 /** Key used in `tagSlots` and the parallel renderer counter. */

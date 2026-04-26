@@ -77,6 +77,7 @@ async function translateBatch(
     icu: typeof item.source === 'string' ? item.source : treeToICU(item.source),
     ...(item.context ? { context: item.context } : {}),
     ...(item.description ? { description: item.description } : {}),
+    ...(typeof item.maxChars === 'number' ? { maxChars: item.maxChars } : {}),
   }));
 
   const responseSchema = z.object({
