@@ -7,7 +7,7 @@ export default defineConfig({
     middleware: 'src/middleware.ts',
   },
   format: ['esm', 'cjs'],
-  dts: true,
+  dts: { compilerOptions: { composite: false, incremental: false } },
   sourcemap: true,
   splitting: true,
   clean: true,
