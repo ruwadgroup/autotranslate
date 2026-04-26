@@ -226,11 +226,11 @@ describe('<T>', () => {
   it('renders Num / Currency / DateTime as locale-formatted output inside <T>', () => {
     const sourceKey = canonicalKey([
       { type: 'text', value: 'Total: ' },
-      { type: 'var', name: 'currency#0' },
+      { type: 'var', name: 'currency_0' },
       { type: 'text', value: ' on ' },
-      { type: 'var', name: 'dt#0' },
+      { type: 'var', name: 'dt_0' },
       { type: 'text', value: ', visited ' },
-      { type: 'var', name: 'num#0' },
+      { type: 'var', name: 'num_0' },
       { type: 'text', value: ' times' },
     ]);
     const { container } = render(
@@ -239,11 +239,11 @@ describe('<T>', () => {
         catalog={{
           [sourceKey]: [
             { type: 'text', value: 'Total: ' },
-            { type: 'var', name: 'currency#0' },
+            { type: 'var', name: 'currency_0' },
             { type: 'text', value: ' on ' },
-            { type: 'var', name: 'dt#0' },
+            { type: 'var', name: 'dt_0' },
             { type: 'text', value: ', visited ' },
-            { type: 'var', name: 'num#0' },
+            { type: 'var', name: 'num_0' },
             { type: 'text', value: ' times' },
           ],
         }}

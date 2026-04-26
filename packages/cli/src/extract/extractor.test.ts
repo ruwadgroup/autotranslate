@@ -199,11 +199,11 @@ const x = <T>You bought <Num>{qty}</Num> for <Currency currency="USD">{price}</C
     const tree = Object.values(messages)[0];
     expect(tree).toEqual([
       { type: 'text', value: 'You bought ' },
-      { type: 'var', name: 'num#0' },
+      { type: 'var', name: 'num_0' },
       { type: 'text', value: ' for ' },
-      { type: 'var', name: 'currency#0' },
+      { type: 'var', name: 'currency_0' },
       { type: 'text', value: ' on ' },
-      { type: 'var', name: 'dt#0' },
+      { type: 'var', name: 'dt_0' },
       { type: 'text', value: '.' },
     ]);
   });

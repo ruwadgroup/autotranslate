@@ -99,7 +99,8 @@ function formatNode(
   const explicit = readStringAttribute(opening, 'name');
   const occurrence = state.formatCount.get(prefix) ?? 0;
   state.formatCount.set(prefix, occurrence + 1);
-  const name = explicit ?? `${prefix}#${occurrence}`;
+  // `_` separator keeps the slot name a valid ICU argument identifier.
+  const name = explicit ?? `${prefix}_${occurrence}`;
   return { type: 'var', name };
 }
 

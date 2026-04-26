@@ -114,16 +114,16 @@ describe('serializeChildren', () => {
     );
     expect(tree).toEqual([
       { type: 'text', value: 'Total: ' },
-      { type: 'var', name: 'currency#0' },
+      { type: 'var', name: 'currency_0' },
       { type: 'text', value: ' on ' },
-      { type: 'var', name: 'dt#0' },
+      { type: 'var', name: 'dt_0' },
       { type: 'text', value: ', viewed ' },
-      { type: 'var', name: 'num#0' },
+      { type: 'var', name: 'num_0' },
       { type: 'text', value: ' times' },
     ]);
-    expect(varSlots.has('currency#0')).toBe(true);
-    expect(varSlots.has('dt#0')).toBe(true);
-    expect(varSlots.has('num#0')).toBe(true);
+    expect(varSlots.has('currency_0')).toBe(true);
+    expect(varSlots.has('dt_0')).toBe(true);
+    expect(varSlots.has('num_0')).toBe(true);
   });
 
   it('honors an explicit name on formatter components', () => {

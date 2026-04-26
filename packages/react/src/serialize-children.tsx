@@ -162,7 +162,9 @@ function walk(children: ReactNode, state: WriterState): StructuredMessage {
       const explicit = (props.name as string | undefined) ?? null;
       const occurrence = state.formatCount.get(formatPrefix) ?? 0;
       state.formatCount.set(formatPrefix, occurrence + 1);
-      const name = explicit ?? `${formatPrefix}#${occurrence}`;
+      // Use `_` (not `#`) so the slot name is a valid ICU argument
+      // identifier — round-trips through `treeToICU` / `icuToTree` cleanly.
+      const name = explicit ?? `${formatPrefix}_${occurrence}`;
       out.push({ type: 'var', name });
       state.varSlots.set(name, child);
       return;
