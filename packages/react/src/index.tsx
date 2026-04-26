@@ -32,4 +32,5 @@ export type { TranslationProviderProps } from './provider';
 export { TranslationProvider } from './provider';
 export type { TProps } from './T';
 export { T } from './T';
+export type { AutotranslateCatalog, CatalogKey } from './use-t';
 export { useLocale, useT, useTranslations } from './use-t';
