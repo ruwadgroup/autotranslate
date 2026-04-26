@@ -6,6 +6,9 @@ import { createNextMiddleware } from '@autotranslate/next/middleware';
 export default createNextMiddleware({
   defaultLocale: 'en',
   locales: ['en', 'es', 'fr', 'ja'],
+  // Every page lives under `app/[lang]/` — there's no bare `app/page.tsx`.
+  // Force the prefix so `/` redirects to `/en` instead of 404'ing.
+  prefixDefaultLocale: true,
 });
 
 export const config = {
