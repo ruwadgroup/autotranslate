@@ -77,11 +77,8 @@ getDirection('ar'); // → 'rtl'
 
 - `createTranslator(opts)` → `Translator`
 - `hash(input, length?)`, `shortHash(input)` — SHA-256 hex helpers
-- `canonicalize(tree)`, `canonicalKey(tree)`, `TREE_KEY_PREFIX`
-- `renderTreeToString(tree, locale, params?)`, `isStructured(value)`
-- `mergeAdjacentText`, `MARKER_NAMES`, `FORMAT_MARKER_PREFIX`,
-  `BRANCH_RESERVED_PROPS` (shared with `@autotranslate/cli` and
-  `@autotranslate/react`)
+- `canonicalKey(tree, context?)`, `renderTreeToString(tree, locale, params?)`,
+  `isStructured(value)`
 - Types: `Catalog`, `CatalogEntry`, `Locale`, `Manifest`, `MessageMeta`,
   `StructuredMessage`, `TextNode`, `VarNode`, `PluralNode`, `BranchNode`,
   `TagNode`, `Translator`, `TranslatorOptions`
@@ -106,6 +103,11 @@ getDirection('ar'); // → 'rtl'
 
 - `parseICU`, `formatICU`, `extractVariables`
 - `ICUParseError`
+
+> **Note**: `@autotranslate/core/internal` is a workspace-private subpath shared
+> between `@autotranslate/cli`, `@autotranslate/react`, and
+> `@autotranslate/providers`. **It is not part of the public API** and may break
+> without notice. Application code should not import from it.
 
 ## Design notes
 

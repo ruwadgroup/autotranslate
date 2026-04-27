@@ -19,4 +19,4 @@ A GitHub Action picks up changesets on `main` and opens a "Version Packages" PR.
 Merging that PR triggers a publish to npm with
 [provenance](https://docs.npmjs.com/generating-provenance-statements) via OIDC.
 
-See [`docs/RELEASING.md`](../docs/RELEASING.md) for the full flow.
+See [`.github/RELEASING.md`](../.github/RELEASING.md) for the full flow.

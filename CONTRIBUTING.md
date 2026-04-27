@@ -118,7 +118,7 @@ public API, CI / dev-tooling tweaks.
 
 ## Releasing
 
-Maintainers only. See [`docs/RELEASING.md`](docs/RELEASING.md).
+Maintainers only. See [`.github/RELEASING.md`](.github/RELEASING.md).
 
 ## Reporting bugs / requesting features
 

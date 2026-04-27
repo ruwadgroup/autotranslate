@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: 'If you use autotranslate in academic work, please cite it as below.'
+title: autotranslate
+abstract: >-
+  Code-first, AI-powered internationalization toolkit for React. Extracts
+  translatable strings from source, runs them through a translation provider
+  (Vercel AI SDK, DeepL, Google Cloud, or custom), and persists self-hosted
+  JSON catalogs with full type-safety end to end.
+authors:
+  - family-names: Hakim
+    given-names: Tamim Bin
+    email: tamimbinhakim.work@gmail.com
+type: software
+license: MIT
+version: 0.0.0
+date-released: '2026-04-27'
+url: 'https://github.com/tamimbinhakim/autotranslate'
+repository-code: 'https://github.com/tamimbinhakim/autotranslate'
+keywords:
+  - i18n
+  - l10n
+  - internationalization
+  - localization
+  - translation
+  - react
+  - nextjs
+  - typescript
+  - ai
+  - icu
