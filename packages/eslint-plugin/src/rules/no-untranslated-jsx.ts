@@ -8,19 +8,10 @@ import {
 } from '../utils/ast';
 
 interface RuleOptions {
-  /** Extra attribute names that may carry untranslated string literals. */
   readonly allowAttributes?: ReadonlyArray<string>;
-  /** Extra component names treated as translation markers. */
   readonly markers?: ReadonlyArray<string>;
 }
 
-/**
- * Flag user-visible string literals inside JSX that aren't wrapped by a
- * translation marker (`<T>`, `<Var>`, …) or a known structural attribute.
- *
- * Catches things like `<p>Hello</p>` and `<button title="Save">…</button>`
- * during dev so they don't slip past the extractor.
- */
 const rule: Rule.RuleModule = {
   meta: {
     type: 'problem',
@@ -55,8 +46,7 @@ const rule: Rule.RuleModule = {
     ]);
 
     return {
-      // ESLint's bundled types don't model JSX nodes; cast handler arg
-      // through `unknown`.
+      // ESLint's bundled types don't model JSX nodes; cast through `unknown`.
       JSXText(rawNode: unknown) {
         const node = rawNode as { value: string; parent?: unknown };
         if (!jsxTextHasContent(node.value)) return;

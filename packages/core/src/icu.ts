@@ -7,10 +7,6 @@ import {
 import { getPluralCategory } from './plural';
 import type { Locale } from './types';
 
-/**
- * Thrown when `parseICU` cannot parse a message. Wraps the upstream parser
- * error and includes the original input for diagnostics.
- */
 export class ICUParseError extends Error {
   override readonly name = 'ICUParseError';
   readonly input: string;
@@ -24,10 +20,6 @@ export class ICUParseError extends Error {
   }
 }
 
-/**
- * Parse an ICU MessageFormat string into its AST. Throws `ICUParseError` on
- * malformed input.
- */
 export function parseICU(input: string): MessageFormatElement[] {
   try {
     return parse(input, { requiresOtherClause: false });
@@ -36,13 +28,6 @@ export function parseICU(input: string): MessageFormatElement[] {
   }
 }
 
-/**
- * Format an ICU MessageFormat string with the given values.
- *
- * Supported types: literal, argument, select, plural (cardinal), pound (`#`),
- * tag wrappers, and `Intl.NumberFormat` / `Intl.DateTimeFormat` for the
- * `number` / `date` / `time` element types.
- */
 export function formatICU(
   input: string,
   locale: Locale,
@@ -51,10 +36,7 @@ export function formatICU(
   return formatElements(parseICU(input), locale, values);
 }
 
-/**
- * Return the names of all interpolation variables a message references.
- * Used by typegen to type the `params` argument of `useT(key)`.
- */
+/** Names of every interpolation variable referenced by `input`. */
 export function extractVariables(input: string): ReadonlyArray<string> {
   const names = new Set<string>();
   collectVariables(parseICU(input), names);
@@ -109,7 +91,7 @@ function formatElement(
 
     case TYPE.argument: {
       const v = values[el.value];
-      return v === undefined || v === null ? `{${el.value}}` : String(v);
+      return v == null ? `{${el.value}}` : String(v);
     }
 
     case TYPE.number:
@@ -130,8 +112,6 @@ function formatElement(
     case TYPE.plural: {
       const raw = values[el.value];
       const n = typeof raw === 'number' ? raw : Number(raw);
-      // Non-finite count falls back to `other` so a missing/invalid input
-      // still renders something readable. `#` is blanked in that case.
       const branch = Number.isFinite(n)
         ? (el.options[`=${n}`] ?? el.options[getPluralCategory(locale, n)] ?? el.options.other)
         : el.options.other;

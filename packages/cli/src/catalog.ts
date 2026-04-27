@@ -6,7 +6,7 @@ export type CatalogFile = Record<string, CatalogEntry>;
 
 const META_FILENAME = '.meta.json';
 
-/** Read a catalog from disk. Returns empty object if the file doesn't exist. */
+/** Read a catalog from disk. Returns `{}` if the file is missing. */
 export async function readCatalog(path: string): Promise<CatalogFile> {
   try {
     const raw = await readFile(path, 'utf8');

@@ -5,14 +5,8 @@ import { localeCatalogPath, readCatalog } from '../catalog';
 import type { CheckProblem, CheckResult, ResolvedConfig } from '../types';
 
 /**
- * Verify catalog parity:
- *
- * - **missing**: a key is in source but absent from a target locale.
- * - **orphan**: a key is in a target catalog but no longer in source.
- * - **invalid-icu**: a string-form catalog entry isn't a valid ICU message.
- *
- * Suitable for CI: returns `ok: false` and a problem list when the repo
- * isn't translation-clean.
+ * Verify catalog parity. Reports `missing`, `orphan`, and `invalid-icu`
+ * problems. Returns `ok: false` when any problem is found (CI-friendly).
  */
 export async function check(resolved: ResolvedConfig): Promise<CheckResult> {
   const { config, outDir } = resolved;

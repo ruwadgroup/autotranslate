@@ -5,39 +5,26 @@ import type { Provider, TranslationItem, TranslationRequest } from './types';
 
 export interface AIProviderOptions {
   /**
-   * `<vendor>:<model>` identifier. Supported vendors: `anthropic`, `openai`,
-   * `google`, `openrouter`. Examples:
-   *
-   * - `'anthropic:claude-haiku-4-5'`
-   * - `'openai:gpt-4o-mini'`
-   * - `'google:gemini-2.5-flash'`
-   * - `'openrouter:anthropic/claude-haiku-4-5'`
+   * `<vendor>:<model>`. Supported vendors: `anthropic`, `openai`, `google`,
+   * `openrouter`. (e.g. `'anthropic:claude-haiku-4-5'`).
    */
   readonly model: string;
-  /** API key for the chosen vendor. Falls back to vendor-default env vars. */
+  /** Falls back to vendor-default env vars when omitted. */
   readonly apiKey?: string;
-  /** Free-form system instruction (tone, audience, brand voice). */
   readonly instruction?: string;
-  /** Maximum number of items per `generateObject` call. Default 50. */
+  /** Items per `generateObject` call. Default 50. */
   readonly maxBatchSize?: number;
-  /**
-   * Optional escape hatch for callers that want to bypass the built-in
-   * vendor resolver (e.g. to test against a custom AI Gateway). The result
-   * must be an `ai-sdk`-compatible `LanguageModel`.
-   */
+  /** Escape hatch returning an `ai-sdk`-compatible `LanguageModel`. */
   readonly resolveModel?: (model: string, apiKey?: string) => Promise<unknown>;
 }
 
 const DEFAULT_BATCH_SIZE = 50;
 
 /**
- * Vercel AI SDK-backed translation provider.
- *
- * Strategy: linearize each source entry to an ICU message, batch them into a
- * single `generateObject` call, and reconstruct the tree post-translation
- * via `icuToTree`. ICU is a far better wire format than custom JSON because
- * the model already knows it — placeholders, plurals, and tags survive
- * round-trips reliably.
+ * Vercel AI SDK-backed translation provider. Linearizes each entry to ICU,
+ * batches into one `generateObject` call, then reconstructs the tree post-
+ * translation. ICU is a far better wire format than custom JSON because the
+ * model already knows it.
  */
 export function createAIProvider(options: AIProviderOptions): Provider {
   const { model, apiKey, instruction, maxBatchSize = DEFAULT_BATCH_SIZE, resolveModel } = options;
@@ -89,9 +76,8 @@ async function translateBatch(
     ),
   });
 
-  // ai-sdk's `LanguageModel` type varies between v4 and v5 and resolveModel
-  // is intentionally typed as `unknown`. Cast to the SDK's expected shape;
-  // the runtime contract is what matters.
+  // `LanguageModel` shape varies between ai-sdk v4 and v5; the runtime contract
+  // is what matters.
   const { object } = await generateObject({
     model: model as Parameters<typeof generateObject>[0]['model'],
     schema: responseSchema,
@@ -145,8 +131,8 @@ async function defaultResolveModel(model: string, apiKey?: string): Promise<unkn
       return createGoogleGenerativeAI({ ...(apiKey ? { apiKey } : {}) })(modelId);
     }
     case 'openrouter': {
-      // OpenRouter exposes an OpenAI-compatible API. Reuse the OpenAI factory
-      // with an overridden baseURL so users don't need an extra peer dep.
+      // OpenRouter is OpenAI-compatible — reuse the OpenAI factory with an
+      // overridden baseURL so users don't need an extra peer dep.
       const { createOpenAI } = await import('@ai-sdk/openai');
       return createOpenAI({
         baseURL: 'https://openrouter.ai/api/v1',
@@ -169,9 +155,8 @@ function chunk<T>(items: ReadonlyArray<T>, size: number): T[][] {
   return out;
 }
 
-// Tiny non-cryptographic hash used only to give the instruction a stable
-// signature for cache-key derivation. Avoids pulling in node:crypto and
-// keeps the runtime edge-safe.
+// FNV-1a 32-bit. Non-cryptographic; used only to give the instruction a
+// stable signature for the cache key. Avoids pulling in node:crypto.
 function shortHash(input: string): string {
   let h = 0x811c9dc5;
   for (let i = 0; i < input.length; i++) {

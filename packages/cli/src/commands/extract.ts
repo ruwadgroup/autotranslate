@@ -7,11 +7,7 @@ import { extractDictionary } from '../extract/dictionary';
 import { extractFile } from '../extract/extractor';
 import type { ExtractResult, ResolvedConfig } from '../types';
 
-/**
- * Scan all source files matched by `config.content`, build the canonical
- * source-locale catalog, and persist it to `<outDir>/<source>.json` along
- * with `<outDir>/.meta.json`.
- */
+/** Scan source files, build the source-locale catalog, persist to disk. */
 export async function extract(resolved: ResolvedConfig): Promise<ExtractResult> {
   const { cwd, config, outDir } = resolved;
   const files = await fg(config.content, {

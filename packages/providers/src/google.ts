@@ -1,41 +1,28 @@
 import type { CatalogEntry, Locale } from '@autotranslate/core';
+import { defaultFetch, type FetchLike, safeReadText } from './fetch';
 import { restorePlaceholders, shieldPlaceholders, UnsupportedICUError } from './placeholder-shield';
 import type { Provider, TranslationItem } from './types';
 
 export interface GoogleProviderOptions {
-  /** Google Cloud API key — see https://cloud.google.com/docs/authentication/api-keys . */
   readonly apiKey: string;
-  /**
-   * Override the API endpoint. Defaults to the Translation v2 base. Use
-   * `https://translate.googleapis.com/language/translate/v2` for the public
-   * (free, rate-limited) endpoint.
-   */
   readonly endpoint?: string;
-  /**
-   * Optional locale-tag override (`zh-Hans` → `zh-CN`, etc.). Most BCP-47
-   * tags pass through unchanged.
-   */
   readonly localeMap?: Readonly<Record<string, string>>;
-  /** `fetch` implementation. Falls back to `globalThis.fetch`. */
-  readonly fetch?: typeof globalThis.fetch;
+  readonly fetch?: FetchLike;
 }
 
 const DEFAULT_ENDPOINT = 'https://translation.googleapis.com/language/translate/v2';
 const MAX_TEXTS_PER_REQUEST = 128;
 
 /**
- * Google Cloud Translation v2 provider.
- *
- * Same scope as the DeepL provider: plain-string entries only, with ICU
- * placeholders shielded behind opaque sentinels. Format is `text` (not
- * `html`) — string-typed catalog entries from `useT` rarely contain markup.
+ * Google Cloud Translation v2 provider. Same scope as the DeepL provider —
+ * plain-string entries only, ICU placeholders shielded behind sentinels.
  */
 export function createGoogleProvider(options: GoogleProviderOptions): Provider {
   const {
     apiKey,
     endpoint = DEFAULT_ENDPOINT,
     localeMap,
-    fetch: fetchImpl = globalThis.fetch,
+    fetch: fetchImpl = defaultFetch(),
   } = options;
   if (!apiKey) {
     throw new Error('Google provider requires an `apiKey`.');
@@ -127,14 +114,6 @@ function assertStringEntriesOnly(items: ReadonlyArray<TranslationItem>): void {
 function mapLocale(locale: Locale, override: Readonly<Record<string, string>> | undefined): string {
   if (override?.[locale]) return override[locale] as string;
   return locale;
-}
-
-async function safeReadText(response: Response): Promise<string> {
-  try {
-    return await response.text();
-  } catch {
-    return '';
-  }
 }
 
 function chunk<T>(items: ReadonlyArray<T>, size: number): T[][] {

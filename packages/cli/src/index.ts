@@ -1,10 +1,3 @@
-/**
- * Programmatic API for the autotranslate CLI.
- *
- * The bin entry (`autotranslate` command) wraps these functions; importing
- * directly is supported for build pipelines, custom CI checks, and tests.
- */
-
 export const VERSION = '0.0.0';
 
 export type { CatalogFile } from './catalog';

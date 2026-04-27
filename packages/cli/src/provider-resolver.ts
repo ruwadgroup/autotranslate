@@ -2,14 +2,7 @@ import type { Provider } from '@autotranslate/providers';
 import { createStubProvider } from '@autotranslate/providers/stub';
 import type { ResolvedConfig } from './types';
 
-/**
- * Instantiate the provider declared in `config.provider`.
- *
- * Custom providers (`name: 'custom'`) are supplied programmatically via the
- * `provider` option of the public API rather than the config file, since
- * they're functions and don't survive JSON serialization. The CLI throws a
- * clear error if a custom provider is selected without an override.
- */
+/** Instantiate the provider declared in `config.provider`. */
 export async function resolveProvider(resolved: ResolvedConfig): Promise<Provider> {
   const provider = resolved.config.provider;
   switch (provider.name) {

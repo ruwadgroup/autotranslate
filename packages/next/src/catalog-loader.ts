@@ -5,12 +5,8 @@ import type { Catalog, Locale } from '@autotranslate/core';
 const cache = new Map<string, Promise<Catalog>>();
 
 /**
- * Default fs-backed catalog loader. Reads `<cwd>/<outDir>/<locale>.json`.
- *
- * Memoized per (cwd, outDir, locale) tuple — Next.js may call this on every
- * server render, and parsing the JSON each time wastes time. The cache is
- * process-local and lives for the lifetime of the server. Restarts of the
- * dev server (and fresh deploys) drop it naturally.
+ * Default fs-backed catalog loader. Reads `<cwd>/<outDir>/<locale>.json` and
+ * memoizes per (cwd, outDir, locale).
  */
 export function fsCatalogLoader(cwd: string, outDir: string): (locale: Locale) => Promise<Catalog> {
   return async (locale) => {

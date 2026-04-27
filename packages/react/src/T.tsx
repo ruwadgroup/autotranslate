@@ -13,33 +13,24 @@ import { type SerializedTree, serializeChildren, tagKey } from './serialize-chil
 
 export interface TProps {
   readonly children: ReactNode;
-  /**
-   * Optional context hint (carries through to the catalog meta as a
-   * translator-facing note). Not used at runtime; preserved here so the
-   * extractor can capture it.
-   */
+  /** Translator-facing context. Disambiguates identical copy in different contexts. */
   readonly context?: string;
-  /** Optional translator-facing description. Same story as `context`. */
+  /** Translator-facing description. */
   readonly description?: string;
 }
 
 /**
  * Translatable JSX block.
  *
- * Walks `children` to derive a canonical `StructuredMessage`, looks up the
- * translation in the active catalog (with source-locale fallback), and
- * renders the translated tree using the original `<Var>` / `<Plural>` /
- * tag elements as templates so props (e.g. `<a href>`) and event handlers
- * carry over.
- *
- * On miss, renders `children` verbatim.
+ * Walks `children` to derive a canonical message, looks up the translation in
+ * the active catalog (with source-locale fallback), and renders the translated
+ * tree using the original `<Var>` / `<Plural>` / tag elements as templates.
+ * Falls back to `children` on miss.
  */
 export function T({ children, context }: TProps): ReactElement {
   const { locale, catalog, fallback } = useTranslationContext();
   const serialized = useMemo(() => serializeChildren(children), [children]);
   const key = useMemo(() => canonicalKey(serialized.tree, context), [serialized.tree, context]);
-  // Bare key (no context) so a context-flavored copy can fall back to the
-  // generic translation when the catalog hasn't received a per-context one yet.
   const bareKey = useMemo(
     () => (context ? canonicalKey(serialized.tree) : key),
     [serialized.tree, context, key],
@@ -142,7 +133,5 @@ function renderTag(
   if (original) {
     return cloneElement(original, undefined, renderedChildren);
   }
-  // No matching source element — render a bare element so the structure is
-  // at least visible. Translators introducing new tags is rare but possible.
   return createElement(node.tag, null, renderedChildren);
 }

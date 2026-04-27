@@ -20,14 +20,7 @@ export class ConfigNotFoundError extends Error {
   }
 }
 
-/**
- * Locate and load `autotranslate.config.{ts,mts,js,mjs}` from `cwd`.
- *
- * `.ts` files load through `jiti` so users don't need a build step. The
- * default export is read; both `export default { ... }` and
- * `export default defineConfig({ ... })` shapes work because the helper is
- * type-only. The result is validated through `parseConfig` from core.
- */
+/** Locate and load `autotranslate.config.{ts,mts,js,mjs}` from `cwd`. */
 export async function loadConfig(cwd: string = process.cwd()): Promise<ResolvedConfig> {
   for (const name of CANDIDATE_FILENAMES) {
     const path = resolve(cwd, name);

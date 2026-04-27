@@ -1,14 +1,3 @@
-/**
- * Next.js server helpers for autotranslate.
- *
- * Designed for the App Router. Use this entry from RSC and route handlers.
- * The companion subpaths are:
- *
- * - `@autotranslate/next/middleware` — `createNextMiddleware()` for `proxy.ts`
- *   (Next 16 renamed `middleware` → `proxy`).
- * - `@autotranslate/next/plugin` — `withAutotranslate()` Next config wrapper.
- */
-
 import type { Locale, Translator } from '@autotranslate/core';
 import { createTranslator } from '@autotranslate/core';
 import { fsCatalogLoader } from './catalog-loader';
@@ -22,13 +11,8 @@ export type { CatalogLoader, GetTOptions, NextLocaleConfig, ProxyOptions } from 
 export { LOCALE_HEADER } from './types';
 
 /**
- * Read the active locale from the current request.
- *
- * Returns the value the proxy set in the `x-autotranslate-locale` header. If
- * the proxy didn't run (or didn't match), returns `undefined` and the caller
- * should fall back to its own signal (e.g. the `[lang]` URL param).
- *
- * Must be called from a server component, route handler, or server action.
+ * Read the active locale set by the proxy middleware. Returns `undefined`
+ * when the proxy didn't run.
  */
 export async function getRequestLocale(): Promise<Locale | undefined> {
   const { headers } = await import('next/headers');
@@ -37,16 +21,8 @@ export async function getRequestLocale(): Promise<Locale | undefined> {
 }
 
 /**
- * Build a translator bound to `locale`.
- *
- * The default loader reads `<cwd>/<outDir>/<locale>.json` (the layout the CLI
- * writes). Pass `load` to swap in a different storage strategy (KV, embedded
- * JSON, network fetch, …). Pass `fallback` to use a second locale when a key
- * is missing — typically your source locale.
- *
- * Must be called from a server context — Node-runtime route handlers or
- * server components. Edge-runtime callers should pass a custom `load` that
- * doesn't touch the filesystem.
+ * Build a translator bound to `locale`. The default loader reads
+ * `<cwd>/<outDir>/<locale>.json`.
  */
 export async function getT(locale: Locale, options: GetTOptions = {}): Promise<Translator> {
   const cwd = options.cwd ?? process.cwd();
@@ -66,9 +42,7 @@ export async function getT(locale: Locale, options: GetTOptions = {}): Promise<T
 }
 
 /**
- * Dictionary-mode server helper. Returns a `(key, params?) => string`
- * function that prefixes lookups with `namespace`. Mirrors the client
- * `useTranslations(ns)` hook.
+ * Dictionary-mode helper. Mirrors the client `useTranslations(ns)` hook.
  *
  * ```ts
  * const t = await getTranslations(locale, 'dashboard');

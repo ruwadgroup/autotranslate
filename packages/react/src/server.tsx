@@ -9,10 +9,6 @@ import {
 /**
  * Server-only translator factory for RSC / SSR / route handlers.
  *
- * No React context is involved — pass `locale` and `catalog` explicitly.
- * Use this in `getStaticProps`, server components, route handlers, edge
- * functions, etc.
- *
  * ```ts
  * import { getT } from '@autotranslate/react/server';
  *
@@ -38,10 +34,6 @@ export async function getT(
   });
 }
 
-/**
- * Synchronous translator factory. Re-exported from `@autotranslate/core` for
- * convenience so server-only code doesn't need a separate core import.
- */
 export function createTranslator(options: TranslatorOptions): Translator {
   return createCoreTranslator(options);
 }

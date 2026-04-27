@@ -27,24 +27,15 @@ interface ResolvedOptions {
  * // vite.config.ts
  * import autotranslate from '@autotranslate/vite';
  *
- * export default defineConfig({
- *   plugins: [autotranslate()],
- * });
+ * export default defineConfig({ plugins: [autotranslate()] });
  * ```
  *
- * In application code:
- *
  * ```ts
+ * // app code
  * import { catalogs, source, locales } from 'virtual:autotranslate';
  * ```
  *
- * The plugin auto-loads `autotranslate.config.{ts,mts,js,mjs}` from the
- * Vite project root to discover the source/target locales and the catalog
- * directory. Override any of these via plugin options.
- *
- * Dev-mode HMR: editing `.translations/<locale>.json` (e.g. by re-running
- * `pnpm i18n`) invalidates the virtual module so the running app picks up
- * the new catalogs without a full reload.
+ * Editing `.translations/<locale>.json` invalidates the virtual module in dev.
  */
 export default function autotranslate(options: AutotranslatePluginOptions = {}): Plugin {
   let cwd = options.cwd ?? process.cwd();

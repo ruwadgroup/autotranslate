@@ -2,11 +2,6 @@ import { ICUParseError, parseICU } from '@autotranslate/core/icu';
 import type { Rule } from 'eslint';
 import { TRANSLATOR_FACTORIES } from '../utils/ast';
 
-/**
- * Validate that string-literal keys passed to a translator function are
- * parseable ICU MessageFormat. Catches mismatched braces, malformed
- * `plural`/`select` arms, and stray apostrophes at write time.
- */
 const rule: Rule.RuleModule = {
   meta: {
     type: 'problem',

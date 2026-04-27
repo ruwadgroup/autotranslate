@@ -1,14 +1,6 @@
 import type { Rule, Scope } from 'eslint';
 import { TRANSLATOR_FACTORIES } from '../utils/ast';
 
-/**
- * Flag dynamic / non-literal keys passed to translator functions
- * (`t(`prefix.${var}`)`, `t(somevar)`). Dynamic keys break extraction —
- * the CLI walks AST literals and can't follow runtime values.
- *
- * Tracks bindings local to each file: identifiers initialized from
- * `useT()`, `useTranslations()`, `getT()`, or `getTranslations()`.
- */
 const rule: Rule.RuleModule = {
   meta: {
     type: 'problem',
@@ -36,12 +28,9 @@ const rule: Rule.RuleModule = {
         if (init?.type !== 'CallExpression') return;
         if (init.callee.type !== 'Identifier') return;
         if (!TRANSLATOR_FACTORIES.has(init.callee.name)) return;
-        // `const t = useT();` — `t` is a translator. We also accept
-        // destructured forms, but the common case is identifier binding.
         if (node.id.type === 'Identifier') rememberBinding(node.id.name);
       },
       AwaitExpression(node) {
-        // `const t = await getT(...);`
         if (node.argument.type !== 'CallExpression') return;
         if (node.argument.callee.type !== 'Identifier') return;
         if (!TRANSLATOR_FACTORIES.has(node.argument.callee.name)) return;
@@ -57,10 +46,8 @@ const rule: Rule.RuleModule = {
         if (!arg) return;
         if (arg.type === 'Literal' && typeof arg.value === 'string') return;
         if (arg.type === 'TemplateLiteral' && arg.expressions.length === 0) return;
-        // Constants resolved through scope — still acceptable since the
-        // value is static and the extractor can be taught to follow them
-        // later. We accept identifier references that point at literals
-        // declared in the same file.
+        // Identifier references to a same-file string literal are static —
+        // accept them so a `const KEY = '...'; t(KEY)` pattern works.
         if (arg.type === 'Identifier' && resolvesToStringLiteral(arg.name, context.sourceCode)) {
           return;
         }

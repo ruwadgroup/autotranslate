@@ -2,47 +2,28 @@ import { shortHash } from './hash';
 import { getPluralCategory, type PluralCategory } from './plural';
 import type { Locale } from './types';
 
-/** Plain text segment between markup. Adjacent text nodes are pre-merged. */
 export interface TextNode {
   readonly type: 'text';
   readonly value: string;
 }
 
-/**
- * Variable interpolation slot. `name` is the prop key passed to the runtime
- * via `params` / the `<Var name>` prop.
- */
 export interface VarNode {
   readonly type: 'var';
   readonly name: string;
 }
 
-/**
- * Plural branch. `forms` carries the trees for each CLDR category that the
- * author provided. The `other` form is required at extraction time.
- */
 export interface PluralNode {
   readonly type: 'plural';
   readonly name: string;
   readonly forms: { readonly [K in PluralCategory]?: StructuredMessage };
 }
 
-/**
- * Status / discriminator branch. Like `PluralNode`, but the selector is a
- * free-form string value (e.g. `'pending' | 'shipped' | 'delivered'`) and
- * the case names are user-defined. The `default` case is the fallback.
- */
 export interface BranchNode {
   readonly type: 'branch';
   readonly name: string;
   readonly cases: { readonly [caseName: string]: StructuredMessage };
 }
 
-/**
- * HTML element or simple component wrapper inside a `<T>` tree (e.g. `<a>`,
- * `<strong>`). Component trees are flattened into tag nodes so translators
- * see structure without prop noise.
- */
 export interface TagNode {
   readonly type: 'tag';
   readonly tag: string;
@@ -53,26 +34,56 @@ export type TranslationNode = TextNode | VarNode | PluralNode | BranchNode | Tag
 
 export type StructuredMessage = ReadonlyArray<TranslationNode>;
 
-/**
- * Type guard for catalog entries.
- */
 export function isStructured(value: unknown): value is StructuredMessage {
   return Array.isArray(value);
 }
 
+export const MARKER_NAMES: ReadonlySet<string> = new Set([
+  'Var',
+  'Plural',
+  'Branch',
+  'Num',
+  'Currency',
+  'DateTime',
+  'RelativeTime',
+]);
+
+export const FORMAT_MARKER_PREFIX: Readonly<Record<string, string>> = {
+  Num: 'num',
+  Currency: 'currency',
+  DateTime: 'dt',
+  RelativeTime: 'rel',
+};
+
+export const BRANCH_RESERVED_PROPS: ReadonlySet<string> = new Set([
+  'branch',
+  'name',
+  'children',
+  'key',
+  'ref',
+]);
+
+export function mergeAdjacentText(nodes: ReadonlyArray<TranslationNode>): TranslationNode[] {
+  const merged: TranslationNode[] = [];
+  for (const node of nodes) {
+    const last = merged[merged.length - 1];
+    if (node.type === 'text' && last?.type === 'text') {
+      merged[merged.length - 1] = { type: 'text', value: last.value + node.value };
+    } else {
+      merged.push(node);
+    }
+  }
+  return merged;
+}
+
 /**
  * Canonical JSON form of a tree: object keys sorted, no whitespace.
- *
- * The output is an input to `shortHash` to derive a stable key, so changing
- * its shape is a wire-format break — both extractor and runtime must agree.
+ * Wire format — extractor and runtime must agree.
  */
 export function canonicalize(tree: StructuredMessage): string {
   return JSON.stringify(tree, sortKeys);
 }
 
-// Returning a new object from a JSON.stringify replacer reorders its keys
-// because Object.keys iterates insertion order — JSON.stringify then walks
-// the replacer's output in that (sorted) order.
 function sortKeys(_key: string, value: unknown): unknown {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) {
     return value;
@@ -85,26 +96,15 @@ function sortKeys(_key: string, value: unknown): unknown {
   return sorted;
 }
 
-/** Canonical key prefix for `<T>` trees. Distinguishes them from `useT` keys. */
 export const TREE_KEY_PREFIX = 't.';
 
-/**
- * Stable canonical key for a structured message. Identical trees produce
- * identical keys regardless of authoring whitespace or prop order.
- *
- * `context`, when supplied, mixes into the hash so two identical trees with
- * different translator-facing contexts get distinct keys.
- */
+/** Stable hash key for a tree. `context` mixes in to disambiguate identical copy. */
 export function canonicalKey(tree: StructuredMessage, context?: string): string {
-  const canonical = context ? `${canonicalize(tree)}ctx:${context}` : canonicalize(tree);
+  const canonical = context ? `${canonicalize(tree)}ctx:${context}` : canonicalize(tree);
   return `${TREE_KEY_PREFIX}${shortHash(canonical)}`;
 }
 
-/**
- * Render a tree to plain text using `params` for `<Var>` and `<Plural>` slots.
- * Tag wrappers are dropped — only their children are rendered. Suitable for
- * `useT` callers that need a string out of a structured catalog entry.
- */
+/** Render a tree to plain text. Tag wrappers are dropped; only children render. */
 export function renderTreeToString(
   tree: StructuredMessage,
   locale: Locale,
@@ -127,14 +127,11 @@ function renderNode(
       return node.value;
     case 'var': {
       const v = params[node.name];
-      return v === undefined || v === null ? `{${node.name}}` : String(v);
+      return v == null ? `{${node.name}}` : String(v);
     }
     case 'plural': {
       const raw = params[node.name];
       const num = typeof raw === 'number' ? raw : Number(raw);
-      // Non-finite count → render the `other` form with `#` blanked. This
-      // matches `formatICU` behavior and keeps copy reasonable when callers
-      // forget to pass a count.
       const branch = Number.isFinite(num)
         ? (node.forms[getPluralCategory(locale, num)] ?? node.forms.other)
         : node.forms.other;
@@ -144,7 +141,7 @@ function renderNode(
     }
     case 'branch': {
       const raw = params[node.name];
-      const key = raw === undefined || raw === null ? 'default' : String(raw);
+      const key = raw == null ? 'default' : String(raw);
       const branch = node.cases[key] ?? node.cases.default;
       if (!branch) return '';
       return renderTreeToString(branch, locale, params);

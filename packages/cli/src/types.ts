@@ -4,7 +4,6 @@ import type { AutotranslateConfig } from '@autotranslate/core/config';
 export interface ResolvedConfig {
   readonly cwd: string;
   readonly config: AutotranslateConfig;
-  /** Absolute path to the catalog directory (`<cwd>/<config.outDir>`). */
   readonly outDir: string;
 }
 
@@ -21,11 +20,8 @@ export interface ExtractResult {
 }
 
 export interface TranslateStats {
-  /** Translations newly fetched from the provider. */
   readonly fetched: number;
-  /** Translations served from cache. */
   readonly cached: number;
-  /** Keys covered by per-locale overrides. */
   readonly overridden: number;
 }
 

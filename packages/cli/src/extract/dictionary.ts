@@ -4,18 +4,13 @@ import type { CatalogEntry, Manifest } from '@autotranslate/core';
 import { createJiti } from 'jiti';
 
 export interface DictionaryExtraction {
-  /** Flattened key (`dashboard.title`) → string value. */
   readonly messages: Record<string, CatalogEntry>;
-  /** Source occurrences (one per leaf, pointing at the dictionary file). */
   readonly manifest: Manifest;
 }
 
 /**
- * Load a user-supplied dictionary module and flatten its default-export
- * tree into `dot.path` keys with their string values.
- *
- * Supports plain `.ts` / `.mts` / `.js` / `.mjs` / `.json` files. The default
- * export must be a (possibly nested) plain object whose leaves are strings.
+ * Load a user-supplied dictionary and flatten its default-export tree into
+ * `dot.path` keys. Accepts `.ts` / `.mts` / `.js` / `.mjs` / `.json`.
  */
 export async function extractDictionary(
   cwd: string,
@@ -56,7 +51,6 @@ function flatten(
     } else if (isPlainRecord(value)) {
       flatten(value, path, messages, manifest, display);
     }
-    // Non-string, non-object leaves are skipped — translations are strings.
   }
 }
 

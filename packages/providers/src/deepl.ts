@@ -1,48 +1,26 @@
 import type { CatalogEntry, Locale } from '@autotranslate/core';
+import { defaultFetch, type FetchLike, safeReadText } from './fetch';
 import { restorePlaceholders, shieldPlaceholders, UnsupportedICUError } from './placeholder-shield';
 import type { Provider, TranslationItem, TranslationRequest } from './types';
 
 export interface DeepLProviderOptions {
-  /** API key. Get one at https://www.deepl.com/your-account/keys . */
   readonly apiKey: string;
-  /**
-   * Override the API endpoint. Defaults to `https://api.deepl.com/v2/translate`.
-   * Free-tier users should pass `https://api-free.deepl.com/v2/translate`.
-   */
+  /** Defaults to `https://api.deepl.com/v2/translate`; free tier uses `api-free`. */
   readonly endpoint?: string;
-  /**
-   * Optional formality preference passed through to DeepL.
-   * Only honored for languages that support it (DE, FR, IT, …).
-   */
+  /** Honored only by languages that support it (DE, FR, IT, …). */
   readonly formality?: 'default' | 'more' | 'less' | 'prefer_more' | 'prefer_less';
-  /** Optional translator-facing context. Passed through as-is. */
   readonly context?: string;
-  /**
-   * Override the BCP-47 → DeepL locale mapping. Useful for niche tags
-   * (`zh-Hans` → `ZH-HANS`, `pt-BR` → `PT-BR`).
-   */
   readonly localeMap?: Readonly<Record<string, string>>;
-  /**
-   * `fetch` implementation. Falls back to globalThis.fetch — override for
-   * tests or to inject a custom HTTP layer.
-   */
-  readonly fetch?: typeof globalThis.fetch;
+  readonly fetch?: FetchLike;
 }
 
 const DEFAULT_ENDPOINT = 'https://api.deepl.com/v2/translate';
 const MAX_TEXTS_PER_REQUEST = 50;
 
 /**
- * DeepL translation provider.
- *
- * Translates plain-string source entries — `t('Sign out')` and the simpler
- * `t('Hello, {name}!')` patterns. ICU placeholders are shielded behind
- * opaque sentinels so DeepL only sees natural-language text and can't
- * accidentally translate variable names. Tags + plural / select arms aren't
- * handled here; mix the `ai` provider in for those.
- *
- * Network errors propagate; the caller (CLI translate command) handles
- * retries and per-locale isolation.
+ * DeepL translation provider. Plain-string entries only — placeholders are
+ * shielded behind sentinels. Throws on plural / select / tag entries; route
+ * those through the `ai` provider.
  */
 export function createDeepLProvider(options: DeepLProviderOptions): Provider {
   const {
@@ -51,7 +29,7 @@ export function createDeepLProvider(options: DeepLProviderOptions): Provider {
     formality,
     context,
     localeMap,
-    fetch: fetchImpl = globalThis.fetch,
+    fetch: fetchImpl = defaultFetch(),
   } = options;
   if (!apiKey) {
     throw new Error('DeepL provider requires an `apiKey`.');
@@ -140,10 +118,9 @@ function assertStringEntriesOnly(items: ReadonlyArray<TranslationItem>): void {
   );
 }
 
+// DeepL accepts uppercase 2-letter (`DE`) plus a small set of regional codes.
 function mapLocale(locale: Locale, override: Readonly<Record<string, string>> | undefined): string {
   if (override?.[locale]) return override[locale] as string;
-  // DeepL accepts uppercase 2-letter (`DE`) and a small set of regional
-  // codes (`EN-US`, `EN-GB`, `PT-BR`, `PT-PT`, `ZH-HANS`, `ZH-HANT`).
   const upper = locale.toUpperCase();
   return REGIONAL_DEEPL_TARGETS.has(upper) ? upper : upper.split('-')[0]!;
 }
@@ -156,14 +133,6 @@ const REGIONAL_DEEPL_TARGETS: ReadonlySet<string> = new Set([
   'ZH-HANS',
   'ZH-HANT',
 ]);
-
-async function safeReadText(response: Response): Promise<string> {
-  try {
-    return await response.text();
-  } catch {
-    return '';
-  }
-}
 
 function chunk<T>(items: ReadonlyArray<T>, size: number): T[][] {
   if (size <= 0) return [items.slice()];

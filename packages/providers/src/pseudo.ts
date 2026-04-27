@@ -55,10 +55,6 @@ const ACCENT_MAP: Readonly<Record<string, string>> = {
   Z: 'Ž',
 };
 
-/**
- * Accent ASCII letters; leave everything else (whitespace, punctuation,
- * non-Latin scripts, ICU placeholders) untouched.
- */
 function accentLetters(input: string): string {
   let out = '';
   for (const ch of input) {
@@ -69,11 +65,7 @@ function accentLetters(input: string): string {
 
 /**
  * Pseudo-localize a string: accent letters and wrap in expansion brackets.
- * Designed to surface untranslated strings, layout overflow, and missing ICU
- * placeholders during dev.
- *
- * ICU-like tokens (`{name}`, `{count, plural, ...}`) and tag wrappers are
- * preserved verbatim — the wrapping is applied to literal segments only.
+ * ICU placeholders are preserved verbatim.
  */
 export function pseudoLocalize(input: string): string {
   let out = '';
@@ -100,10 +92,7 @@ export function pseudoLocalize(input: string): string {
   return `⟦ ${out} ⟧`;
 }
 
-/**
- * Pseudo-localize every text leaf in a structured tree, preserving
- * structure (vars, plurals, tag wrappers).
- */
+/** Pseudo-localize every text leaf in a tree; structure is preserved. */
 export function pseudoLocalizeTree(tree: StructuredMessage): StructuredMessage {
   return tree.map((node) => pseudoNode(node));
 }

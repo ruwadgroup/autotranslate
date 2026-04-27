@@ -11,11 +11,7 @@ const CONFIG_FILES = [
   'autotranslate.config.mjs',
 ];
 
-/**
- * Locate and load `autotranslate.config.{ts,mts,js,mjs}` from `cwd`,
- * matching the CLI's loader. Returns `null` when no config is present —
- * the plugin treats that as "use the option-supplied or default values".
- */
+/** Load `autotranslate.config.{ts,mts,js,mjs}` from `cwd`. Returns `null` if absent. */
 export async function loadConfig(cwd: string): Promise<AutotranslateConfig | null> {
   for (const name of CONFIG_FILES) {
     const path = resolve(cwd, name);

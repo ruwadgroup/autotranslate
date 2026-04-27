@@ -13,21 +13,13 @@ import { resolveProvider } from '../provider-resolver';
 import type { LocaleStats, ResolvedConfig, TranslateResult, TranslateStats } from '../types';
 
 export interface TranslateOptions {
-  /**
-   * Programmatic override for the provider, used for `name: 'custom'` and
-   * for testing. When supplied, takes precedence over the config-driven
-   * provider.
-   */
+  /** Programmatic provider override (takes precedence over config). */
   readonly provider?: Provider;
-  /** Restrict translation to a subset of target locales. */
+  /** Restrict to a subset of target locales. */
   readonly only?: ReadonlyArray<Locale>;
 }
 
-/**
- * Translate the source catalog into every target locale, writing each
- * `<outDir>/<locale>.json` and updating the per-(source, target, provider)
- * cache.
- */
+/** Translate the source catalog into every target locale. */
 export async function translate(
   resolved: ResolvedConfig,
   options: TranslateOptions = {},
@@ -155,8 +147,7 @@ async function translateLocale(args: TranslateLocaleArgs): Promise<TranslateStat
     }
   }
 
-  // Carry over keys that exist on disk but aren't in source any more — the
-  // CLI's `check` command flags them as orphans for cleanup.
+  // Carry over orphaned keys; `check` flags them for cleanup.
   for (const [k, v] of Object.entries(existing)) {
     if (!(k in next)) next[k] = v as CatalogEntry;
   }

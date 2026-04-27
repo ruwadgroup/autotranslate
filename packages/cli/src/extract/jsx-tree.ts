@@ -1,12 +1,16 @@
-import type { StructuredMessage, TranslationNode } from '@autotranslate/core';
-import type { PluralCategory } from '@autotranslate/core/locale';
+import {
+  BRANCH_RESERVED_PROPS,
+  FORMAT_MARKER_PREFIX,
+  mergeAdjacentText,
+  type StructuredMessage,
+  type TranslationNode,
+} from '@autotranslate/core';
+import { PLURAL_CATEGORIES, type PluralCategory } from '@autotranslate/core/locale';
 import type * as t from '@babel/types';
 
 /**
- * Convert the children of a `<T>` JSX element into a canonical
- * `StructuredMessage`. Mirrors the runtime walker in
- * `@autotranslate/react/serialize-children` — both must agree on the shape
- * for the canonical hash to match between extraction and runtime.
+ * Convert the children of a `<T>` JSX element into a canonical message.
+ * Mirrors the runtime walker in `@autotranslate/react/serialize-children`.
  */
 export function jsxChildrenToTree(children: ReadonlyArray<t.Node>): StructuredMessage {
   const state: ExtractState = { formatCount: new Map() };
@@ -14,7 +18,6 @@ export function jsxChildrenToTree(children: ReadonlyArray<t.Node>): StructuredMe
 }
 
 interface ExtractState {
-  /** Per-formatter occurrence counter. Mirrors the runtime serializer. */
   readonly formatCount: Map<string, number>;
 }
 
@@ -24,7 +27,7 @@ function childrenToTree(children: ReadonlyArray<t.Node>, state: ExtractState): S
     const node = nodeToTreeNode(child, state);
     if (node) out.push(...(Array.isArray(node) ? node : [node]));
   }
-  return mergeText(out);
+  return mergeAdjacentText(out);
 }
 
 function nodeToTreeNode(
@@ -33,9 +36,6 @@ function nodeToTreeNode(
 ): TranslationNode | TranslationNode[] | null {
   switch (node.type) {
     case 'JSXText': {
-      // Normalize JSX text the same way React's JSX runtime does so the
-      // canonical key matches what `serializeChildren` computes at runtime.
-      // Mirrors `@babel/types`'s `cleanJSXElementLiteralChild`.
       const value = normalizeJSXText(node.value);
       if (value === '') return null;
       return { type: 'text', value };
@@ -51,10 +51,6 @@ function nodeToTreeNode(
       if (expr.type === 'NumericLiteral') {
         return { type: 'text', value: String(expr.value) };
       }
-      // Anything else inside `{ ... }` between JSX siblings is a runtime
-      // expression — at extract time we can't know its value. Skip; the
-      // ESLint plugin (later) will warn against expressions outside
-      // `<Var>` / `<Plural>`.
       return null;
     }
     case 'JSXFragment':
@@ -66,24 +62,14 @@ function nodeToTreeNode(
   }
 }
 
-const FORMAT_MARKERS: Readonly<Record<string, string>> = {
-  Num: 'num',
-  Currency: 'currency',
-  DateTime: 'dt',
-  RelativeTime: 'rel',
-};
-
 function elementToTreeNode(el: t.JSXElement, state: ExtractState): TranslationNode | null {
   const opening = el.openingElement;
   const tag = jsxNameToString(opening.name);
   if (tag === 'Var') return varNode(opening);
-  if (tag === 'Plural') return pluralNode(opening, el, state);
+  if (tag === 'Plural') return pluralNode(opening, state);
   if (tag === 'Branch') return branchNode(opening, el, state);
-  const formatPrefix = FORMAT_MARKERS[tag];
+  const formatPrefix = FORMAT_MARKER_PREFIX[tag];
   if (formatPrefix) return formatNode(opening, formatPrefix, state);
-  // HTML element / unknown component → tag node. We strip props from the
-  // canonical form because translators shouldn't translate `href`/`onClick`
-  // and we don't want them affecting the hash.
   return {
     type: 'tag',
     tag,
@@ -99,7 +85,6 @@ function formatNode(
   const explicit = readStringAttribute(opening, 'name');
   const occurrence = state.formatCount.get(prefix) ?? 0;
   state.formatCount.set(prefix, occurrence + 1);
-  // `_` separator keeps the slot name a valid ICU argument identifier.
   const name = explicit ?? `${prefix}_${occurrence}`;
   return { type: 'var', name };
 }
@@ -109,24 +94,16 @@ function varNode(opening: t.JSXOpeningElement): TranslationNode {
   return { type: 'var', name };
 }
 
-const PLURAL_FORMS: ReadonlyArray<PluralCategory> = ['zero', 'one', 'two', 'few', 'many', 'other'];
-
-function pluralNode(
-  opening: t.JSXOpeningElement,
-  _el: t.JSXElement,
-  state: ExtractState,
-): TranslationNode {
+function pluralNode(opening: t.JSXOpeningElement, state: ExtractState): TranslationNode {
   const name = readStringAttribute(opening, 'name') ?? 'count';
   const forms: { -readonly [K in PluralCategory]?: StructuredMessage } = {};
-  for (const cat of PLURAL_FORMS) {
+  for (const cat of PLURAL_CATEGORIES) {
     const value = readJSXAttribute(opening, cat);
     if (value === undefined) continue;
     forms[cat] = readBranch(value, state);
   }
   return { type: 'plural', name, forms };
 }
-
-const BRANCH_RESERVED: ReadonlySet<string> = new Set(['branch', 'name', 'key', 'ref']);
 
 function branchNode(
   opening: t.JSXOpeningElement,
@@ -138,10 +115,9 @@ function branchNode(
   for (const attr of opening.attributes) {
     if (attr.type !== 'JSXAttribute' || attr.name.type !== 'JSXIdentifier') continue;
     const propName = attr.name.name;
-    if (BRANCH_RESERVED.has(propName)) continue;
+    if (BRANCH_RESERVED_PROPS.has(propName)) continue;
     cases[propName] = readBranch(attr.value, state);
   }
-  // Children → default fallback case.
   const childTree = childrenToTree(el.children, state);
   if (childTree.length > 0) {
     cases.default = childTree;
@@ -204,11 +180,10 @@ function jsxNameToString(node: t.JSXOpeningElement['name']): string {
   return 'Unknown';
 }
 
-/**
- * Match React's JSX-runtime whitespace handling: drop whitespace-only lines,
- * collapse tabs to spaces, trim leading whitespace on continuation lines and
- * trailing whitespace on non-final lines, then join with single spaces.
- */
+// Mirrors React's JSX-runtime whitespace handling (`@babel/types`'s
+// `cleanJSXElementLiteralChild`): drop whitespace-only lines, collapse tabs
+// to spaces, trim leading whitespace on continuation lines and trailing on
+// non-final lines, then join with single spaces.
 function normalizeJSXText(value: string): string {
   const lines = value.split(/\r\n|\r|\n/);
   let lastNonEmpty = -1;
@@ -228,17 +203,4 @@ function normalizeJSXText(value: string): string {
     out += line;
   }
   return out;
-}
-
-function mergeText(nodes: TranslationNode[]): StructuredMessage {
-  const merged: TranslationNode[] = [];
-  for (const node of nodes) {
-    const last = merged[merged.length - 1];
-    if (node.type === 'text' && last?.type === 'text') {
-      merged[merged.length - 1] = { type: 'text', value: last.value + node.value };
-    } else {
-      merged.push(node);
-    }
-  }
-  return merged;
 }

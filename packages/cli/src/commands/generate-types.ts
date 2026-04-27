@@ -4,21 +4,13 @@ import { isMissing } from '../catalog';
 import type { ResolvedConfig } from '../types';
 
 export interface GenerateTypesResult {
-  /** Absolute path of the written `.d.ts`. */
   readonly path: string;
-  /** Number of catalog keys narrowed in the augmentation. */
   readonly keyCount: number;
 }
 
 /**
- * Read the source-locale catalog and emit a `.d.ts` that augments
- * `@autotranslate/react`'s `AutotranslateCatalog` interface with the literal
- * key set. Consumers reference the file through their `tsconfig.json`
- * `include` (it lives under the catalog out-dir by default).
- *
- * The `(string & {})` fallback in `CatalogKey` keeps arbitrary strings
- * accepted, so generated types are additive — they add autocomplete without
- * tightening compile errors on existing call sites.
+ * Emit a `.d.ts` that augments `@autotranslate/react`'s `AutotranslateCatalog`
+ * with the literal catalog keys.
  */
 export async function generateTypes(resolved: ResolvedConfig): Promise<GenerateTypesResult> {
   const { config, outDir } = resolved;

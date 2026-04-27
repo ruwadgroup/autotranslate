@@ -2,29 +2,20 @@ import { parseICU } from '@autotranslate/core/icu';
 import { TYPE } from '@formatjs/icu-messageformat-parser';
 
 /**
- * Reversible placeholder shield for translators that don't understand ICU
- * MessageFormat. Replaces `{name}` and `{age, number}` argument placeholders
- * with opaque sentinels (`[[ATPH:0]]`) so the translator only sees natural-
- * language text, then restores the originals after.
+ * Reversible placeholder shield for translators that don't understand ICU.
+ * Replaces argument placeholders with opaque `[[ATPH:N]]` sentinels and
+ * restores the originals after.
  *
- * Plural / select / pound (`#`) / tag elements are out of scope — they
- * carry translatable copy inside their arms which a flat shield would lose.
- * Callers should reject those entries before invoking the shield.
+ * Plural / select / pound / tag elements throw — they carry translatable
+ * copy inside their arms.
  */
 export interface ShieldResult {
-  /** The shielded text — safe to send to a non-ICU translator. */
   readonly text: string;
-  /** Map from sentinel index → original ICU expression text (`{name}`, etc.). */
   readonly slots: ReadonlyArray<string>;
 }
 
 const SENTINEL = '[[ATPH:%d]]';
 
-/**
- * Encode every supported placeholder in `input` as a sentinel. Throws when
- * the input contains an unsupported ICU element (plural / select / pound /
- * tag wrapper) so callers route those to a provider that can handle them.
- */
 export function shieldPlaceholders(input: string): ShieldResult {
   const ast = parseICU(input);
   const slots: string[] = [];
@@ -43,8 +34,6 @@ export function shieldPlaceholders(input: string): ShieldResult {
       case TYPE.number:
       case TYPE.date:
       case TYPE.time: {
-        // Preserve the ICU formatter syntax verbatim — the translator just
-        // needs to leave the sentinel alone, not understand the format.
         const style = (el as { style?: unknown }).style;
         const original =
           typeof style === 'string'
@@ -61,10 +50,6 @@ export function shieldPlaceholders(input: string): ShieldResult {
   return { text: out, slots };
 }
 
-/**
- * Restore sentinels in `translated` with the original ICU expressions
- * captured by `shieldPlaceholders`. Missing sentinels are left as-is.
- */
 export function restorePlaceholders(translated: string, slots: ReadonlyArray<string>): string {
   return translated.replace(/\[\[ATPH:(\d+)\]\]/g, (match, raw) => {
     const idx = Number.parseInt(raw, 10);

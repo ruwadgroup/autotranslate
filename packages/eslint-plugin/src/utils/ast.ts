@@ -1,16 +1,9 @@
 import type { Rule } from 'eslint';
 
-/**
- * `@types/eslint`'s `Rule.Node` only covers the ESTree spec — JSX node
- * types live outside of it. We narrow at runtime via the discriminator and
- * treat the parent chain as loosely typed at the boundary.
- */
+// `@types/eslint`'s `Rule.Node` only covers the ESTree spec; JSX nodes live
+// outside it. We narrow via the discriminator at runtime.
 type AnyNode = Rule.Node | { readonly type: string; readonly parent?: AnyNode };
 
-/**
- * Marker components that are translation-aware. Anything inside one of these
- * is exempt from the `no-untranslated-jsx` rule.
- */
 export const TRANSLATION_MARKERS: ReadonlySet<string> = new Set([
   'T',
   'Tx',
@@ -23,10 +16,6 @@ export const TRANSLATION_MARKERS: ReadonlySet<string> = new Set([
   'RelativeTime',
 ]);
 
-/**
- * Hook factory names that produce a callable translator. `t = useT()` and
- * `t = useTranslations(ns)` both yield a translator-shaped function.
- */
 export const TRANSLATOR_FACTORIES: ReadonlySet<string> = new Set([
   'useT',
   'useTranslations',
@@ -45,11 +34,7 @@ interface JSXElementLike {
   readonly parent?: AnyNode;
 }
 
-/**
- * Walk up the AST to determine whether a node is enclosed by a JSX element
- * named in `markers` (or any descendant of one). Returns the marker name
- * when found, otherwise `null`.
- */
+/** Returns the nearest enclosing marker name, or `null`. */
 export function findMarkerAncestor(
   node: AnyNode,
   markers: ReadonlySet<string> = TRANSLATION_MARKERS,
@@ -71,11 +56,6 @@ export function findMarkerAncestor(
   return null;
 }
 
-/**
- * Trim and decide whether a JSX text node carries any visible content.
- * JSX collapses surrounding whitespace at runtime, so a node containing only
- * whitespace + newlines isn't user-visible copy.
- */
 export function jsxTextHasContent(value: string): boolean {
   return value.replace(/\s+/g, ' ').trim() !== '';
 }
@@ -91,11 +71,7 @@ interface TemplateLiteralLike {
   readonly quasis: ReadonlyArray<{ readonly value: { readonly cooked?: string } }>;
 }
 
-/**
- * Check whether `node` is a static string expression — a string `Literal`
- * or a template literal with no expressions. Returns the literal value, or
- * `null` when not translatable.
- */
+/** Returns the literal string when `node` is a static string expression. */
 export function readStaticString(
   node: { readonly type: string } | undefined | null,
 ): string | null {
@@ -113,10 +89,7 @@ export function readStaticString(
   return null;
 }
 
-/**
- * Decide whether a JSX attribute is allowed to contain a string literal
- * without translation. Most structural / non-user-facing attributes pass.
- */
+/** Attributes that may carry untranslated string literals. */
 export const ALLOWLIST_ATTRIBUTES: ReadonlySet<string> = new Set([
   // structural
   'className',
@@ -165,9 +138,6 @@ interface JSXAttributeLike {
   readonly name: { readonly type: string; readonly name?: string | { readonly name: string } };
 }
 
-/**
- * Returns the JSXAttribute name when `parent` is one — otherwise `null`.
- */
 export function jsxAttributeName(
   parent: { readonly type: string } | undefined | null,
 ): string | null {

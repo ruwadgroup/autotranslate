@@ -7,11 +7,7 @@ export interface LoadedCatalogs {
   readonly catalogs: Readonly<Record<Locale, Catalog>>;
 }
 
-/**
- * Read every `<locale>.json` from `<cwd>/<outDir>` for the given locale set.
- * Missing catalog files surface as empty objects so the consumer doesn't
- * crash on the first run before `pnpm i18n` has populated `.translations/`.
- */
+/** Read every `<locale>.json` from `<cwd>/<outDir>`. Missing files surface as `{}`. */
 export async function loadCatalogs(
   cwd: string,
   outDir: string,

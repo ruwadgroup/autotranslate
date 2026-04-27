@@ -3,21 +3,11 @@ import { pseudoLocalize, pseudoLocalizeTree } from './pseudo';
 import type { Provider, TranslationItem } from './types';
 
 export interface StubProviderOptions {
-  /**
-   * Pseudo-localize every translation. Letters are accented, content is
-   * wrapped in expansion brackets, and ICU tokens / vars are preserved.
-   * Useful for surfacing untranslated strings and layout overflow during dev.
-   */
+  /** Pseudo-localize every translation. Useful for surfacing untranslated copy. */
   readonly pseudo?: boolean;
 }
 
-/**
- * Identity translation provider.
- *
- * Returns the source as the translation, optionally pseudo-localized. Use it
- * for tests, end-to-end smoke runs, and as a development default before AI
- * credentials are configured.
- */
+/** Identity provider — returns the source unchanged, optionally pseudo-localized. */
 export function createStubProvider(options: StubProviderOptions = {}): Provider {
   const { pseudo = false } = options;
   const signature = `stub${pseudo ? ':pseudo' : ''}`;

@@ -4,11 +4,6 @@ import { hash } from '@autotranslate/core';
 import { isMissing } from './catalog';
 import type { CatalogEntry } from './types';
 
-/**
- * Per-(source, target, providerSig) cache. Each entry stores the
- * source-content hash that produced the translation; on the next run, we
- * skip translation when the hash still matches.
- */
 export interface CacheEntry {
   readonly contentHash: string;
   readonly translation: CatalogEntry;

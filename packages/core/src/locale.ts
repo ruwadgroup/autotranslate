@@ -1,14 +1,10 @@
 import type { Locale } from './types';
 
 export type { PluralCategory } from './plural';
-export { getPluralCategory } from './plural';
+export { getPluralCategory, isPluralCategory, PLURAL_CATEGORIES } from './plural';
 
 export type LocaleDirection = 'ltr' | 'rtl';
 
-/**
- * RTL languages by ISO 639 code. Used as a fallback when
- * `Intl.Locale.prototype.textInfo` is unavailable.
- */
 const RTL_LANGUAGES: ReadonlySet<string> = new Set([
   'ar',
   'arc',
@@ -25,10 +21,6 @@ const RTL_LANGUAGES: ReadonlySet<string> = new Set([
   'yi',
 ]);
 
-/**
- * Common deprecated language codes mapped to their modern equivalents.
- * Applied before `Intl.Locale` parsing.
- */
 const ALIASES: Readonly<Record<string, string>> = {
   iw: 'he',
   in: 'id',
@@ -39,9 +31,6 @@ const ALIASES: Readonly<Record<string, string>> = {
   tl: 'fil',
 };
 
-/**
- * Returns `true` if `value` parses as a BCP-47 tag.
- */
 export function isValidLocale(value: string): boolean {
   if (!value) return false;
   try {
@@ -52,10 +41,7 @@ export function isValidLocale(value: string): boolean {
   }
 }
 
-/**
- * Normalize a locale tag to its canonical BCP-47 form. Throws if the tag is
- * structurally invalid.
- */
+/** Normalize a locale tag to canonical BCP-47. Throws if structurally invalid. */
 export function standardizeLocale(value: string): Locale {
   const aliased = applyAlias(value);
   return new Intl.Locale(aliased).toString();
@@ -69,10 +55,6 @@ function applyAlias(value: string): string {
   return dash === -1 ? aliased : aliased + value.slice(dash);
 }
 
-/**
- * Resolve writing direction. Uses `Intl.Locale.textInfo` when available,
- * falling back to a curated RTL language list.
- */
 export function getDirection(locale: Locale): LocaleDirection {
   let parsed: Intl.Locale;
   try {
@@ -88,23 +70,14 @@ export function getDirection(locale: Locale): LocaleDirection {
 }
 
 export interface MatchLocaleOptions {
-  /** `Accept-Language` header value, if any. */
   readonly accept?: string;
-  /** Cookie-driven preference, if any. Wins over `accept`. */
   readonly cookie?: string;
-  /** First URL path segment, if any. Wins over cookie + accept. */
   readonly path?: string;
-  /** Locale to use when nothing matches. */
   readonly defaultLocale: Locale;
-  /** Locales the application ships translations for. */
   readonly supported: ReadonlyArray<Locale>;
 }
 
-/**
- * Pick the best supported locale given client signals. Precedence is
- * `path` > `cookie` > `accept` > `defaultLocale`. Matching is exact first,
- * then language-only.
- */
+/** Pick the best supported locale: `path` > `cookie` > `accept` > `defaultLocale`. */
 export function matchLocale(options: MatchLocaleOptions): Locale {
   const { accept, cookie, path, defaultLocale, supported } = options;
   if (supported.length === 0) return defaultLocale;
@@ -146,13 +119,7 @@ function languageOf(tag: string): string {
   return (dash === -1 ? tag : tag.slice(0, dash)).toLowerCase();
 }
 
-/**
- * Display name for `locale`, expressed in `displayLocale` (defaulting to
- * `locale` itself, which yields the native autonym — `Français` for `fr`).
- *
- * Returns the input tag unchanged on platforms missing `Intl.DisplayNames`
- * or for malformed tags.
- */
+/** Display name for `locale`, expressed in `displayLocale` (defaults to autonym). */
 export function getLocaleName(locale: Locale, displayLocale?: Locale): string {
   if (typeof Intl?.DisplayNames !== 'function') return locale;
   try {
@@ -163,9 +130,6 @@ export function getLocaleName(locale: Locale, displayLocale?: Locale): string {
   }
 }
 
-/**
- * Detailed properties for a locale tag.
- */
 export interface LocaleProperties {
   readonly tag: Locale;
   readonly languageCode: string;
@@ -177,10 +141,6 @@ export interface LocaleProperties {
   readonly emoji?: string;
 }
 
-/**
- * Resolve descriptive metadata for `locale`. Useful for building locale
- * switchers without re-deriving each field.
- */
 export function getLocaleProperties(locale: Locale): LocaleProperties {
   let parsed: Intl.Locale;
   try {
@@ -210,10 +170,7 @@ export function getLocaleProperties(locale: Locale): LocaleProperties {
   return emoji ? { ...properties, emoji } : properties;
 }
 
-/**
- * Flag emoji from a locale's region (e.g. `en-US` → `🇺🇸`). Returns
- * `undefined` when no region is present or it can't be resolved.
- */
+/** Flag emoji from a locale's region (e.g. `en-US` → `🇺🇸`). */
 export function getLocaleEmoji(locale: Locale): string | undefined {
   let parsed: Intl.Locale;
   try {
@@ -236,19 +193,11 @@ function regionCodeToEmoji(region: string): string | undefined {
   return String.fromCodePoint(0x1f1a5 + a, 0x1f1a5 + b);
 }
 
-/**
- * Return `true` if both tags share the same primary language subtag
- * (e.g. `en` and `en-US`).
- */
 export function isSameLanguage(a: Locale, b: Locale): boolean {
   return languageOf(a) === languageOf(b);
 }
 
-/**
- * Pick the best supported locale from a user's ordered preference list.
- * Mirrors `matchLocale` but accepts a list of candidates instead of HTTP
- * signals — useful in client code (`navigator.languages`).
- */
+/** Pick the best supported locale from an ordered preference list. */
 export function determineLocale(
   preferred: ReadonlyArray<Locale>,
   supported: ReadonlyArray<Locale>,
@@ -276,10 +225,7 @@ export interface AcceptLanguageEntry {
   readonly q: number;
 }
 
-/**
- * Parse an HTTP `Accept-Language` header into language tags ordered by
- * descending quality. Invalid `q` values default to 1.
- */
+/** Parse `Accept-Language` into tags ordered by descending quality. */
 export function parseAcceptLanguage(header: string): ReadonlyArray<AcceptLanguageEntry> {
   return header
     .split(',')

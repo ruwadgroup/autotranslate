@@ -22,10 +22,7 @@ export interface InitResult {
   readonly created: boolean;
 }
 
-/**
- * Scaffold an `autotranslate.config.ts` in `cwd`. No-op when one already
- * exists unless `force` is set.
- */
+/** Scaffold `autotranslate.config.ts` in `cwd`. No-op unless `force` is set. */
 export async function init(options: InitOptions = {}): Promise<InitResult> {
   const cwd = options.cwd ?? process.cwd();
   const path = resolve(cwd, 'autotranslate.config.ts');

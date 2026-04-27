@@ -9,13 +9,11 @@ import _traverse from '@babel/traverse';
 import type * as t from '@babel/types';
 import { jsxChildrenToTree } from './jsx-tree';
 
-// `@babel/traverse` ships an ESM-incompatible default export; unwrap it.
+// `@babel/traverse` ships an ESM-incompatible default export.
 const traverse = (_traverse as unknown as { default?: typeof _traverse }).default ?? _traverse;
 
 export interface FileExtraction {
-  /** Map of message key → source-locale entry. */
   readonly messages: Record<string, CatalogEntry>;
-  /** Source occurrences for each message key. */
   readonly manifest: Manifest;
 }
 
@@ -26,17 +24,11 @@ interface MessageHints {
 }
 
 /**
- * Walk a TypeScript / JSX file and extract translatable messages.
+ * Walk a TS / JSX file and extract translatable messages.
  *
- * Two patterns are recognized:
- *
- * 1. **`<T>...</T>` JSX blocks** — the children are linearized to a
- *    `StructuredMessage` and hashed via `canonicalKey` (mixing in `context`
- *    when present so distinct uses of the same copy stay distinct).
- * 2. **`useT()` literal calls** — any `t('literal', { $context?, $maxChars? })`
- *    call, where `t` is bound to a `useT()` invocation in the same file, is
- *    extracted with the literal as the source. `$context` is suffixed onto
- *    the key (`Submit@@navbar`).
+ * - `<T>...</T>` blocks → linearized to a `StructuredMessage` and hashed.
+ * - `t('literal', { $context?, $maxChars? })` calls bound to `useT()` →
+ *   extracted with the literal as the source.
  */
 export function extractFile(filePath: string, source: string): FileExtraction {
   const ast = parse(source, {
@@ -58,9 +50,8 @@ export function extractFile(filePath: string, source: string): FileExtraction {
   };
 
   traverse(ast, {
-    // First: track names bound to useT(). e.g. `const t = useT();`.
-    // `useTranslations(ns)` is intentionally excluded — those callers feed
-    // off the user-authored dictionary, not from string-literal scanning.
+    // `const t = useT()` — `useTranslations(ns)` is intentionally excluded
+    // (dictionary mode reads from the user-authored dictionary, not literals).
     VariableDeclarator(path) {
       const init = path.node.init;
       if (
@@ -73,7 +64,6 @@ export function extractFile(filePath: string, source: string): FileExtraction {
       }
     },
 
-    // <T>...</T>
     JSXElement(path) {
       const opening = path.node.openingElement;
       if (opening.name.type !== 'JSXIdentifier' || opening.name.name !== 'T') return;
@@ -87,7 +77,6 @@ export function extractFile(filePath: string, source: string): FileExtraction {
       recordOccurrence(key, path.node.loc?.start.line);
     },
 
-    // t('literal', { $context?, $maxChars? })
     CallExpression(path) {
       const callee = path.node.callee;
       if (callee.type !== 'Identifier' || !tBindingNames.has(callee.name)) return;

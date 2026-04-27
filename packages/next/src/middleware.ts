@@ -6,14 +6,9 @@ import { LOCALE_HEADER, type ProxyOptions } from './types';
 const DEFAULT_COOKIE_NAME = 'NEXT_LOCALE';
 
 /**
- * Build a Next 16 `proxy` function (formerly `middleware`) that resolves
- * the active locale from path → cookie → `Accept-Language`, then either
- * redirects bare paths under `/<locale>/...` (`strategy: 'prefix'`, default)
- * or just sets a cookie (`strategy: 'cookie'`).
- *
- * In both modes, the resolved locale is pushed downstream via the
- * `x-autotranslate-locale` request header so server components can read it
- * via `getRequestLocale()`.
+ * Build a Next 16 `proxy` function that resolves locale from path → cookie →
+ * `Accept-Language`. The resolved locale is passed downstream via the
+ * `x-autotranslate-locale` header.
  *
  * ```ts
  * // proxy.ts
@@ -23,10 +18,6 @@ const DEFAULT_COOKIE_NAME = 'NEXT_LOCALE';
  *   defaultLocale: 'en',
  *   locales: ['en', 'es', 'fr', 'ja'],
  * });
- *
- * export const config = {
- *   matcher: ['/((?!api|_next|.*\\..*).*)'],
- * };
  * ```
  */
 export function createNextMiddleware(
@@ -57,15 +48,14 @@ export function createNextMiddleware(
       return NextResponse.next({ request: { headers } });
     }
 
-    // 'prefix' strategy
     const segments = pathname.split('/').filter(Boolean);
     const first = segments[0];
     const pathLocale =
       first && (locales as ReadonlyArray<string>).includes(first) ? (first as Locale) : undefined;
 
     if (pathLocale) {
-      // Strip the default-locale prefix when `prefixDefaultLocale` is off,
-      // so the canonical URL for the default locale stays at `/`.
+      // Strip the default-locale prefix when `prefixDefaultLocale` is off so
+      // the canonical default-locale URL stays at `/`.
       if (pathLocale === defaultLocale && !prefixDefaultLocale) {
         const url = request.nextUrl.clone();
         const stripped = `/${segments.slice(1).join('/')}`;
