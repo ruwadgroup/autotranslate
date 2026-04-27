@@ -43,6 +43,11 @@
       "import": "./dist/icu.js",
       "require": "./dist/icu.cjs"
     },
+    "./internal": {
+      "types": "./dist/internal.d.ts",
+      "import": "./dist/internal.js",
+      "require": "./dist/internal.cjs"
+    },
     "./package.json": "./package.json"
   },
   "files": [

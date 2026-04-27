@@ -1,14 +1,14 @@
-import {
-  type BranchNode,
-  mergeAdjacentText,
-  type PluralNode,
-  type StructuredMessage,
-  type TagNode,
-  type TextNode,
-  type TranslationNode,
-  type VarNode,
+import type {
+  BranchNode,
+  PluralNode,
+  StructuredMessage,
+  TagNode,
+  TextNode,
+  TranslationNode,
+  VarNode,
 } from '@autotranslate/core';
 import { parseICU } from '@autotranslate/core/icu';
+import { mergeAdjacentText } from '@autotranslate/core/internal';
 import {
   isPluralCategory,
   PLURAL_CATEGORIES,

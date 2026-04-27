@@ -1,10 +1,9 @@
+import type { StructuredMessage, TranslationNode } from '@autotranslate/core';
 import {
   BRANCH_RESERVED_PROPS,
   FORMAT_MARKER_PREFIX,
   mergeAdjacentText,
-  type StructuredMessage,
-  type TranslationNode,
-} from '@autotranslate/core';
+} from '@autotranslate/core/internal';
 import { PLURAL_CATEGORIES, type PluralCategory } from '@autotranslate/core/locale';
 import type * as t from '@babel/types';
 

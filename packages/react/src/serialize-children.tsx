@@ -1,11 +1,10 @@
+import type { StructuredMessage, TranslationNode } from '@autotranslate/core';
 import {
   BRANCH_RESERVED_PROPS,
   FORMAT_MARKER_PREFIX,
   MARKER_NAMES,
   mergeAdjacentText,
-  type StructuredMessage,
-  type TranslationNode,
-} from '@autotranslate/core';
+} from '@autotranslate/core/internal';
 import { PLURAL_CATEGORIES, type PluralCategory } from '@autotranslate/core/locale';
 import { Children, Fragment, isValidElement, type ReactElement, type ReactNode } from 'react';
 import { Branch, Currency, DateTime, Num, Plural, RelativeTime, Var } from './markers';

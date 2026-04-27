@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { relative, resolve } from 'node:path';
 import type { CatalogEntry, Manifest } from '@autotranslate/core';
 import fg from 'fast-glob';
-import { localeCatalogPath, writeCatalog, writeManifest } from '../catalog';
+import { writeCatalog, writeManifest } from '../catalog';
 import { extractDictionary } from '../extract/dictionary';
 import { extractFile } from '../extract/extractor';
 import type { ExtractResult, ResolvedConfig } from '../types';
@@ -56,5 +56,3 @@ function mergeMeta(
     ...(occurrences.length > 0 ? { occurrences } : {}),
   };
 }
-
-export { localeCatalogPath };

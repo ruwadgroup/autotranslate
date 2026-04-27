@@ -6,6 +6,7 @@ export default defineConfig({
     config: 'src/config.ts',
     locale: 'src/locale.ts',
     icu: 'src/icu.ts',
+    internal: 'src/internal.ts',
   },
   format: ['esm', 'cjs'],
   dts: { compilerOptions: { composite: false, incremental: false } },

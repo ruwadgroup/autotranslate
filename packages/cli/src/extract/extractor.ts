@@ -1,9 +1,5 @@
-import {
-  applyContextToKey,
-  type CatalogEntry,
-  canonicalKey,
-  type Manifest,
-} from '@autotranslate/core';
+import { type CatalogEntry, canonicalKey, type Manifest } from '@autotranslate/core';
+import { applyContextToKey } from '@autotranslate/core/internal';
 import { parse } from '@babel/parser';
 import _traverse from '@babel/traverse';
 import type * as t from '@babel/types';
