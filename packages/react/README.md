@@ -2,22 +2,38 @@
 
 React adapter for
 [autotranslate](https://github.com/tamimbinhakim/autotranslate). `<T>` for
-translatable JSX blocks, `<Var>` / `<Plural>` for slot markers, `useT` for
-plain-string translation, and a separate server entry for RSC / SSR.
+translatable JSX, `<Var>` / `<Plural>` / `<Branch>` markers for structural
+slots, `<Num>` / `<Currency>` / `<DateTime>` / `<RelativeTime>` for locale-aware
+formatting, and a separate server entry for RSC / SSR.
 
 ```bash
 pnpm add @autotranslate/react @autotranslate/core
 ```
 
-## Usage
+## Quick features
+
+- **`<T>` for translatable JSX.** Walks children, derives a canonical tree,
+  looks up the translation, and renders it using the original markup as
+  templates — `<a href>` and event handlers carry over.
+- **`useT` for plain strings.** Drop-in `(key, params?) => string` for button
+  labels, `aria-*`, and anything that isn't JSX.
+- **Slot markers.** `<Var>`, `<Plural>`, `<Branch>` for structure; `<Num>`,
+  `<Currency>`, `<DateTime>`, `<RelativeTime>` for `Intl.*`.
+- **RSC-aware.** Separate `@autotranslate/react/server` entry. The
+  `react-server` export condition is wired so Next.js App Router picks the right
+  entry automatically.
+- **Type-narrowed keys.** When `autotranslate generate-types` has run, `useT()`
+  autocompletes the catalog and rejects unknown keys.
+
+## Quick start
 
 ```tsx
 import {
-  T,
-  Var,
   Plural,
+  T,
   TranslationProvider,
   useT,
+  Var,
 } from '@autotranslate/react';
 
 export function App() {
@@ -52,53 +68,80 @@ function Greeting({ name, count }: { name: string; count: number }) {
 
 ### `<TranslationProvider locale catalog? fallback? children />`
 
-Wraps your app with locale + catalog context. `catalog` is the active-locale
-map; `fallback` is the source-locale map used when a key is missing from the
-active catalog. Without a provider the runtime degrades to source rendering (no
-errors, no warnings).
+Wraps your tree with locale + catalog context. `catalog` is the active-locale
+map; `fallback` is the source-locale map used when a key is missing. Without a
+provider the runtime degrades to source rendering — no errors, no warnings.
 
 ### `<T>...</T>`
 
 Translatable JSX block. Walks `children`, derives a canonical
-`StructuredMessage`, hashes it to a key, and looks up the translation in the
-active catalog. On hit, the translated tree is rendered using the original
-`<Var>` / `<Plural>` / HTML elements as templates — so props like `<a href>` and
-event handlers carry over to the translated output. On miss, renders `children`
-verbatim.
+`StructuredMessage`, hashes it to a key, and looks up the translation. On hit,
+the translated tree is rendered using the original `<Var>` / `<Plural>` / HTML
+elements as templates. On miss, renders `children` verbatim.
 
 ### `<Var name?>{value}</Var>`
 
-Variable slot inside `<T>`. `name` defaults to `value`. Children are the runtime
-substitution.
+Variable slot inside `<T>`. `name` defaults to `value`.
 
 ### `<Plural value name? zero? one? two? few? many? other />`
 
-Plural branch inside `<T>`. `name` defaults to `count`. CLDR category is
-selected per the active locale via `Intl.PluralRules`; `#` in any branch is
-replaced with the formatted count.
+Plural branch inside `<T>`. CLDR category is selected per the active locale via
+`Intl.PluralRules`. `#` in any branch is replaced with the formatted count.
+`name` defaults to `count`.
+
+### `<Branch branch name? ...cases>{default}</Branch>`
+
+Discriminator branch inside `<T>`. Every prop other than `branch`, `name`, and
+`children` is a named case. `children` is the default fallback.
+
+```tsx
+<T>
+  <Branch
+    branch={status}
+    pending={<>Pending review</>}
+    shipped={<>On its way</>}
+  >
+    Status: <Var>{status}</Var>
+  </Branch>
+</T>
+```
+
+### `<Num>`, `<Currency>`, `<DateTime>`, `<RelativeTime>`
+
+`Intl.*`-backed locale-aware formatters. Inside `<T>`, they're treated as opaque
+variable slots — the formatter renders itself.
 
 ## Hooks
 
 ### `useT()`
 
-Returns `(key, params?) => string`. Use this for plain-string translation —
-button labels, `aria-*` attributes, anything that isn't JSX.
+Returns `(key, params?) => string` bound to the active locale + catalog.
+
+### `useTranslations(namespace?)`
+
+Curries `useT` with a `namespace.` prefix. Mirrors dictionary-mode patterns from
+`next-intl` / `react-intl`.
+
+```ts
+const t = useTranslations('dashboard');
+t('title'); // → catalog['dashboard.title']
+```
 
 ### `useLocale()`
 
-Returns the active locale.
+Returns the active locale string.
 
-## Server entry (`@autotranslate/react/server`)
+## Server entry
 
-Synchronous-friendly translator factories for RSC, SSR, route handlers, edge
-functions, etc. — no React context involved.
+Synchronous-friendly translator factories for RSC, SSR, route handlers, and edge
+functions — no React context involved.
 
 ```ts
 import { getT } from '@autotranslate/react/server';
 
 export default async function Page() {
   const t = await getT('es', () => loadCatalog('es'), () => loadCatalog('en'));
-  return <h1>{t('Welcome')}</h1>;
+  return <h1>{t.t('Welcome')}</h1>;
 }
 ```
 
@@ -110,10 +153,13 @@ export default async function Page() {
 The `react-server` export condition is wired so Next.js App Router / RSC
 bundlers pick this entry automatically when compiling server components.
 
-## Public API
+## API
 
-- `<T>`, `<Var>`, `<Plural>`, `<TranslationProvider>`
-- `useT`, `useLocale`
-- `useTranslationContext`, `TranslationContext`
-- Types: `TProps`, `VarProps`, `PluralProps`, `TranslationProviderProps`,
-  `TranslationContextValue`
+- `<T>`, `<Var>`, `<Plural>`, `<Branch>`, `<Num>`, `<Currency>`, `<DateTime>`,
+  `<RelativeTime>`, `<TranslationProvider>`
+- `useT`, `useTranslations`, `useLocale`, `useTranslationContext`
+- `TranslationContext`, `AutotranslateCatalog` (interface, augmented by
+  `autotranslate generate-types`), `CatalogKey`
+- Types: `TProps`, `VarProps`, `PluralProps`, `BranchProps`, `NumProps`,
+  `CurrencyProps`, `DateTimeProps`, `RelativeTimeProps`,
+  `TranslationProviderProps`, `TranslationContextValue`

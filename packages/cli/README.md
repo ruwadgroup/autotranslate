@@ -1,7 +1,7 @@
 # @autotranslate/cli
 
-The `autotranslate` CLI: scans your codebase, extracts translatable strings,
-runs them through a translation provider, and writes locale catalogs.
+The `autotranslate` command. Scans your codebase, extracts translatable strings,
+runs them through a provider, and writes locale catalogs.
 
 ```bash
 pnpm add -D @autotranslate/cli
@@ -15,12 +15,12 @@ npx autotranslate check
 
 ### `autotranslate init`
 
-Scaffold `autotranslate.config.ts` in the current directory. No-op when one
+Scaffold `autotranslate.config.ts` in the current directory. No-op if one
 exists; pass `--force` to overwrite.
 
 ### `autotranslate extract`
 
-Glob `config.content`, parse every TS/JSX file with `@babel/parser`, and write
+Glob `config.content`, parse every TS / JSX file with `@babel/parser`, and write
 the canonical source-locale catalog to `<outDir>/<config.source>.json` plus
 per-key metadata to `<outDir>/.meta.json`.
 
@@ -29,9 +29,8 @@ Two patterns are recognized:
 - **`<T>...</T>`** — children are linearized to a `StructuredMessage` and hashed
   via `canonicalKey` from `@autotranslate/core`. Whitespace collapse matches the
   runtime walker so the canonical key is identical at extract and render time.
-- **`useT()` literal calls** — any `t('literal')` call where `t` is bound to a
-  `useT()` invocation in the same file. The literal becomes both the key and the
-  source.
+- **`useT()` literal calls** — `t('literal')` where `t` is bound to a `useT()`
+  invocation in the same file. The literal becomes both the key and the source.
 
 ### `autotranslate translate`
 
@@ -45,6 +44,12 @@ Translate the source catalog into every target locale. For each target:
 6. Write the merged catalog and update the cache.
 
 `-l, --locale <locale...>` restricts to a subset of target locales.
+
+### `autotranslate generate-types`
+
+Read the source-locale catalog and emit a `.d.ts` that augments
+`@autotranslate/react`'s `AutotranslateCatalog` interface with the literal key
+set. `useT('Sing out')` becomes a TypeScript error.
 
 ### `autotranslate check`
 
@@ -62,16 +67,18 @@ Every command is also a function:
 
 ```ts
 import {
-  loadConfig,
-  extract,
-  translate,
   check,
+  extract,
+  generateTypes,
   init,
+  loadConfig,
+  translate,
 } from '@autotranslate/cli';
 
 const resolved = await loadConfig();
 await extract(resolved);
 await translate(resolved, { provider: myCustomProvider });
+
 const result = await check(resolved);
 if (!result.ok) process.exit(1);
 ```

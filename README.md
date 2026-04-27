@@ -5,82 +5,47 @@
 [![Code style: Biome](https://img.shields.io/badge/code_style-biome-60a5fa.svg)](https://biomejs.dev/)
 [![pnpm](https://img.shields.io/badge/pnpm-monorepo-f69220.svg?logo=pnpm&logoColor=white)](https://pnpm.io/)
 [![Conventional Commits](https://img.shields.io/badge/conventional_commits-1.0.0-fa6673.svg)](https://www.conventionalcommits.org)
-[![Status: pre-alpha](https://img.shields.io/badge/status-pre--alpha-orange.svg)](#project-status)
+[![Status: pre-alpha](https://img.shields.io/badge/status-pre--alpha-orange.svg)](#status)
 
-<!--
-  CI / Release / npm badges activate once the repo + packages are published:
-  ![CI](https://img.shields.io/github/actions/workflow/status/tamimbinhakim/autotranslate/ci.yml?branch=main&label=CI)
-  ![npm](https://img.shields.io/npm/v/%40autotranslate%2Fcore?label=%40autotranslate%2Fcore)
--->
+Code-first, AI-powered i18n for any React framework.
 
-> [!WARNING]
->
-> **autotranslate is in active development and is not yet feature-complete.**
->
-> The API surface, package exports, and on-disk catalog format are all **subject
-> to breaking changes without notice** until the **v1.0.0** release, which will
-> mark the first **stable** version. Pre-1.0 versions (`0.x.y`) are pre-release
-> builds — use them only if you are willing to follow along with breaking
-> changes. See [`ROADMAP.md`](ROADMAP.md) for the path to stability.
+> [!WARNING] autotranslate is pre-1.0. The API surface, package exports, and
+> on-disk catalog format may change without notice until **v1.0.0**. See
+> [`ROADMAP.md`](ROADMAP.md).
 
-> **Automated, AI-powered i18n for any React framework. Code is the source of
-> truth.**
-
-`autotranslate` is a TypeScript-first internationalization toolkit that scans
-your codebase, extracts translatable strings, and translates them with the AI
-model of your choice. No JSON hierarchies, no key bookkeeping, no proprietary
-cloud — just write strings naturally and let the build pipeline handle the rest.
+Write strings the way you write code. Run a command. Get translated catalogs.
 
 ```tsx
-// Write
-<T>Welcome, <Var>{user.name}</Var></T>
-
-// Run
-npx autotranslate translate
-
-// Get
-.translations/es.json, fr.json, ja.json...
+<T>
+  Welcome, <Var>{user.name}</Var>!
+</T>
 ```
 
----
+```bash
+npx autotranslate translate
+```
 
-## Why another i18n library?
+```
+.translations/es.json, fr.json, ja.json …
+```
 
-Existing solutions force a tradeoff:
+## Quick features
 
-| Library                | Code-as-source | AI translation | Self-hosted | Framework-pluggable |
-| ---------------------- | :------------: | :------------: | :---------: | :-----------------: |
-| `react-i18next`        |       ❌       |       ❌       |     ✅      |         ✅          |
-| `next-intl`            |       ❌       |       ❌       |     ✅      |    Next.js only     |
-| `lingui`               |       ✅       |       ❌       |     ✅      |         ✅          |
-| `gt-next` / `gt-react` |       ✅       |       ✅       |     ❌      |   Next.js + React   |
-| **`autotranslate`**    |       ✅       |       ✅       |     ✅      | ✅ + edge runtimes  |
-
-`autotranslate` is the first toolkit to combine **strings-as-keys** +
-**bring-your-own AI** + **fully self-hosted JSON catalogs** + **first-class
-adapters for Next.js, Vite, Remix, React Native, and edge runtimes** +
-**end-to-end typesafety** (codegen'd locale unions, typed message keys, ICU
-param inference).
-
----
-
-## Packages
-
-This is a monorepo. Every package is published independently to npm under the
-`@autotranslate/*` scope.
-
-| Package                                                  | npm                            | Purpose                                                   |
-| -------------------------------------------------------- | ------------------------------ | --------------------------------------------------------- |
-| [`@autotranslate/core`](packages/core)                   | `@autotranslate/core`          | Framework-agnostic runtime, types, ICU, locale resolution |
-| [`@autotranslate/cli`](packages/cli)                     | `@autotranslate/cli`           | Extract, translate, watch, check                          |
-| [`@autotranslate/react`](packages/react)                 | `@autotranslate/react`         | `<T>`, `useT`, `TranslationProvider`, RSC helpers         |
-| [`@autotranslate/next`](packages/next)                   | `@autotranslate/next`          | Next.js plugin, middleware, server helpers                |
-| [`@autotranslate/vite`](packages/vite)                   | `@autotranslate/vite`          | Vite plugin, virtual locale modules, HMR                  |
-| [`@autotranslate/providers`](packages/providers)         | `@autotranslate/providers`     | Vercel AI SDK, DeepL, Google, custom                      |
-| [`@autotranslate/eslint-plugin`](packages/eslint-plugin) | `@autotranslate/eslint-plugin` | Lint rules for translation hygiene                        |
-| [`@autotranslate/mcp`](packages/mcp)                     | `@autotranslate/mcp`           | MCP server (Claude Code, Cursor, …)                       |
-
----
+- **Code is the source of truth.** Keys derive from your source — string
+  literals for `useT`, structural hash for `<T>`. No JSON to hand-author.
+- **Bring your own AI.** Vercel AI SDK (Anthropic, OpenAI, Google, OpenRouter)
+  out of the box. DeepL and Google Cloud Translation for short copy. Plug in
+  anything via a custom provider.
+- **Self-hosted by default.** Catalogs are JSON files in your repo. No cloud, no
+  CDN, no vendor lock-in.
+- **Framework-pluggable.** First-class adapters for Next.js, Vite, Remix, React
+  Native, and edge runtimes (Vercel Edge, Cloudflare Workers, Bun).
+- **End-to-end type-safe.** Codegen'd locale unions, narrowed `useT` keys, ICU
+  param inference. A missing translation is a TypeScript error.
+- **Edge-runtime friendly.** No `node:fs` in the runtime path. Synchronous
+  translator, RSC-aware, edge-aware.
+- **Fast diffs.** SHA-256 + per-(source, target, provider) cache means only
+  changed strings hit the model.
 
 ## Quick start
 
@@ -110,7 +75,7 @@ export default defineConfig({
 Wrap your app:
 
 ```tsx
-import { TranslationProvider, T } from '@autotranslate/react';
+import { T, TranslationProvider } from '@autotranslate/react';
 
 export function App() {
   return (
@@ -127,65 +92,93 @@ Translate:
 npx autotranslate translate
 ```
 
-That's it. The CLI extracts every `<T>` and `useT()` call, generates
-`.translations/{locale}.json`, and translates only the diff.
-
----
+That's it. The CLI extracts every `<T>` and `useT()` call, writes
+`.translations/{locale}.json`, and only translates what changed.
 
 ## How it works
 
 ```
-Source code  ──►  AST extractor  ──►  en.json (canonical)
-                                          │
-                                          ▼
-                          Diff vs cache (SHA-256 + gzip)
-                                          │
-                                          ▼
+Source code  →  AST extractor  →  en.json (canonical)
+                                       │
+                                       ▼
+                         Diff vs cache (SHA-256)
+                                       │
+                                       ▼
                 Translation provider (AI / DeepL / custom)
-                                          │
-                                          ▼
-                    .translations/{locale}.json + .meta.json
-                                          │
-                                          ▼
-       Runtime: load on demand (RSC) / bundle in (SPA / RN)
+                                       │
+                                       ▼
+                  .translations/{locale}.json + .meta.json
+                                       │
+                                       ▼
+        Runtime: load on demand (RSC) / bundle in (SPA / RN)
 ```
 
 See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full design.
 
----
+## Why autotranslate?
+
+| Library                | Code-as-source | AI translation | Self-hosted | Framework-pluggable |
+| ---------------------- | :------------: | :------------: | :---------: | :-----------------: |
+| `react-i18next`        |       ❌       |       ❌       |     ✅      |         ✅          |
+| `next-intl`            |       ❌       |       ❌       |     ✅      |    Next.js only     |
+| `lingui`               |       ✅       |       ❌       |     ✅      |         ✅          |
+| `gt-next` / `gt-react` |       ✅       |       ✅       |     ❌      |   Next.js + React   |
+| **`autotranslate`**    |       ✅       |       ✅       |     ✅      | ✅ + edge runtimes  |
+
+autotranslate is the first toolkit to combine strings-as-keys, bring-your-own
+AI, fully self-hosted catalogs, first-class adapters across frameworks, and
+end-to-end type-safety in one place.
+
+## Packages
+
+Every package is published independently to npm under `@autotranslate/*`.
+
+| Package                                                  | Purpose                                                   |
+| -------------------------------------------------------- | --------------------------------------------------------- |
+| [`@autotranslate/core`](packages/core)                   | Framework-free runtime, types, ICU, locale resolution     |
+| [`@autotranslate/cli`](packages/cli)                     | `init`, `extract`, `translate`, `check`, `generate-types` |
+| [`@autotranslate/react`](packages/react)                 | `<T>`, `useT`, `TranslationProvider`, RSC helpers         |
+| [`@autotranslate/next`](packages/next)                   | Next.js plugin, proxy middleware, server helpers          |
+| [`@autotranslate/vite`](packages/vite)                   | Vite plugin, virtual locale modules, HMR                  |
+| [`@autotranslate/providers`](packages/providers)         | Vercel AI SDK, DeepL, Google, custom                      |
+| [`@autotranslate/eslint-plugin`](packages/eslint-plugin) | Lint rules for translation hygiene                        |
+| [`@autotranslate/mcp`](packages/mcp)                     | MCP server (Claude Code, Cursor, …)                       |
+
+## Examples
+
+- [`examples/next-app`](examples/next-app) — Next.js App Router + RSC + proxy
+- [`examples/vite-react`](examples/vite-react) — Vite + React SPA
+
+```bash
+pnpm --filter @autotranslate/example-next-app dev
+pnpm --filter @autotranslate/example-vite-react dev
+```
 
 ## Framework recipes
 
-- **Next.js** → [`packages/next`](packages/next), example:
-  [`examples/next-app`](examples/next-app)
-- **Vite + React** → [`packages/vite`](packages/vite), example:
-  [`examples/vite-react`](examples/vite-react)
-- **Remix / React Router** → use `@autotranslate/react`
+- **Next.js** → [`packages/next`](packages/next)
+- **Vite + React** → [`packages/vite`](packages/vite)
+- **Remix / React Router** → use `@autotranslate/react` directly
 - **React Native** → use `@autotranslate/react` (no DOM peer)
-
----
 
 ## Repo layout
 
 ```
 autotranslate/
 ├── packages/
-│   ├── core/             # framework-free runtime + types
-│   ├── cli/              # autotranslate command
-│   ├── react/            # React + RSC bindings
-│   ├── next/             # Next.js plugin & middleware
-│   ├── vite/             # Vite plugin
-│   ├── providers/        # AI / MT translation providers
-│   ├── eslint-plugin/    # lint rules
-│   └── mcp/              # MCP server
+│   ├── core/             framework-free runtime + types
+│   ├── cli/              autotranslate command
+│   ├── react/            React + RSC bindings
+│   ├── next/             Next.js plugin + proxy
+│   ├── vite/             Vite plugin
+│   ├── providers/        AI / MT translation providers
+│   ├── eslint-plugin/    lint rules
+│   └── mcp/              MCP server
 ├── examples/
-│   ├── next-app/         # Next.js App Router demo
-│   └── vite-react/       # Vite + React demo
-├── docs/
-└── .github/              # CI, CodeQL, dependabot, templates
+│   ├── next-app/         Next.js App Router demo
+│   └── vite-react/       Vite + React demo
+└── docs/
 ```
-
----
 
 ## Development
 
@@ -200,28 +193,21 @@ pnpm typecheck   # composite tsc
 pnpm lint        # biome check
 ```
 
-Conventional commits are enforced via commitlint + husky. Use `pnpm changeset`
-to add a release note alongside any user-visible change.
-
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full workflow.
 
----
+## Status
 
-## Project status
+**Pre-alpha.** Implementations land package-by-package per the
+[roadmap](ROADMAP.md).
 
-**Pre-alpha.** The repository scaffold is in place; implementations land
-package-by-package per the [roadmap](ROADMAP.md).
-
-| Phase    | Versions | What it means                                                                |
-| -------- | -------- | ---------------------------------------------------------------------------- |
-| Pre-1.0  | `0.x.y`  | Active development. **Breaking changes anytime.** Treat as preview.          |
-| 1.0      | `1.0.0`  | **First stable release.** Public API frozen, semver guarantees from here on. |
-| Post-1.0 | `1.x.y+` | Backwards-compatible features and fixes per semver.                          |
+| Phase    | Versions | What it means                                                   |
+| -------- | -------- | --------------------------------------------------------------- |
+| Pre-1.0  | `0.x.y`  | Active development. Breaking changes anytime. Treat as preview. |
+| 1.0      | `1.0.0`  | First stable release. Public API frozen, semver from here on.   |
+| Post-1.0 | `1.x.y+` | Backwards-compatible features and fixes per semver.             |
 
 If you adopt a `0.x` build today, pin exact versions and read every changeset
-before upgrading. Bug reports, design feedback, and PRs are very welcome.
-
----
+before upgrading. Bug reports, design feedback, and PRs are welcome.
 
 ## License
 

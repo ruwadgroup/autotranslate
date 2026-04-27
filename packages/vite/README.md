@@ -7,7 +7,21 @@ module and triggers HMR when `.translations/` changes.
 pnpm add -D @autotranslate/vite
 ```
 
-## Usage
+## Quick features
+
+- **Virtual module.**
+  `import { catalogs, source, locales } from 'virtual:autotranslate'` — fully
+  type-safe, fully tree-shakeable.
+- **Auto-discovery.** Reads `autotranslate.config.{ts,mts,js,mjs}` from the Vite
+  project root for `source`, `targets`, and `outDir`.
+- **Dev HMR.** Re-running `pnpm i18n` (or any tool that touches
+  `.translations/*.json`) invalidates the virtual module without a manual
+  refresh.
+- **No glob hacks.** Same effect as
+  `import.meta.glob('../.translations/*.json', { eager: true })` but without the
+  path-stripping dance and with proper TypeScript types.
+
+## Quick start
 
 ```ts
 // vite.config.ts
@@ -22,7 +36,7 @@ export default defineConfig({
 
 ```ts
 // src/catalogs.ts
-import { catalogs, source, locales } from 'virtual:autotranslate';
+import { catalogs, locales, source } from 'virtual:autotranslate';
 
 // catalogs.es, catalogs.fr, … all bundled at build time.
 // `source` is your source locale; `locales` is the full list.
@@ -39,22 +53,6 @@ Add the client types reference once in your app's tsconfig:
 }
 ```
 
-## How it works
-
-The plugin auto-loads `autotranslate.config.{ts,mts,js,mjs}` from the Vite
-project root to discover `source`, `targets`, and `outDir`. Override any of
-those via plugin options.
-
-At build time it reads each `<outDir>/<locale>.json` (created by
-`autotranslate translate`) and inlines them as JSON literals in the virtual
-module — same effect as
-`import.meta.glob('../.translations/*.json', { eager: true })` but without the
-path-stripping dance and with proper TypeScript types.
-
-In dev, the plugin watches `<outDir>` and triggers a full reload when any locale
-JSON changes — so re-running `pnpm i18n` updates the running app without a
-manual refresh.
-
 ## Options
 
 | Option    | Type                  | Default                               |
@@ -65,7 +63,7 @@ manual refresh.
 | `locales` | `ReadonlyArray<...>`  | `[source, ...targets]` from config    |
 | `config`  | `AutotranslateConfig` | inline config (skips the disk lookup) |
 
-## Public API
+## API
 
 - `default export` — the plugin factory
 - `AutotranslatePluginOptions` type

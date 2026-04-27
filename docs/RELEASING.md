@@ -4,52 +4,52 @@ Maintainers only.
 
 ## Cadence
 
-We cut releases as soon as a changeset lands on `main`. There is no fixed
-schedule.
+Releases cut as soon as a changeset lands on `main`. No fixed schedule.
 
 ## Flow
 
-1. **Author a changeset on the feature PR.**
+### 1. Author a changeset on the feature PR
 
-   ```bash
-   pnpm changeset
-   ```
+```bash
+pnpm changeset
+```
 
-   Pick affected packages, bump type, and write a short user-visible summary.
+Pick affected packages, bump type, and write a short user-visible summary.
 
-2. **Merge the PR to `main`.**
+### 2. Merge the PR to `main`
 
-   The `release` workflow (`.github/workflows/release.yml`) runs on every push
-   to `main`. It:
-   - Installs deps with the frozen lockfile.
-   - Builds every package via `turbo build`.
-   - Runs `changesets/action`. If pending changesets exist, it opens (or
-     updates) a PR titled **"chore(release): version packages"** that bumps
-     versions and rewrites changelogs.
+The release workflow (`.github/workflows/release.yml`) runs on every push to
+`main`. It:
 
-3. **Review the version PR.**
+- Installs deps with the frozen lockfile.
+- Builds every package via `turbo build`.
+- Runs `changesets/action`. If pending changesets exist, it opens (or updates) a
+  PR titled **"chore(release): version packages"** that bumps versions and
+  rewrites changelogs.
 
-   Verify the bumps match intent. Tweak the changelogs if needed (the diff is in
-   `CHANGELOG.md` per package).
+### 3. Review the version PR
 
-4. **Merge the version PR.**
+Verify the bumps match intent. Tweak per-package `CHANGELOG.md` entries as
+needed.
 
-   The same workflow re-runs, sees no pending changesets, and instead
-   **publishes** to npm via:
+### 4. Merge the version PR
 
-   ```bash
-   pnpm release   # turbo run build --filter ./packages/* && changeset publish
-   ```
+The same workflow re-runs, sees no pending changesets, and instead **publishes**
+to npm via:
 
-   It uses GitHub Actions' OIDC token + `NPM_TOKEN` secret to publish with
-   [provenance](https://docs.npmjs.com/generating-provenance-statements). After
-   publish, GitHub Releases are created per published package.
+```bash
+pnpm release   # turbo run build --filter ./packages/* && changeset publish
+```
+
+Publishing uses the GitHub Actions OIDC token plus `NPM_TOKEN` for
+[provenance](https://docs.npmjs.com/generating-provenance-statements). GitHub
+Releases are created per published package.
 
 ## Required secrets / vars
 
-- `NPM_TOKEN` — npm automation token with `publish` scope on `@autotranslate/*`.
-- `GITHUB_TOKEN` — auto-provided.
-- (optional) `TURBO_TOKEN` + `TURBO_TEAM` — remote turbo cache.
+- `NPM_TOKEN` — npm automation token with `publish` scope on `@autotranslate/*`
+- `GITHUB_TOKEN` — auto-provided
+- (optional) `TURBO_TOKEN` + `TURBO_TEAM` — remote turbo cache
 
 ## Verifying provenance
 
@@ -68,7 +68,6 @@ To cut a pre-release (e.g. `0.2.0-beta.0`):
 ```bash
 pnpm changeset pre enter beta
 # normal changeset flow
-# when ready to leave pre-release:
 pnpm changeset pre exit
 ```
 
@@ -76,18 +75,18 @@ pnpm changeset pre exit
 
 For an urgent fix on a stable release while `main` has unreleased work:
 
-1. Branch from the published tag: `git checkout -b hotfix/<scope> <tag>`.
+1. Branch from the published tag — `git checkout -b hotfix/<scope> <tag>`.
 2. Apply the fix + changeset.
-3. Open a PR against a `release/<major>.<minor>` branch.
-4. The release workflow on that branch will publish a patch.
+3. Open a PR against `release/<major>.<minor>`.
+4. The release workflow on that branch publishes a patch.
 
 ## Yanking
 
-Mistakes happen. To unpublish or deprecate:
+Mistakes happen. Deprecate rather than unpublish:
 
 ```bash
 npm deprecate @autotranslate/<pkg>@<version> "Reason"
 ```
 
 Never run `npm unpublish` on a version older than 72 hours — it's blocked by
-registry policy. Deprecate instead and ship a patch.
+registry policy. Deprecate and ship a patch.

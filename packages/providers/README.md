@@ -9,17 +9,30 @@ concurrency, and caching on top.
 pnpm add @autotranslate/providers
 ```
 
+## Quick features
+
+- **Vercel AI SDK.** Anthropic, OpenAI, Google, OpenRouter — peer deps load
+  lazily so you only install the vendor you actually use.
+- **Classic MT.** DeepL and Google Cloud Translation v2 for short copy. ICU
+  placeholders are shielded behind opaque sentinels so the translator never sees
+  variable names.
+- **Pseudo-localization.** `createStubProvider({ pseudo: true })` accents
+  letters and wraps text in expansion brackets — surfaces untranslated UI and
+  layout overflow in dev.
+- **Custom providers.** `defineProvider({ name, signature, translate })`. Hook
+  up any HTTP API, local LLM, or in-house service.
+
 ## Subpath entries
 
-| Entry                             | Status  | Provider                                                        |
-| --------------------------------- | ------- | --------------------------------------------------------------- |
-| `@autotranslate/providers`        | shipped | Types, `defineProvider`, `pseudoLocalize`, `createStubProvider` |
-| `@autotranslate/providers/stub`   | shipped | Identity / pseudo-localization                                  |
-| `@autotranslate/providers/ai`     | shipped | Vercel AI SDK (OpenAI, Anthropic, Google, OpenRouter)           |
-| `@autotranslate/providers/deepl`  | v0.5    | DeepL (placeholder; throws today)                               |
-| `@autotranslate/providers/google` | v0.5    | Google Cloud Translation (placeholder; throws today)            |
+| Entry                             | Status  | Provider                                              |
+| --------------------------------- | ------- | ----------------------------------------------------- |
+| `@autotranslate/providers`        | shipped | Types, `defineProvider`, pseudo helpers, stub         |
+| `@autotranslate/providers/stub`   | shipped | Identity / pseudo-localization                        |
+| `@autotranslate/providers/ai`     | shipped | Vercel AI SDK (Anthropic, OpenAI, Google, OpenRouter) |
+| `@autotranslate/providers/deepl`  | shipped | DeepL Pro / Free                                      |
+| `@autotranslate/providers/google` | shipped | Google Cloud Translation v2                           |
 
-## Usage
+## Quick start
 
 ```ts
 import { createAIProvider } from '@autotranslate/providers/ai';
@@ -53,7 +66,6 @@ const pseudo = createStubProvider({ pseudo: true });
 ```ts
 import { defineProvider } from '@autotranslate/providers';
 
-// Custom provider — wire any HTTP API or local LLM.
 export const myProvider = defineProvider({
   name: 'custom',
   signature: 'custom:v1',
@@ -79,24 +91,32 @@ export const myProvider = defineProvider({
    `StructuredMessage` shape.
 
 ICU is a far better wire format than custom JSON because the model already knows
-it — placeholders, plurals, and tag wrappers survive round-trips reliably
-without prompt-engineering gymnastics.
+it — placeholders, plurals, and tag wrappers survive round-trips without
+prompt-engineering gymnastics.
 
 ### Vendor selection
 
 The `model` string is `<vendor>:<model-id>`:
 
-| Vendor       | Example                                 | Peer dep                                          |
-| ------------ | --------------------------------------- | ------------------------------------------------- |
-| `anthropic`  | `anthropic:claude-haiku-4-5`            | `@ai-sdk/anthropic`                               |
-| `openai`     | `openai:gpt-4o-mini`                    | `@ai-sdk/openai`                                  |
-| `google`     | `google:gemini-2.5-flash`               | `@ai-sdk/google`                                  |
-| `openrouter` | `openrouter:anthropic/claude-haiku-4-5` | `@ai-sdk/openai` (used for OpenAI-compatible API) |
+| Vendor       | Example                                 | Peer dep                                 |
+| ------------ | --------------------------------------- | ---------------------------------------- |
+| `anthropic`  | `anthropic:claude-haiku-4-5`            | `@ai-sdk/anthropic`                      |
+| `openai`     | `openai:gpt-4o-mini`                    | `@ai-sdk/openai`                         |
+| `google`     | `google:gemini-2.5-flash`               | `@ai-sdk/google`                         |
+| `openrouter` | `openrouter:anthropic/claude-haiku-4-5` | `@ai-sdk/openai` (OpenAI-compatible API) |
 
-Peer deps are loaded lazily — install only the vendor(s) you use. For
-non-standard backends, pass `resolveModel` to bypass the built-in factory.
+For non-standard backends, pass `resolveModel` to bypass the built-in factory.
 
-## Public API
+## How the DeepL / Google providers work
+
+DeepL and Google handle plain-string entries only. ICU placeholders (`{name}`,
+`{age, number}`) are wrapped in opaque `[[ATPH:N]]` sentinels before the call
+and restored after, so the translator only sees natural- language text.
+
+Plural / select / pound / tag entries throw `UnsupportedICUError` — route those
+through the `ai` provider.
+
+## API
 
 ### `@autotranslate/providers`
 
@@ -110,3 +130,15 @@ non-standard backends, pass `resolveModel` to bypass the built-in factory.
 
 - `createAIProvider(opts)` → `Provider`
 - Types: `AIProviderOptions`
+
+### `@autotranslate/providers/deepl`
+
+- `createDeepLProvider(opts)` → `Provider`
+- Types: `DeepLProviderOptions`
+- `UnsupportedICUError`
+
+### `@autotranslate/providers/google`
+
+- `createGoogleProvider(opts)` → `Provider`
+- Types: `GoogleProviderOptions`
+- `UnsupportedICUError`

@@ -1,13 +1,13 @@
 # Contributing to autotranslate
 
-Thanks for considering a contribution! This guide gets you from zero to merged
+Thanks for considering a contribution! This guide gets you from zero to a merged
 PR.
 
 ## Prerequisites
 
-- **Node** ≥ 20 (see `.nvmrc` — use `nvm use`)
-- **pnpm** ≥ 10 (this repo pins `packageManager` in `package.json`)
-- **Git** with `core.autocrlf` off (we enforce LF via `.gitattributes`)
+- **Node** ≥ 20 (see `.nvmrc` — `nvm use`)
+- **pnpm** ≥ 10 (pinned via `packageManager` in `package.json`)
+- **Git** with `core.autocrlf` off (LF is enforced via `.gitattributes`)
 
 ## Setup
 
@@ -21,12 +21,12 @@ pnpm build
 ## Working on a package
 
 ```bash
-pnpm dev                          # watch every package
-pnpm --filter @autotranslate/core dev   # watch one package
-pnpm --filter @autotranslate/core test  # run that package's tests
+pnpm dev                                # watch every package
+pnpm --filter @autotranslate/core dev   # watch one
+pnpm --filter @autotranslate/core test  # test one
 ```
 
-Examples are wired to the workspace via `workspace:*`. Run them with:
+Examples are wired via `workspace:*`:
 
 ```bash
 pnpm --filter @autotranslate/example-next-app dev
@@ -35,14 +35,14 @@ pnpm --filter @autotranslate/example-vite-react dev
 
 ## Code style
 
-- **Formatter & linter:** [Biome](https://biomejs.dev/) for
-  `.ts`/`.tsx`/`.json`. Prettier handles `.md`/`.yml`/`.yaml`.
-- **TypeScript:** strict mode, `noUncheckedIndexedAccess`,
+- **Formatter & linter** — [Biome](https://biomejs.dev/) for `.ts` / `.tsx` /
+  `.json`. Prettier handles `.md` / `.yml` / `.yaml`.
+- **TypeScript** — strict mode, `noUncheckedIndexedAccess`,
   `exactOptionalPropertyTypes`. No `any` without a `// biome-ignore`
   justification.
-- **Imports:** `useImportType` is enforced — type-only imports must use
+- **Imports** — `useImportType` is enforced. Type-only imports use
   `import type`.
-- **Comments:** default to none. Add only when _why_ is non-obvious. No
+- **Comments** — default to none. Add only when _why_ is non-obvious. No
   multi-paragraph docstrings.
 
 ```bash
@@ -54,20 +54,20 @@ pnpm typecheck      # full project tsc
 
 ## Tests
 
-Every package uses [Vitest](https://vitest.dev). Place tests next to source
-(`*.test.ts`) or under `tests/`. Run:
+[Vitest](https://vitest.dev) across the monorepo. Place tests next to source
+(`*.test.ts`) or under `tests/`.
 
 ```bash
 pnpm test               # watch
-pnpm test:ci            # one-shot, with coverage where configured
+pnpm test:ci            # one-shot
 ```
 
-A PR introducing new behavior must include tests.
+A PR that introduces new behavior includes tests.
 
 ## Commit messages
 
-We follow [Conventional Commits](https://www.conventionalcommits.org/).
-`commit-msg` hook enforces this.
+[Conventional Commits](https://www.conventionalcommits.org/), enforced via the
+`commit-msg` hook.
 
 ```
 <type>(<scope>): <subject>
@@ -100,21 +100,21 @@ pnpm changeset
 ```
 
 Pick the affected packages, the bump (`patch` / `minor` / `major`), and write a
-short summary aimed at end users. Commit the generated `.md` file. The release
-workflow turns it into a GitHub release + npm publish.
+short summary aimed at end users. Commit the generated `.md`.
 
-Skip changesets for: docs-only changes, internal refactors that don't change
-public API, CI/dev-tooling tweaks.
+Skip changesets for: docs-only changes, internal refactors that don't touch
+public API, CI / dev-tooling tweaks.
 
 ## Pull request flow
 
-1. Fork & branch from `main`. Branch names: `feat/<scope>/<short-desc>`,
+1. Fork & branch from `main`. Branch naming: `feat/<scope>/<short-desc>`,
    `fix/<scope>/<short-desc>`.
 2. Make your change. Add tests. Add a changeset.
 3. `pnpm lint && pnpm typecheck && pnpm test:ci && pnpm build` — all green.
 4. Open a PR against `main`. The template walks through the checklist.
-5. CI runs lint, typecheck, tests on Node 20 + 22 across Linux/macOS/Windows.
-6. A maintainer reviews. Once approved, squash-merge.
+5. CI runs lint, typecheck, tests on Node 20 + 22 across Linux / macOS /
+   Windows.
+6. A maintainer reviews. Approved → squash-merge.
 
 ## Releasing
 
@@ -123,7 +123,7 @@ Maintainers only. See [`docs/RELEASING.md`](docs/RELEASING.md).
 ## Reporting bugs / requesting features
 
 Use the issue templates. Provide a minimal reproduction (StackBlitz or repo
-link) — we close issues without one.
+link) — issues without one get closed.
 
 ## Security
 

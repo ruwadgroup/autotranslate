@@ -1,13 +1,22 @@
 # @autotranslate/eslint-plugin
 
 ESLint rules for autotranslate. Catches untranslated copy and broken keys at
-write time.
-
-## Install
+write time, before the extractor runs.
 
 ```bash
 pnpm add -D @autotranslate/eslint-plugin
 ```
+
+## Quick features
+
+- **`no-untranslated-jsx`** — flags bare JSX text and untranslated `title` /
+  `aria-label` attributes.
+- **`no-dynamic-key`** — keeps translator keys static so the extractor can see
+  them. Accepts string-literal locals.
+- **`valid-icu-format`** — parses every literal key as ICU and rejects malformed
+  messages (mismatched braces, broken plural arms, stray apostrophes).
+- **Flat + legacy.** Works with ESLint v9 flat config and the older `.eslintrc`
+  format.
 
 ## Use (flat config, ESLint v9+)
 
@@ -39,9 +48,9 @@ translation marker (`<T>`, `<Var>`, `<Plural>`, `<Branch>`, `<Num>`,
 `<Currency>`, `<DateTime>`, `<RelativeTime>`).
 
 ```jsx
-<p>Hello</p>                 // ❌ bare text outside <T>
-<button title="Save">x</button>  // ❌ untranslated attribute
-<T>Hello</T>                 // ✅
+<p>Hello</p>                    // ❌ bare text outside <T>
+<button title="Save">x</button> // ❌ untranslated attribute
+<T>Hello</T>                    // ✅
 ```
 
 Options:

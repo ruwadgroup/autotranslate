@@ -3,12 +3,25 @@
 Next.js integration for autotranslate. Locale detection in `proxy.ts`, server
 helpers for App Router pages, and a Next config wrapper.
 
-> Targets **Next.js 16+**. The `proxy` file convention replaces `middleware`;
-> route `params` are async; this package follows those.
+> Targets **Next.js 16+**. The `proxy` file convention replaces `middleware` and
+> route `params` are async — this package follows those.
 
 ```bash
 pnpm add @autotranslate/next @autotranslate/react @autotranslate/core
 ```
+
+## Quick features
+
+- **Locale routing.** Path-prefix or cookie strategy. Resolved locale is pushed
+  downstream via `x-autotranslate-locale` and read with `getRequestLocale()`.
+- **`getT` for server components.** Async factory that loads the active catalog
+  (and a source-locale fallback) on demand. Per-(cwd, outDir, locale)
+  memoization out of the box.
+- **Edge-runtime ready.** Pass a custom `load` to bypass the fs-backed loader on
+  Vercel Edge / Cloudflare Workers.
+- **Future-proof config wrapper.** `withAutotranslate` is a typed pass-through
+  today; the canonical integration point for build-time hooks (typegen, catalog
+  inlining) tomorrow.
 
 ## Subpath entries
 
@@ -36,10 +49,10 @@ export const config = {
 };
 ```
 
-The proxy resolves the active locale from path → cookie → `Accept-Language`,
-redirects bare paths under `/<locale>/...` (or sets a cookie when
-`strategy: 'cookie'`), and pushes the resolved locale downstream via the
-`x-autotranslate-locale` request header.
+Resolves the active locale from path → cookie → `Accept-Language`, redirects
+bare paths under `/<locale>/...` (or sets a cookie when `strategy: 'cookie'`),
+and pushes the resolved locale downstream via the `x-autotranslate-locale`
+request header.
 
 ### 2. App layout
 
@@ -57,12 +70,7 @@ export default async function Layout({
   return (
     <html lang={lang}>
       <body>
-        <TranslationProvider
-          locale={lang}
-          catalog={(t as { raw: typeof t.raw }).raw ? {} : {}}
-        >
-          {children}
-        </TranslationProvider>
+        <TranslationProvider locale={lang}>{children}</TranslationProvider>
       </body>
     </html>
   );
@@ -82,41 +90,10 @@ export default async function Page({ params }: PageProps<'/[lang]'>) {
 }
 ```
 
-## Public API
-
-### `@autotranslate/next`
-
-- `getT(locale, options?)` → `Promise<Translator>`
-  - `options.load`: custom `(locale) => Promise<Catalog> | Catalog` for edge /
-    KV / network strategies.
-  - `options.fallback`: source locale used when a key is missing in `locale`.
-  - `options.outDir`, `options.cwd`: override the fs loader's defaults.
-- `getRequestLocale()` → `Promise<Locale | undefined>` — reads the
-  `x-autotranslate-locale` header set by the proxy.
-- `fsCatalogLoader(cwd, outDir)` — the default loader, exposed for callers that
-  want to compose it.
-- `clearCatalogCache()` — drops the in-process loader cache (tests, HMR).
-- `LOCALE_HEADER` — the header name proxy and `getRequestLocale` agree on.
-
-### `@autotranslate/next/middleware`
-
-- `createNextMiddleware(options)` → Next `proxy` function
-  - `defaultLocale`, `locales` (required)
-  - `strategy: 'prefix' | 'cookie'` (default `'prefix'`)
-  - `cookieName` (default `'NEXT_LOCALE'`)
-  - `prefixDefaultLocale: boolean` (default `false` — keep the default locale's
-    URLs at the root)
-
-### `@autotranslate/next/plugin`
-
-- `withAutotranslate(nextConfig)` — typed pass-through today; the canonical
-  integration point for build-time hooks (typegen, catalog inlining) in later
-  versions.
-
 ## Edge runtime
 
-The default `getT` uses `node:fs/promises` and won't run on the Edge. For edge
-route handlers, supply a custom loader:
+The default `getT` uses `node:fs/promises` and won't run on the Edge. Supply a
+custom loader for edge route handlers:
 
 ```ts
 import { getT } from '@autotranslate/next';
@@ -138,3 +115,33 @@ export async function GET(
   return new Response(t.t('Welcome'));
 }
 ```
+
+## API
+
+### `@autotranslate/next`
+
+- `getT(locale, options?)` → `Promise<Translator>`
+  - `options.load` — custom `(locale) => Promise<Catalog> | Catalog`
+  - `options.fallback` — source locale used on miss
+  - `options.outDir`, `options.cwd` — override fs-loader defaults
+- `getTranslations(locale, namespace?, options?)` — namespace-prefixed helper,
+  mirrors the client `useTranslations(ns)` hook
+- `getRequestLocale()` → `Promise<Locale | undefined>` — reads the
+  `x-autotranslate-locale` header set by the proxy
+- `fsCatalogLoader(cwd, outDir)` — the default loader, exposed for composition
+- `clearCatalogCache()` — drops the in-process loader cache (tests, HMR)
+- `LOCALE_HEADER` — header name shared with the proxy
+
+### `@autotranslate/next/middleware`
+
+- `createNextMiddleware(options)` → Next `proxy` function
+  - `defaultLocale`, `locales` — required
+  - `strategy: 'prefix' | 'cookie'` — default `'prefix'`
+  - `cookieName` — default `'NEXT_LOCALE'`
+  - `prefixDefaultLocale: boolean` — default `false` (default-locale URLs stay
+    at the root)
+
+### `@autotranslate/next/plugin`
+
+- `withAutotranslate(nextConfig)` — typed pass-through today; integration point
+  for build-time hooks tomorrow.

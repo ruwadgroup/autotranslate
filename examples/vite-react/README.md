@@ -1,83 +1,31 @@
-# React + TypeScript + Vite
+# example: Vite + React
 
-This template provides a minimal setup to get React working in Vite with HMR and
-some ESLint rules.
+End-to-end demo of `@autotranslate/vite` + `@autotranslate/react` in a
+client-rendered React SPA. Catalogs are bundled via the virtual module; HMR
+picks up `.translations/` changes without a manual reload.
 
-Currently, two official plugins are available:
+## Run it
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react)
-  uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc)
-  uses [SWC](https://swc.rs/)
+From the repo root:
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev
-& build performances. To add it, see
-[this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the
-configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+```bash
+pnpm install
+pnpm --filter @autotranslate/example-vite-react dev
 ```
 
-You can also install
-[eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x)
-and
-[eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom)
-for React-specific lint rules:
+## Re-translate
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x';
-import reactDom from 'eslint-plugin-react-dom';
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+```bash
+pnpm --filter @autotranslate/example-vite-react i18n
 ```
+
+Configure the provider in `examples/vite-react/autotranslate.config.ts`.
+
+## Layout
+
+- `vite.config.ts` — registers the `autotranslate()` plugin
+- `src/catalogs.ts` — imports `catalogs`, `source`, `locales` from
+  `virtual:autotranslate`
+- `src/App.tsx` — wraps the tree in `<TranslationProvider>` and switches locale
+  on a dropdown
+- `.translations/{en,es,fr}.json` — generated catalogs

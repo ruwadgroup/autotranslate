@@ -1,49 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with
-[`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# example: Next.js App Router
 
-## Getting Started
+End-to-end demo of `@autotranslate/next` + `@autotranslate/react` on the Next.js
+App Router. Locale routing via `proxy.ts`, server-component translation,
+RSC-aware client markers.
 
-First, run the development server:
+## Run it
+
+From the repo root:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+pnpm --filter @autotranslate/example-next-app dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the
-result.
+Open <http://localhost:3000> — paths under `/<locale>/...` resolve to the
+matching catalog.
 
-You can start editing the page by modifying `app/page.tsx`. The page
-auto-updates as you edit the file.
+## Re-translate
 
-This project uses
-[`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts)
-to automatically optimize and load [Geist](https://vercel.com/font), a new font
-family for Vercel.
+The example ships with pre-generated `.translations/`. To re-run extraction and
+translation against your own provider:
 
-## Learn More
+```bash
+pnpm --filter @autotranslate/example-next-app i18n
+```
 
-To learn more about Next.js, take a look at the following resources:
+Configure the provider in `examples/next-app/autotranslate.config.ts`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js
-  features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Layout
 
-You can check out
-[the Next.js GitHub repository](https://github.com/vercel/next.js) - your
-feedback and contributions are welcome!
+- `proxy.ts` — `createNextMiddleware({ defaultLocale, locales })`
+- `app/[lang]/layout.tsx` — wraps the tree in `<TranslationProvider>` and loads
+  the active catalog via `getT(locale)`
+- `app/[lang]/page.tsx` — server-component translation with `getT().t(...)`
+- `.translations/{en,es,fr,ja}.json` — generated catalogs
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the
-[Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme)
-from the creators of Next.js.
-
-Check out our
-[Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying)
-for more details.
+> [!NOTE] This example pins **Next.js 16+**. The `proxy` file convention
+> replaces `middleware`; route `params` are async. Read the relevant guide in
+> `node_modules/next/dist/docs/` before editing.
