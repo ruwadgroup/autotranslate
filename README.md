@@ -1,10 +1,10 @@
 <div align="center">
+  <a href="https://github.com/tamimbinhakim/autotranslate">
+    <img src="assets/banner.png" alt="autotranslate — code-first, AI-powered i18n for any React framework" width="100%" />
+  </a>
 
-# autotranslate
-
-**Code-first, AI-powered i18n for any React framework.**
-
-Write strings the way you write code. Run a command. Get translated catalogs.
+<br />
+<br />
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/typescript-strict-blue.svg?logo=typescript&logoColor=white)](tsconfig.base.json)
@@ -12,6 +12,8 @@ Write strings the way you write code. Run a command. Get translated catalogs.
 [![pnpm](https://img.shields.io/badge/pnpm-monorepo-f69220.svg?logo=pnpm&logoColor=white)](https://pnpm.io/)
 [![Conventional Commits](https://img.shields.io/badge/conventional_commits-1.0.0-fa6673.svg)](https://www.conventionalcommits.org)
 [![Status: pre-alpha](https://img.shields.io/badge/status-pre--alpha-orange.svg)](#status)
+
+Write strings the way you write code. Run a command. Get translated catalogs.
 
 </div>
 
