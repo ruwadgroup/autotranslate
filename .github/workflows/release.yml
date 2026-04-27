@@ -26,15 +26,13 @@ jobs:
 
       - uses: pnpm/action-setup@v4
 
+      # Node 24 ships npm 11+ which is required for Trusted Publishing OIDC
+      # (Node 22 only ships npm 10.x; in-place self-upgrade is unreliable).
       - uses: actions/setup-node@v6
         with:
-          node-version-file: .nvmrc
+          node-version: "24"
           cache: pnpm
           registry-url: https://registry.npmjs.org
-
-      # npm Trusted Publishing + provenance attestations require npm >= 11.5.1.
-      # Node 22 ships npm 10.x; bump explicitly so OIDC publish works.
-      - run: npm install -g npm@latest
 
       - run: pnpm install --frozen-lockfile
 
