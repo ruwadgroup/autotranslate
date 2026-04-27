@@ -7,12 +7,17 @@ abstract: >-
   (Vercel AI SDK, DeepL, Google Cloud, or custom), and persists self-hosted
   JSON catalogs with full type-safety end to end.
 authors:
-  - family-names: Hakim
-    given-names: Tamim Bin
+  # 'Bin Hakim' is a patronymic — 'Bin' means 'son of', so the full
+  # 'Tamim Bin Hakim' should not be split as if 'Hakim' were a Western
+  # family name. Treat the patronymic phrase as the family-name unit so
+  # citations render as 'Bin Hakim, T.' instead of the incorrect
+  # 'Hakim, T. B.'.
+  - given-names: Tamim
+    family-names: Bin Hakim
     email: tamimbinhakim.work@gmail.com
 type: software
 license: MIT
-version: 0.0.0
+version: 0.1.0
 date-released: '2026-04-27'
 url: 'https://github.com/tamimbinhakim/autotranslate'
 repository-code: 'https://github.com/tamimbinhakim/autotranslate'
