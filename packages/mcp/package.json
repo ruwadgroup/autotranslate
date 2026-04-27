@@ -1,6 +1,6 @@
 {
   "name": "@autotranslate/mcp",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "MCP server: extract & translate from agentic tools (Claude Code, etc.).",
   "license": "MIT",
   "author": "Tamim Bin Hakim <tamimbinhakim.work@gmail.com>",

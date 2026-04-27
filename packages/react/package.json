@@ -1,6 +1,6 @@
 {
   "name": "@autotranslate/react",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "React adapter: <T>, useT, TranslationProvider, ICU components.",
   "license": "MIT",
   "author": "Tamim Bin Hakim <tamimbinhakim.work@gmail.com>",

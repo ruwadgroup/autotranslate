@@ -1,6 +1,6 @@
 {
   "name": "@autotranslate/vite",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Vite plugin: dev-time translation, HMR, virtual locale modules.",
   "license": "MIT",
   "author": "Tamim Bin Hakim <tamimbinhakim.work@gmail.com>",

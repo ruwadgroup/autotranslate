@@ -1,6 +1,6 @@
 {
   "name": "@autotranslate/eslint-plugin",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "ESLint rules: no-untranslated-jsx, no-string-literal-in-t, valid-icu-format.",
   "license": "MIT",
   "author": "Tamim Bin Hakim <tamimbinhakim.work@gmail.com>",

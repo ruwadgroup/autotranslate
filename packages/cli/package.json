@@ -1,6 +1,6 @@
 {
   "name": "@autotranslate/cli",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "autotranslate CLI: extract, translate, watch, check.",
   "license": "MIT",
   "author": "Tamim Bin Hakim <tamimbinhakim.work@gmail.com>",
