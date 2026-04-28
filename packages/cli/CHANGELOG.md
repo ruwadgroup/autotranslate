@@ -1,5 +1,150 @@
 # @autotranslate/cli
 
+## 0.2.0
+
+### Minor Changes
+
+- [#56](https://github.com/tamimbinhakim/autotranslate/pull/56)
+  [`61ffc77`](https://github.com/tamimbinhakim/autotranslate/commit/61ffc7747be7e31d97a04f7d6326e40da1f8dde6)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Ship
+  `dist/agents.md` — a single-file, agent-readable reference for AI assistants
+  (Claude Code, Cursor, Windsurf, …). Mirrors Next.js's `dist/docs/index.md`
+  convention.
+
+  After installing `@autotranslate/cli`, agents reading the project's
+  `node_modules/` find the library's full surface (config, JSX/string
+  translation, standalone `t()`, providers, Zod, common patterns, gotchas,
+  public API) at:
+
+  ```
+  node_modules/@autotranslate/cli/dist/agents.md
+  ```
+
+  `autotranslate init` now prints a hint with the path so users can paste it
+  into `AGENTS.md` / `CLAUDE.md` / `.cursorrules`.
+
+- [#58](https://github.com/tamimbinhakim/autotranslate/pull/58)
+  [`9208324`](https://github.com/tamimbinhakim/autotranslate/commit/92083248aa16b640f12b49cf60d483286d23177d)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - AI provider
+  receives within-chunk context for consistency
+
+  `TranslationRequest` gains an optional `context` field — already-translated
+  neighbours from the same chunk. The CLI populates it during `translate` per
+  chunk: keys whose cache hit is fresh become reference for keys that need
+  re-translation.
+
+  The bundled `ai` provider passes the context to the model as a `reference`
+  section in the prompt, alongside the changed strings. The system prompt
+  explains that reference items are read-only — the model returns translations
+  only for the items in the `translate` array.
+
+  Marks the system prompt as `cacheControl: { type: 'ephemeral' }` for Anthropic
+  — no-op for short prompts, automatic 90% input savings on cached tokens for
+  large `instruction` blocks. OpenAI does prompt caching automatically beyond
+  ~1024 tokens; other vendors ignore the option.
+
+  Net effect: when one string in a 50-string chunk changes, the AI sees the 49
+  unchanged neighbours' translations as reference and produces output consistent
+  with the surrounding copy. No behaviour change for single-string-per-chunk
+  cases.
+
+- [#57](https://github.com/tamimbinhakim/autotranslate/pull/57)
+  [`21aadff`](https://github.com/tamimbinhakim/autotranslate/commit/21aadfffaf317b8a2ae95fdbc81ee04e98242412)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Chunked catalog
+  and cache layout
+
+  `.translations/` is now a tree, not flat files. The CLI groups keys into
+  chunks by their alphabetically-first occurrence's source file:
+
+  ```
+  .translations/
+    en/
+      components/Header.json
+      pages/Checkout.json
+      _external/zod.json
+    es/  …
+    .cache/<provider-sig>/<source-target>/<chunk>.json
+  ```
+
+  Wins:
+  - **Reviewable diffs.** A 5-string copy change shows up in 1-2 small chunk
+    files instead of buried in a multi-thousand-line catalog.
+  - **Skip-on-no-change.** Each chunk caches its `chunkHash`; runs where
+    `chunkHash` matches skip the API entirely. No-op CI passes are now
+    effectively free.
+  - **Better consistency.** Within a chunk, unchanged neighbouring strings ride
+    along as context for AI re-translation of changed strings.
+  - **Auto-split.** Chunks exceeding 300 strings split alphabetically
+    (`Foo.0.json`, `Foo.1.json`). Default cap configurable.
+
+  Migration: silent, on first `translate` run after upgrade. The flat
+  `<locale>.json` source file is reshaped into the chunked tree; legacy
+  `.cache/<sig>.json` files are pruned (cache resets — first run is a cold
+  pass).
+
+  `fsCatalogLoader` (Next) and the Vite plugin walk the new tree recursively.
+  Both retain a fallback to the flat layout for users mid- upgrade — the runtime
+  never breaks during the transition.
+
+  New helpers in `@autotranslate/core/internal`:
+  - `chunkPathFor(meta)` — pure function returning the chunk path for a key
+  - `buildChunkLayout(manifest, options?)` — chunk path → keys map
+
+- [#59](https://github.com/tamimbinhakim/autotranslate/pull/59)
+  [`b0ffbca`](https://github.com/tamimbinhakim/autotranslate/commit/b0ffbca3f91b980ce99c3f0f5a44e9e3b50b3fa6)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Per-chunk
+  parallelism + streaming progress for `autotranslate translate`
+
+  `translate` now runs chunks across all targets in parallel up to
+  `config.concurrency` (default 8). With multiple locales and many chunks, this
+  is dramatically faster — chunks no longer block on one target finishing before
+  another starts.
+
+  `TranslateOptions` gains:
+  - `concurrency?: number` — override `config.concurrency` per call.
+  - `onProgress?: (event) => void` — fires on every chunk's `started` /
+    `completed` transition with
+    `{ target, chunkPath, status, fetched?, cached?, overridden? }`.
+
+  The CLI binary uses the new callback to render a live spinner — the user sees
+  `translating… 12 done, 8 in flight` while a translate runs instead of waiting
+  for everything to finish silently.
+
+- [#52](https://github.com/tamimbinhakim/autotranslate/pull/52)
+  [`0f5e052`](https://github.com/tamimbinhakim/autotranslate/commit/0f5e052b821b4eab781c8d843dd28b644ee719b5)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Add standalone
+  `t()` and `@autotranslate/zod` integration
+  - `@autotranslate/core` now exports `bindTranslator`, `withTranslator`,
+    `currentTranslator`, and a synchronous `t(key, params)` from
+    `@autotranslate/core/standalone` and `@autotranslate/core/t`. The Node entry
+    uses `AsyncLocalStorage` for per-request isolation; browsers fall back to a
+    module slot via the `browser` export condition.
+  - `AutotranslateCatalog` augmentation point moved to `@autotranslate/core`.
+    `@autotranslate/react` re-exports it for ergonomics.
+    `autotranslate generate-types` augments core only — re-run it after
+    upgrading.
+  - The CLI extractor recognizes `import { t } from '@autotranslate/core/t'`
+    (and `/standalone`) so non-React call sites flow through the same
+    extraction + translation pipeline.
+  - New `@autotranslate/zod` package: a Zod v4 error map that translates
+    standard issues through the active translator, with bundled English
+    fallbacks and adapter sub-paths for Next (`@autotranslate/zod/next`) and
+    Remix (`@autotranslate/zod/remix`). Add `@autotranslate/zod/source` to your
+    `content` glob to pipe the keys through your usual translation flow.
+  - Workspace bumped to Zod v4 (`zod ^4.0.0`). `@autotranslate/core/config`
+    swapped `.url()` for `z.url()` and `z.SafeParseReturnType` for
+    `z.ZodSafeParseResult`.
+
+### Patch Changes
+
+- Updated dependencies
+  [[`9208324`](https://github.com/tamimbinhakim/autotranslate/commit/92083248aa16b640f12b49cf60d483286d23177d),
+  [`01133fd`](https://github.com/tamimbinhakim/autotranslate/commit/01133fd6b48ed7741eef14ce8a52689d05a113a2),
+  [`21aadff`](https://github.com/tamimbinhakim/autotranslate/commit/21aadfffaf317b8a2ae95fdbc81ee04e98242412),
+  [`0f5e052`](https://github.com/tamimbinhakim/autotranslate/commit/0f5e052b821b4eab781c8d843dd28b644ee719b5)]:
+  - @autotranslate/providers@0.2.0
+  - @autotranslate/core@0.2.0
+
 ## 0.1.0
 
 ### Minor Changes

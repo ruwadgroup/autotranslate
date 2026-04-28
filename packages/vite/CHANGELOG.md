@@ -1,5 +1,59 @@
 # @autotranslate/vite
 
+## 0.2.0
+
+### Minor Changes
+
+- [#57](https://github.com/tamimbinhakim/autotranslate/pull/57)
+  [`21aadff`](https://github.com/tamimbinhakim/autotranslate/commit/21aadfffaf317b8a2ae95fdbc81ee04e98242412)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Chunked catalog
+  and cache layout
+
+  `.translations/` is now a tree, not flat files. The CLI groups keys into
+  chunks by their alphabetically-first occurrence's source file:
+
+  ```
+  .translations/
+    en/
+      components/Header.json
+      pages/Checkout.json
+      _external/zod.json
+    es/  …
+    .cache/<provider-sig>/<source-target>/<chunk>.json
+  ```
+
+  Wins:
+  - **Reviewable diffs.** A 5-string copy change shows up in 1-2 small chunk
+    files instead of buried in a multi-thousand-line catalog.
+  - **Skip-on-no-change.** Each chunk caches its `chunkHash`; runs where
+    `chunkHash` matches skip the API entirely. No-op CI passes are now
+    effectively free.
+  - **Better consistency.** Within a chunk, unchanged neighbouring strings ride
+    along as context for AI re-translation of changed strings.
+  - **Auto-split.** Chunks exceeding 300 strings split alphabetically
+    (`Foo.0.json`, `Foo.1.json`). Default cap configurable.
+
+  Migration: silent, on first `translate` run after upgrade. The flat
+  `<locale>.json` source file is reshaped into the chunked tree; legacy
+  `.cache/<sig>.json` files are pruned (cache resets — first run is a cold
+  pass).
+
+  `fsCatalogLoader` (Next) and the Vite plugin walk the new tree recursively.
+  Both retain a fallback to the flat layout for users mid- upgrade — the runtime
+  never breaks during the transition.
+
+  New helpers in `@autotranslate/core/internal`:
+  - `chunkPathFor(meta)` — pure function returning the chunk path for a key
+  - `buildChunkLayout(manifest, options?)` — chunk path → keys map
+
+### Patch Changes
+
+- Updated dependencies
+  [[`01133fd`](https://github.com/tamimbinhakim/autotranslate/commit/01133fd6b48ed7741eef14ce8a52689d05a113a2),
+  [`21aadff`](https://github.com/tamimbinhakim/autotranslate/commit/21aadfffaf317b8a2ae95fdbc81ee04e98242412),
+  [`0f5e052`](https://github.com/tamimbinhakim/autotranslate/commit/0f5e052b821b4eab781c8d843dd28b644ee719b5)]:
+  - @autotranslate/core@0.2.0
+
 ## 0.1.0
 
 ### Minor Changes
