@@ -1,15 +1,9 @@
-import { type CatalogKey as CoreCatalogKey, createTranslator } from '@autotranslate/core';
+import type { CatalogKey } from '@autotranslate/core';
+import { createTranslator } from '@autotranslate/core';
 import { useCallback, useMemo } from 'react';
 import { useTranslationContext } from './context';
 
-/** Back-compat augmentation point. Canonical interface lives in `@autotranslate/core`. */
-// biome-ignore lint/suspicious/noEmptyInterface: back-compat augmentation point
-export interface AutotranslateCatalog {}
-
-type LegacyKey = keyof AutotranslateCatalog;
-
-/** Generated catalog keys (from core or this package's legacy interface), or `string`. */
-export type CatalogKey = [LegacyKey] extends [never] ? CoreCatalogKey : LegacyKey | CoreCatalogKey;
+export type { AutotranslateCatalog, CatalogKey } from '@autotranslate/core';
 
 /**
  * Hook returning a translator function bound to the active locale + catalog.

@@ -2,6 +2,7 @@
 
 export const VERSION = '0.0.0';
 
+export type { AutotranslateCatalog, CatalogKey } from '@autotranslate/core';
 export type { TranslationContextValue } from './context';
 export { TranslationContext, useTranslationContext } from './context';
 export type {
@@ -18,5 +19,4 @@ export type { TranslationProviderProps } from './provider';
 export { TranslationProvider } from './provider';
 export type { TProps } from './T';
 export { T } from './T';
-export type { AutotranslateCatalog, CatalogKey } from './use-t';
 export { useLocale, useT, useTranslations } from './use-t';

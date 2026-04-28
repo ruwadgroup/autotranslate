@@ -14,9 +14,8 @@ Add standalone `t()` and `@autotranslate/zod` integration
   uses `AsyncLocalStorage` for per-request isolation; browsers fall back to a
   module slot via the `browser` export condition.
 - `AutotranslateCatalog` augmentation point moved to `@autotranslate/core`.
-  `@autotranslate/react` keeps an empty back-compat interface so existing
-  typegen output continues to narrow `useT()`. `autotranslate generate-types`
-  now augments both packages.
+  `@autotranslate/react` re-exports it for ergonomics.
+  `autotranslate generate-types` augments core only — re-run it after upgrading.
 - The CLI extractor recognizes `import { t } from '@autotranslate/core/t'` (and
   `/standalone`) so non-React call sites flow through the same extraction +
   translation pipeline.
