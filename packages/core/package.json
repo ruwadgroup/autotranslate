@@ -84,7 +84,7 @@
     "clean": "rm -rf dist .turbo *.tsbuildinfo"
   },
   "dependencies": {
-    "@formatjs/icu-messageformat-parser": "^2.11.4",
+    "@formatjs/icu-messageformat-parser": "^3.5.5",
     "@noble/hashes": "^1.7.1",
     "zod": "^4.0.0"
   },

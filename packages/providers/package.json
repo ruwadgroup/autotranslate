@@ -68,7 +68,7 @@
   },
   "dependencies": {
     "@autotranslate/core": "workspace:*",
-    "@formatjs/icu-messageformat-parser": "^2.11.4",
+    "@formatjs/icu-messageformat-parser": "^3.5.5",
     "zod": "^4.0.0"
   },
   "peerDependencies": {
