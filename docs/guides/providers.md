@@ -11,6 +11,7 @@ batching, concurrency, caching, and override application on top.
 | `@autotranslate/providers/ai`     | Production. Anthropic / OpenAI / Google / OpenRouter via Vercel AI SDK. |
 | `@autotranslate/providers/deepl`  | Plain-string copy. Excellent quality on supported pairs.                |
 | `@autotranslate/providers/google` | Plain-string copy. Cheap and fast.                                      |
+| `@autotranslate/providers/hybrid` | Routes structured trees to AI, plain strings to DeepL/Google.           |
 
 You select one in `autotranslate.config.ts`:
 
