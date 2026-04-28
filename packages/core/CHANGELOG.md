@@ -1,5 +1,83 @@
 # @autotranslate/core
 
+## 1.0.0-beta.0
+
+### Major Changes
+
+- [#75](https://github.com/tamimbinhakim/autotranslate/pull/75)
+  [`75ba96c`](https://github.com/tamimbinhakim/autotranslate/commit/75ba96cfa7180524fae55b8c973c1fad51c9cd90)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - `autotranslate`
+  1.0.0-beta — public API freeze candidate
+
+  The surface is stable enough to call. This release is published under the
+  `beta` npm dist-tag (`pnpm add @autotranslate/core@beta`) and exists to soak
+  the API in real apps before the GA cut.
+
+  What landed since 0.2:
+  - Chunked translation catalogs and per-chunk caching
+  - Per-chunk AI context-prefix for consistency across long documents
+  - Glossary support + first-class hybrid provider
+  - Streaming dev-mode translation (Vite + Next)
+  - Performance benchmarks published in `docs/performance.md`
+  - Public-API contract enumerated in `STABILITY.md`
+  - TypeScript Language Service plugin (`@autotranslate/typescript-plugin`)
+  - Copy-experiments package (`@autotranslate/experiments`)
+  - Migration guides for `react-i18next`, `next-intl`, `lingui`, `gt-next`
+
+  What's expected to change before 1.0 GA:
+  - Real-world soak (a few weeks of production use across multiple frameworks)
+  - A handful of additional formatter slots — `<List>` (`Intl.ListFormat`) and
+    `<Unit>` (`Intl.NumberFormat({ style: 'unit' })`) at minimum
+  - Final pass on cookbook recipes informed by user feedback
+
+  The on-disk catalog format, runtime hashing scheme, public exports, and CLI
+  contracts are all considered frozen modulo bug fixes. See `STABILITY.md`.
+
+### Minor Changes
+
+- [#64](https://github.com/tamimbinhakim/autotranslate/pull/64)
+  [`4a99f3b`](https://github.com/tamimbinhakim/autotranslate/commit/4a99f3bf00035e83c5754690a5710d264c9c9879)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Glossary
+  support + first-class hybrid provider
+
+  **`glossary` config field** — a flat array of brand / proper-noun terms the AI
+  must never translate or transliterate. The CLI prepends the glossary to the
+  provider's instruction at translate time.
+
+  ```ts
+  defineConfig({
+    // …
+    glossary: ['autotranslate', 'API', 'SDK'],
+    instruction: 'Friendly tone.',
+  });
+  ```
+
+  The merged instruction the provider receives:
+
+  ```
+  Glossary — preserve these terms exactly; never translate or transliterate:
+  - autotranslate
+  - API
+  - SDK
+
+  Friendly tone.
+  ```
+
+  **`hybrid` provider** — built-in provider that routes structured-tree entries
+  (`<T>` blocks, plurals, branches) to an `ai` provider and plain strings
+  (`useT` literals, dictionary keys) to DeepL or Google.
+
+  ```ts
+  provider: {
+    name: 'hybrid',
+    ai: { name: 'ai', model: 'anthropic:claude-haiku-4-5', apiKey: process.env.ANTHROPIC_API_KEY },
+    plain: { name: 'deepl', apiKey: process.env.DEEPL_API_KEY },
+  }
+  ```
+
+  Lives at `@autotranslate/providers/hybrid` (`createHybridProvider`). Cache
+  signature combines both providers' signatures.
+
 ## 0.2.0
 
 ### Minor Changes

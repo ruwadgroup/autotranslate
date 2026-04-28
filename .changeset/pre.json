@@ -15,5 +15,14 @@
     "@autotranslate/vite": "0.2.0",
     "@autotranslate/zod": "0.2.0"
   },
-  "changesets": []
+  "changesets": [
+    "experiments-package",
+    "glossary-hybrid",
+    "migration-guides-cookbook",
+    "next-streaming-dev-mode",
+    "remove-mcp",
+    "streaming-dev-mode",
+    "typescript-plugin-package",
+    "v1-0-0-beta"
+  ]
 }

@@ -1,5 +1,122 @@
 # @autotranslate/cli
 
+## 1.0.0-beta.0
+
+### Major Changes
+
+- [#75](https://github.com/tamimbinhakim/autotranslate/pull/75)
+  [`75ba96c`](https://github.com/tamimbinhakim/autotranslate/commit/75ba96cfa7180524fae55b8c973c1fad51c9cd90)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - `autotranslate`
+  1.0.0-beta — public API freeze candidate
+
+  The surface is stable enough to call. This release is published under the
+  `beta` npm dist-tag (`pnpm add @autotranslate/core@beta`) and exists to soak
+  the API in real apps before the GA cut.
+
+  What landed since 0.2:
+  - Chunked translation catalogs and per-chunk caching
+  - Per-chunk AI context-prefix for consistency across long documents
+  - Glossary support + first-class hybrid provider
+  - Streaming dev-mode translation (Vite + Next)
+  - Performance benchmarks published in `docs/performance.md`
+  - Public-API contract enumerated in `STABILITY.md`
+  - TypeScript Language Service plugin (`@autotranslate/typescript-plugin`)
+  - Copy-experiments package (`@autotranslate/experiments`)
+  - Migration guides for `react-i18next`, `next-intl`, `lingui`, `gt-next`
+
+  What's expected to change before 1.0 GA:
+  - Real-world soak (a few weeks of production use across multiple frameworks)
+  - A handful of additional formatter slots — `<List>` (`Intl.ListFormat`) and
+    `<Unit>` (`Intl.NumberFormat({ style: 'unit' })`) at minimum
+  - Final pass on cookbook recipes informed by user feedback
+
+  The on-disk catalog format, runtime hashing scheme, public exports, and CLI
+  contracts are all considered frozen modulo bug fixes. See `STABILITY.md`.
+
+### Minor Changes
+
+- [#64](https://github.com/tamimbinhakim/autotranslate/pull/64)
+  [`4a99f3b`](https://github.com/tamimbinhakim/autotranslate/commit/4a99f3bf00035e83c5754690a5710d264c9c9879)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Glossary
+  support + first-class hybrid provider
+
+  **`glossary` config field** — a flat array of brand / proper-noun terms the AI
+  must never translate or transliterate. The CLI prepends the glossary to the
+  provider's instruction at translate time.
+
+  ```ts
+  defineConfig({
+    // …
+    glossary: ['autotranslate', 'API', 'SDK'],
+    instruction: 'Friendly tone.',
+  });
+  ```
+
+  The merged instruction the provider receives:
+
+  ```
+  Glossary — preserve these terms exactly; never translate or transliterate:
+  - autotranslate
+  - API
+  - SDK
+
+  Friendly tone.
+  ```
+
+  **`hybrid` provider** — built-in provider that routes structured-tree entries
+  (`<T>` blocks, plurals, branches) to an `ai` provider and plain strings
+  (`useT` literals, dictionary keys) to DeepL or Google.
+
+  ```ts
+  provider: {
+    name: 'hybrid',
+    ai: { name: 'ai', model: 'anthropic:claude-haiku-4-5', apiKey: process.env.ANTHROPIC_API_KEY },
+    plain: { name: 'deepl', apiKey: process.env.DEEPL_API_KEY },
+  }
+  ```
+
+  Lives at `@autotranslate/providers/hybrid` (`createHybridProvider`). Cache
+  signature combines both providers' signatures.
+
+### Patch Changes
+
+- [#63](https://github.com/tamimbinhakim/autotranslate/pull/63)
+  [`1e2d44e`](https://github.com/tamimbinhakim/autotranslate/commit/1e2d44e7a23ee381127d55b9dcbb777b25e04f0a)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Migration
+  guides + new cookbook recipes
+  - `docs/migrating/{react-i18next,next-intl,lingui,gt-next}.md` — step-by-step
+    migration paths from each major i18n library.
+  - `docs/cookbook/multi-tenant.md` — three patterns for multi-tenant
+    translations (build-time per tenant, runtime overrides, AI instruction
+    injection per tenant).
+  - `docs/cookbook/ab-copy.md` — A/B copy testing patterns layered on external
+    experiment frameworks.
+  - `docs/cookbook/branded-glossary.md` — four layers of brand-term locking
+    (instruction, `<Var>`, overrides, separate config).
+
+  Index updated; no code changes.
+
+- [#61](https://github.com/tamimbinhakim/autotranslate/pull/61)
+  [`0305ae8`](https://github.com/tamimbinhakim/autotranslate/commit/0305ae8bd6f15628ce885019067e9d66ed8a9906)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Remove
+  `@autotranslate/mcp` from the workspace
+
+  The MCP package was a 0.0.2 stub that duplicated what the CLI + `agents.md`
+  already cover. Agents managing autotranslate (Claude Code, Cursor, Windsurf)
+  have shell access and a comprehensive single-file reference at
+  `node_modules/@autotranslate/cli/dist/agents.md` — wrapping the CLI in a
+  JSON-RPC layer added maintenance cost without unique capability.
+
+  The published `@autotranslate/mcp@0.0.2` stays accessible on npm but is no
+  longer maintained. Future agentic tooling will live inside the CLI as direct
+  subcommands or in adapter packages where appropriate.
+
+- Updated dependencies
+  [[`4a99f3b`](https://github.com/tamimbinhakim/autotranslate/commit/4a99f3bf00035e83c5754690a5710d264c9c9879),
+  [`75ba96c`](https://github.com/tamimbinhakim/autotranslate/commit/75ba96cfa7180524fae55b8c973c1fad51c9cd90)]:
+  - @autotranslate/core@1.0.0-beta.0
+  - @autotranslate/providers@1.0.0-beta.0
+
 ## 0.2.0
 
 ### Minor Changes

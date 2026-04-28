@@ -1,5 +1,83 @@
 # @autotranslate/react
 
+## 1.0.0-beta.0
+
+### Major Changes
+
+- [#75](https://github.com/tamimbinhakim/autotranslate/pull/75)
+  [`75ba96c`](https://github.com/tamimbinhakim/autotranslate/commit/75ba96cfa7180524fae55b8c973c1fad51c9cd90)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - `autotranslate`
+  1.0.0-beta — public API freeze candidate
+
+  The surface is stable enough to call. This release is published under the
+  `beta` npm dist-tag (`pnpm add @autotranslate/core@beta`) and exists to soak
+  the API in real apps before the GA cut.
+
+  What landed since 0.2:
+  - Chunked translation catalogs and per-chunk caching
+  - Per-chunk AI context-prefix for consistency across long documents
+  - Glossary support + first-class hybrid provider
+  - Streaming dev-mode translation (Vite + Next)
+  - Performance benchmarks published in `docs/performance.md`
+  - Public-API contract enumerated in `STABILITY.md`
+  - TypeScript Language Service plugin (`@autotranslate/typescript-plugin`)
+  - Copy-experiments package (`@autotranslate/experiments`)
+  - Migration guides for `react-i18next`, `next-intl`, `lingui`, `gt-next`
+
+  What's expected to change before 1.0 GA:
+  - Real-world soak (a few weeks of production use across multiple frameworks)
+  - A handful of additional formatter slots — `<List>` (`Intl.ListFormat`) and
+    `<Unit>` (`Intl.NumberFormat({ style: 'unit' })`) at minimum
+  - Final pass on cookbook recipes informed by user feedback
+
+  The on-disk catalog format, runtime hashing scheme, public exports, and CLI
+  contracts are all considered frozen modulo bug fixes. See `STABILITY.md`.
+
+### Minor Changes
+
+- [#65](https://github.com/tamimbinhakim/autotranslate/pull/65)
+  [`3633841`](https://github.com/tamimbinhakim/autotranslate/commit/3633841b9332178b70fcc41d18e6581ff34c4a63)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Streaming
+  dev-mode translation
+
+  In dev, missing keys can now translate on first miss. The runtime hook plus a
+  Vite middleware close the "edit a string → see it translated" loop without
+  manually running `pnpm i18n`.
+
+  ```ts
+  // vite.config.ts
+  import autotranslate from '@autotranslate/vite';
+  export default { plugins: [autotranslate({ streaming: true })] };
+  ```
+
+  ```tsx
+  // app entry — dev only
+  import { TranslationProvider, createDevOnMissing } from '@autotranslate/react';
+
+  <TranslationProvider
+    locale={locale}
+    catalog={catalog}
+    onMissing={import.meta.env.DEV ? createDevOnMissing() : undefined}
+  >
+  ```
+
+  When `useT('New string')` hits a key that isn't in the catalog yet, the
+  runtime POSTs to the dev endpoint, the server runs translate for that key, the
+  chunk is updated, and Vite's existing HMR triggers a reload.
+
+  Production: omit `onMissing`. The runtime falls back to source on miss (same
+  behaviour as today).
+
+  Next.js streaming dev mode is on the v0.9 roadmap; today the Next adapter
+  relies on running `pnpm i18n` between edits.
+
+### Patch Changes
+
+- Updated dependencies
+  [[`4a99f3b`](https://github.com/tamimbinhakim/autotranslate/commit/4a99f3bf00035e83c5754690a5710d264c9c9879),
+  [`75ba96c`](https://github.com/tamimbinhakim/autotranslate/commit/75ba96cfa7180524fae55b8c973c1fad51c9cd90)]:
+  - @autotranslate/core@1.0.0-beta.0
+
 ## 0.1.1
 
 ### Patch Changes
