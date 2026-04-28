@@ -85,7 +85,7 @@
   },
   "dependencies": {
     "@formatjs/icu-messageformat-parser": "^3.5.5",
-    "@noble/hashes": "^1.7.1",
+    "@noble/hashes": "^2.2.0",
     "zod": "^4.0.0"
   },
   "devDependencies": {
