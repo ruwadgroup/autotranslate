@@ -16,10 +16,16 @@ export type { AutotranslateCatalog, CatalogKey } from '@autotranslate/core';
  * ```
  */
 export function useT(): (key: CatalogKey, params?: Readonly<Record<string, unknown>>) => string {
-  const { locale, catalog, fallback } = useTranslationContext();
+  const { locale, catalog, fallback, onMissing } = useTranslationContext();
   const translator = useMemo(
-    () => createTranslator({ locale, catalog, ...(fallback ? { fallback } : {}) }),
-    [locale, catalog, fallback],
+    () =>
+      createTranslator({
+        locale,
+        catalog,
+        ...(fallback ? { fallback } : {}),
+        ...(onMissing ? { onMissing } : {}),
+      }),
+    [locale, catalog, fallback, onMissing],
   );
   return useCallback((key: CatalogKey, params) => translator.t(key, params), [translator]);
 }
