@@ -5,6 +5,7 @@ export default defineConfig({
     index: 'src/index.ts',
     plugin: 'src/plugin.ts',
     middleware: 'src/middleware.ts',
+    streaming: 'src/streaming.ts',
   },
   format: ['esm', 'cjs'],
   dts: { compilerOptions: { composite: false, incremental: false } },

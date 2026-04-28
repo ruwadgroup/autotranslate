@@ -39,6 +39,11 @@
       "import": "./dist/middleware.js",
       "require": "./dist/middleware.cjs"
     },
+    "./streaming": {
+      "types": "./dist/streaming.d.ts",
+      "import": "./dist/streaming.js",
+      "require": "./dist/streaming.cjs"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -61,10 +66,17 @@
     "@autotranslate/react": "workspace:*"
   },
   "peerDependencies": {
+    "@autotranslate/cli": "workspace:*",
     "next": ">=15.0.0",
     "react": ">=18.0.0"
   },
+  "peerDependenciesMeta": {
+    "@autotranslate/cli": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@autotranslate/cli": "workspace:*",
     "@types/node": "^25.6.0",
     "next": "^16.2.4",
     "react": "^19.2.5",
