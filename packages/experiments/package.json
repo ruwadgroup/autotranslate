@@ -1,20 +1,20 @@
 {
-  "name": "@autotranslate/ab",
+  "name": "@autotranslate/experiments",
   "version": "0.0.1",
-  "description": "A/B copy testing for autotranslate. Variants live in your catalog; activate them with any flag system.",
+  "description": "Copy experiments for autotranslate. Variants live in your catalog; activate them with any flag system.",
   "license": "MIT",
   "author": "Tamim Bin Hakim <tamimbinhakim.work@gmail.com>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tamimbinhakim/autotranslate.git",
-    "directory": "packages/ab"
+    "directory": "packages/experiments"
   },
-  "homepage": "https://github.com/tamimbinhakim/autotranslate/tree/main/packages/ab#readme",
+  "homepage": "https://github.com/tamimbinhakim/autotranslate/tree/main/packages/experiments#readme",
   "bugs": "https://github.com/tamimbinhakim/autotranslate/issues",
   "keywords": [
     "i18n",
-    "ab-test",
     "experiments",
+    "ab-test",
     "translation",
     "react"
   ],

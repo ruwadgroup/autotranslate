@@ -10,47 +10,52 @@ pnpm add @autotranslate/ab
 ## API
 
 ```tsx
-import { ABProvider, ABTest, ABVariant, useABTest } from '@autotranslate/ab';
+import {
+  ExperimentProvider,
+  Experiment,
+  Variant,
+  useExperiment,
+} from '@autotranslate/ab';
 ```
 
-### Provider
+## Provider
 
 Resolve experiment assignments upstream (Vercel `flags`, GrowthBook,
 LaunchDarkly, your own header) and pass the resolved map.
 
 ```tsx
-<ABProvider assignments={{ 'cta-text': 'urgent' }}>
+<ExperimentProvider assignments={{ 'cta-text': 'urgent' }}>
   <App />
-</ABProvider>
+</ExperimentProvider>
 ```
 
-### Component-style
+## Component-style
 
 ```tsx
 import { T } from '@autotranslate/react';
-import { ABTest, ABVariant } from '@autotranslate/ab';
+import { Experiment, Variant } from '@autotranslate/ab';
 
-<ABTest name="cta-text">
-  <ABVariant id="control">
+<Experiment name="cta-text">
+  <Variant id="control">
     <T context="cta">Sign up</T>
-  </ABVariant>
-  <ABVariant id="urgent">
+  </Variant>
+  <Variant id="urgent">
     <T context="cta">Start now — limited time</T>
-  </ABVariant>
-</ABTest>;
+  </Variant>
+</Experiment>;
 ```
 
 The matching variant renders. `control` is the fallback when no assignment
 exists for the experiment.
 
-### Hook-style
+## Hook-style
 
 ```tsx
-import { useABTest } from '@autotranslate/ab';
+import { useExperiment } from '@autotranslate/ab';
 import { useT } from '@autotranslate/react';
 
 function CtaButton() {
-  const variant = useABTest('cta-text');
+  const variant = useExperiment('cta-text');
   const t = useT();
   return (
     <button>
@@ -65,12 +70,13 @@ function CtaButton() {
 ## Vercel `flags` integration
 
 Resolve assignments server-side with the
-[`flags`](https://github.com/vercel/flags) SDK and pass them to `<ABProvider>`:
+[`flags`](https://github.com/vercel/flags) SDK and pass them to
+`<ExperimentProvider>`:
 
 ```tsx
 // app/layout.tsx
 import { flag } from 'flags/next';
-import { ABProvider } from '@autotranslate/ab';
+import { ExperimentProvider } from '@autotranslate/ab';
 
 const ctaFlag = flag({
   key: 'cta-text',
@@ -81,7 +87,11 @@ const ctaFlag = flag({
 
 export default async function Layout({ children }) {
   const cta = await ctaFlag();
-  return <ABProvider assignments={{ 'cta-text': cta }}>{children}</ABProvider>;
+  return (
+    <ExperimentProvider assignments={{ 'cta-text': cta }}>
+      {children}
+    </ExperimentProvider>
+  );
 }
 ```
 
@@ -101,8 +111,8 @@ with `context="cta"` won't collide with "Sign up" elsewhere in your app.
 
 ## Cleaning up after a winner
 
-Once an experiment ends, delete the losing `<ABVariant>` and remove the
-`<ABTest>` wrapper. Orphaned catalog entries are flagged by
+Once an experiment ends, delete the losing `<Variant>` and remove the
+`<Experiment>` wrapper. Orphaned catalog entries are flagged by
 `autotranslate check`; the next translate run prunes them.
 
 ## License

@@ -13,19 +13,19 @@ import {
 /** Map of experiment id → active variant id. Build it from your flag system. */
 export type ExperimentAssignments = Readonly<Record<string, string>>;
 
-interface ABContextValue {
+interface ExperimentContextValue {
   readonly assignments: ExperimentAssignments;
   readonly defaultVariant: (experimentId: string) => string;
 }
 
 const DEFAULT_VARIANT = 'control';
 
-const ABContext = createContext<ABContextValue>({
+const ExperimentContext = createContext<ExperimentContextValue>({
   assignments: {},
   defaultVariant: () => DEFAULT_VARIANT,
 });
 
-export interface ABProviderProps {
+export interface ExperimentProviderProps {
   /** Active variant id per experiment. Resolve from your flag system upstream. */
   readonly assignments: ExperimentAssignments;
   /**
@@ -37,51 +37,51 @@ export interface ABProviderProps {
 }
 
 /**
- * Provider that exposes experiment assignments to `<ABTest>`, `<ABVariant>`,
- * and `useABTest`. Resolve the assignments upstream — Vercel `flags`,
+ * Exposes experiment assignments to `<Experiment>`, `<Variant>`, and
+ * `useExperiment`. Resolve the assignments upstream — Vercel `flags`,
  * GrowthBook, LaunchDarkly, your own header — and pass the resolved map.
  */
-export function ABProvider({
+export function ExperimentProvider({
   assignments,
   defaultVariant = DEFAULT_VARIANT,
   children,
-}: ABProviderProps): ReactElement {
-  const value = useMemo<ABContextValue>(
+}: ExperimentProviderProps): ReactElement {
+  const value = useMemo<ExperimentContextValue>(
     () => ({
       assignments,
       defaultVariant: typeof defaultVariant === 'function' ? defaultVariant : () => defaultVariant,
     }),
     [assignments, defaultVariant],
   );
-  return <ABContext.Provider value={value}>{children}</ABContext.Provider>;
+  return <ExperimentContext.Provider value={value}>{children}</ExperimentContext.Provider>;
 }
 
-export function useABContext(): ABContextValue {
-  return useContext(ABContext);
+export function useExperimentContext(): ExperimentContextValue {
+  return useContext(ExperimentContext);
 }
 
 /**
- * Read the active variant for an experiment. Returns the default variant
- * (typically `'control'`) when the provider doesn't have an assignment.
+ * Read the active variant for an experiment. Returns the default (typically
+ * `'control'`) when the provider has no assignment for it.
  */
-export function useABTest(experimentId: string): string {
-  const { assignments, defaultVariant } = useABContext();
+export function useExperiment(experimentId: string): string {
+  const { assignments, defaultVariant } = useExperimentContext();
   return assignments[experimentId] ?? defaultVariant(experimentId);
 }
 
-export interface ABTestProps {
+export interface ExperimentProps {
   readonly name: string;
   readonly children: ReactNode;
 }
 
 /**
- * Render the matching `<ABVariant>` for the active assignment. Falls back
- * to the variant whose `id` matches the provider's default (typically
- * `control`); if no fallback variant exists, renders nothing.
+ * Render the matching `<Variant>` for the active assignment. Falls back to
+ * the variant whose `id` matches the provider's default (typically
+ * `'control'`); renders nothing if no fallback variant is declared.
  */
-export function ABTest({ name, children }: ABTestProps): ReactNode {
-  const active = useABTest(name);
-  const { defaultVariant } = useABContext();
+export function Experiment({ name, children }: ExperimentProps): ReactNode {
+  const active = useExperiment(name);
+  const { defaultVariant } = useExperimentContext();
   const fallback = defaultVariant(name);
 
   let activeNode: ReactNode = null;
@@ -95,22 +95,22 @@ export function ABTest({ name, children }: ABTestProps): ReactNode {
   return activeNode ?? fallbackNode ?? null;
 }
 
-export interface ABVariantProps {
+export interface VariantProps {
   readonly id: string;
   readonly children: ReactNode;
 }
 
 /**
- * One arm of an `<ABTest>`. Rendered only when its `id` matches the active
- * assignment for the surrounding `<ABTest name>`.
+ * One arm of an `<Experiment>`. Rendered only when its `id` matches the
+ * active assignment for the surrounding `<Experiment name>`.
  */
-export function ABVariant({ children }: ABVariantProps): ReactNode {
+export function Variant({ children }: VariantProps): ReactNode {
   return children;
 }
-ABVariant.displayName = 'ABVariant';
+Variant.displayName = 'Variant';
 
-function isVariantElement(node: ReactNode): node is ReactElement<ABVariantProps> {
+function isVariantElement(node: ReactNode): node is ReactElement<VariantProps> {
   if (!isValidElement(node)) return false;
   const type = node.type as { displayName?: string };
-  return type === ABVariant || type?.displayName === 'ABVariant';
+  return type === Variant || type?.displayName === 'Variant';
 }

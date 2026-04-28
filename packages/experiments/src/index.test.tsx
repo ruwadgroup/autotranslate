@@ -1,53 +1,53 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { ABProvider, ABTest, ABVariant, useABTest } from './index';
+import { Experiment, ExperimentProvider, useExperiment, Variant } from './index';
 
 function Probe({ id }: { id: string }) {
-  const variant = useABTest(id);
+  const variant = useExperiment(id);
   return <span>{variant}</span>;
 }
 
-describe('useABTest', () => {
+describe('useExperiment', () => {
   it('returns the active assignment for an experiment', () => {
     render(
-      <ABProvider assignments={{ cta: 'urgent' }}>
+      <ExperimentProvider assignments={{ cta: 'urgent' }}>
         <Probe id="cta" />
-      </ABProvider>,
+      </ExperimentProvider>,
     );
     expect(screen.getByText('urgent')).toBeTruthy();
   });
 
   it('falls back to the default variant when missing', () => {
     render(
-      <ABProvider assignments={{}}>
+      <ExperimentProvider assignments={{}}>
         <Probe id="cta" />
-      </ABProvider>,
+      </ExperimentProvider>,
     );
     expect(screen.getByText('control')).toBeTruthy();
   });
 
   it('honors a function default', () => {
     render(
-      <ABProvider
+      <ExperimentProvider
         assignments={{}}
         defaultVariant={(name) => (name === 'cta' ? 'baseline' : 'control')}
       >
         <Probe id="cta" />
-      </ABProvider>,
+      </ExperimentProvider>,
     );
     expect(screen.getByText('baseline')).toBeTruthy();
   });
 });
 
-describe('ABTest / ABVariant', () => {
+describe('Experiment / Variant', () => {
   it('renders the matching variant', () => {
     render(
-      <ABProvider assignments={{ hero: 'b' }}>
-        <ABTest name="hero">
-          <ABVariant id="control">Original</ABVariant>
-          <ABVariant id="b">Treatment</ABVariant>
-        </ABTest>
-      </ABProvider>,
+      <ExperimentProvider assignments={{ hero: 'b' }}>
+        <Experiment name="hero">
+          <Variant id="control">Original</Variant>
+          <Variant id="b">Treatment</Variant>
+        </Experiment>
+      </ExperimentProvider>,
     );
     expect(screen.queryByText('Original')).toBeNull();
     expect(screen.getByText('Treatment')).toBeTruthy();
@@ -55,23 +55,23 @@ describe('ABTest / ABVariant', () => {
 
   it('falls back to the control variant when assignment is missing', () => {
     render(
-      <ABProvider assignments={{}}>
-        <ABTest name="hero">
-          <ABVariant id="control">Original</ABVariant>
-          <ABVariant id="b">Treatment</ABVariant>
-        </ABTest>
-      </ABProvider>,
+      <ExperimentProvider assignments={{}}>
+        <Experiment name="hero">
+          <Variant id="control">Original</Variant>
+          <Variant id="b">Treatment</Variant>
+        </Experiment>
+      </ExperimentProvider>,
     );
     expect(screen.getByText('Original')).toBeTruthy();
   });
 
   it('renders nothing when no fallback variant is declared', () => {
     const { container } = render(
-      <ABProvider assignments={{}}>
-        <ABTest name="hero">
-          <ABVariant id="b">Treatment</ABVariant>
-        </ABTest>
-      </ABProvider>,
+      <ExperimentProvider assignments={{}}>
+        <Experiment name="hero">
+          <Variant id="b">Treatment</Variant>
+        </Experiment>
+      </ExperimentProvider>,
     );
     expect(container.textContent).toBe('');
   });
