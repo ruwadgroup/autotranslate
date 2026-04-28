@@ -8,6 +8,8 @@ a command, get translated catalogs.
 - **[Overview](overview.md)** — what autotranslate does and where it fits
 - **[Philosophy](philosophy.md)** — code as source of truth, the design choices
   and their reasons
+- **[Stability](../STABILITY.md)** — what's public, what's internal, what's
+  allowed to change in pre-1.0
 - **[Installation](installation.md)** — packages and version matrix
 - **[Quick start](quick-start.md)** — translate your first string in five
   minutes
