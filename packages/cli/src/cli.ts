@@ -29,6 +29,10 @@ program
         'already exists — pass --force to overwrite.',
       );
     }
+    console.log();
+    console.log(chalk.dim('Tip — for AI assistants (Claude Code, Cursor, Windsurf):'));
+    console.log(chalk.dim('  Add this line to your AGENTS.md / CLAUDE.md / .cursorrules:'));
+    console.log(chalk.cyan('    See node_modules/@autotranslate/cli/dist/agents.md'));
   });
 
 program
