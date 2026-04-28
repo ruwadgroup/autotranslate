@@ -12,6 +12,6 @@
     { "path": "./packages/vite" },
     { "path": "./packages/providers" },
     { "path": "./packages/eslint-plugin" },
-    { "path": "./packages/mcp" }
+    { "path": "./packages/zod" }
   ]
 }

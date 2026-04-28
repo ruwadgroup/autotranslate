@@ -37,7 +37,7 @@ translation files → typed runtime, with each stage validated.
 │  Tooling                                                         │
 │  ├─ @autotranslate/cli           (extract, translate, check)     │
 │  ├─ @autotranslate/eslint-plugin (lint rules)                    │
-│  └─ @autotranslate/mcp           (agentic clients)               │
+│  └─ @autotranslate/zod           (Zod v4 validation errors)      │
 ├──────────────────────────────────────────────────────────────────┤
 │  Providers                                                       │
 │  └─ @autotranslate/providers (ai, deepl, google, stub, custom)   │

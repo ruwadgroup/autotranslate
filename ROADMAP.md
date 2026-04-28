@@ -51,11 +51,12 @@ milestone matters to you.
 - [x] Cookbook (locale switcher, form validation, server actions, testing,
       lazy-loading, custom provider, debugging, …)
 
-## v0.7 — MCP + agentic workflow
+## v0.7 — Streaming dev mode + editor diagnostics
 
-- [ ] `@autotranslate/mcp` — tools for `extract`, `translate`, `check`,
-      `add-locale`
-- [ ] Cursor / Claude Code recipes in docs
+- [ ] Streaming dev-mode translation (translate on first miss)
+- [ ] TS LSP plugin / editor diagnostics for missing keys
+- [ ] Hybrid provider mode — MT for short / unambiguous, AI for the rest
+- [ ] Glossary support (per-tenant terminology)
 
 ## v1.0 — Stability & ergonomics
 
