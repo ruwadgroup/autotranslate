@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://github.com/tamimbinhakim/autotranslate">
-    <img src="assets/banner.png" alt="autotranslate — code-first, AI-powered i18n for any React framework" width="100%" />
+    <img src="assets/banner-1.0.0-beta.png" alt="autotranslate — code-first, AI-powered i18n for any React framework" width="100%" />
   </a>
 
 <br />
@@ -11,17 +11,17 @@
 [![Code style: Biome](https://img.shields.io/badge/code_style-biome-60a5fa.svg)](https://biomejs.dev/)
 [![pnpm](https://img.shields.io/badge/pnpm-monorepo-f69220.svg?logo=pnpm&logoColor=white)](https://pnpm.io/)
 [![Conventional Commits](https://img.shields.io/badge/conventional_commits-1.0.0-fa6673.svg)](https://www.conventionalcommits.org)
-[![Status: pre-alpha](https://img.shields.io/badge/status-pre--alpha-orange.svg)](#status)
+[![Status: 1.0.0-beta](https://img.shields.io/badge/status-1.0.0--beta-yellow.svg)](#status)
 
 Write strings the way you write code. Run a command. Get translated catalogs.
 
 </div>
 
 <!-- prettier-ignore -->
-> [!WARNING]
-> autotranslate is pre-1.0. The API surface, package exports, and on-disk
-> catalog format may change without notice until **v1.0.0**.
-> See [`ROADMAP.md`](ROADMAP.md).
+> [!NOTE]
+> autotranslate is in **1.0.0-beta**. Install with the `beta` dist-tag:
+> `pnpm add @autotranslate/core@beta`. The public API surface is frozen modulo
+> bug fixes — see [`STABILITY.md`](STABILITY.md). GA after a real-world soak.
 
 ```tsx
 <T>
@@ -164,17 +164,18 @@ pnpm --filter @autotranslate/example-vite-react dev
 
 ## Status
 
-**Pre-alpha.** Implementations land package-by-package per the
-[roadmap](ROADMAP.md).
+**1.0.0-beta.** Public API surface frozen modulo bug fixes — see
+[`STABILITY.md`](STABILITY.md). GA cuts after a real-world soak.
 
-| Phase    | Versions | What it means                                                   |
-| -------- | -------- | --------------------------------------------------------------- |
-| Pre-1.0  | `0.x.y`  | Active development. Breaking changes anytime. Treat as preview. |
-| 1.0      | `1.0.0`  | First stable release. Public API frozen, semver from here on.   |
-| Post-1.0 | `1.x.y+` | Backwards-compatible features and fixes per semver.             |
+| Phase    | Versions       | What it means                                       |
+| -------- | -------------- | --------------------------------------------------- |
+| Beta     | `1.0.0-beta.x` | Public API frozen. Soaking the surface before GA.   |
+| 1.0      | `1.0.0`        | First stable release. Semver from here on.          |
+| Post-1.0 | `1.x.y+`       | Backwards-compatible features and fixes per semver. |
 
-If you adopt a `0.x` build today, pin exact versions and read every changeset
-before upgrading. Bug reports, design feedback, and PRs are welcome.
+Install the beta with `pnpm add @autotranslate/core@beta`. Bug reports, design
+feedback, and PRs are welcome — the bar for landing breaking changes before GA
+is "real production pain that the API can't accommodate."
 
 ## Contributing
 
