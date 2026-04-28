@@ -89,6 +89,11 @@ export default function autotranslate(options: AutotranslatePluginOptions = {}):
         if (mod) server.moduleGraph.invalidateModule(mod);
         server.ws.send({ type: 'full-reload' });
       });
+
+      if (options.streaming) {
+        const { attachStreamingMiddleware } = await import('./streaming');
+        attachStreamingMiddleware(server, cwd);
+      }
     },
   };
 }

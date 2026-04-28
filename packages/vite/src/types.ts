@@ -11,6 +11,16 @@ export interface AutotranslatePluginOptions {
   readonly source?: string;
   /** Pre-parsed config. Skips disk loading when supplied. */
   readonly config?: AutotranslateConfig;
+  /**
+   * Enable streaming dev-mode translation: a `/__autotranslate/translate`
+   * endpoint accepts `{ key, source }` POSTs in dev, runs the configured
+   * provider for the active targets, writes to the chunked catalog, and
+   * triggers HMR. Wire the runtime via `createDevOnMissing()` from
+   * `@autotranslate/react`.
+   *
+   * Disabled by default — set `streaming: true` to opt in.
+   */
+  readonly streaming?: boolean;
 }
 
 export const VIRTUAL_MODULE_ID = 'virtual:autotranslate';

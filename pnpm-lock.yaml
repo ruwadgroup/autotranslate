@@ -365,6 +365,9 @@ importers:
         specifier: ^2.4.2
         version: 2.6.1
     devDependencies:
+      '@autotranslate/cli':
+        specifier: workspace:*
+        version: link:../cli
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0

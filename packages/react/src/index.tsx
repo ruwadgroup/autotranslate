@@ -5,6 +5,8 @@ export const VERSION = '0.0.0';
 export type { AutotranslateCatalog, CatalogKey } from '@autotranslate/core';
 export type { TranslationContextValue } from './context';
 export { TranslationContext, useTranslationContext } from './context';
+export type { DevOnMissingOptions } from './dev';
+export { createDevOnMissing } from './dev';
 export type {
   BranchProps,
   CurrencyProps,
