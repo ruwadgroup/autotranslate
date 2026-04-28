@@ -12,6 +12,7 @@
     { "path": "./packages/vite" },
     { "path": "./packages/providers" },
     { "path": "./packages/eslint-plugin" },
-    { "path": "./packages/zod" }
+    { "path": "./packages/zod" },
+    { "path": "./packages/typescript-plugin" }
   ]
 }
