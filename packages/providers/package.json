@@ -26,33 +26,69 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./ai": {
       "types": "./dist/ai.d.ts",
-      "import": "./dist/ai.js",
-      "require": "./dist/ai.cjs"
+      "import": {
+        "types": "./dist/ai.d.ts",
+        "default": "./dist/ai.js"
+      },
+      "require": {
+        "types": "./dist/ai.d.cts",
+        "default": "./dist/ai.cjs"
+      }
     },
     "./deepl": {
       "types": "./dist/deepl.d.ts",
-      "import": "./dist/deepl.js",
-      "require": "./dist/deepl.cjs"
+      "import": {
+        "types": "./dist/deepl.d.ts",
+        "default": "./dist/deepl.js"
+      },
+      "require": {
+        "types": "./dist/deepl.d.cts",
+        "default": "./dist/deepl.cjs"
+      }
     },
     "./google": {
       "types": "./dist/google.d.ts",
-      "import": "./dist/google.js",
-      "require": "./dist/google.cjs"
+      "import": {
+        "types": "./dist/google.d.ts",
+        "default": "./dist/google.js"
+      },
+      "require": {
+        "types": "./dist/google.d.cts",
+        "default": "./dist/google.cjs"
+      }
     },
     "./stub": {
       "types": "./dist/stub.d.ts",
-      "import": "./dist/stub.js",
-      "require": "./dist/stub.cjs"
+      "import": {
+        "types": "./dist/stub.d.ts",
+        "default": "./dist/stub.js"
+      },
+      "require": {
+        "types": "./dist/stub.d.cts",
+        "default": "./dist/stub.cjs"
+      }
     },
     "./hybrid": {
       "types": "./dist/hybrid.d.ts",
-      "import": "./dist/hybrid.js",
-      "require": "./dist/hybrid.cjs"
+      "import": {
+        "types": "./dist/hybrid.d.ts",
+        "default": "./dist/hybrid.js"
+      },
+      "require": {
+        "types": "./dist/hybrid.d.cts",
+        "default": "./dist/hybrid.cjs"
+      }
     },
     "./package.json": "./package.json"
   },
@@ -109,5 +145,24 @@
   "publishConfig": {
     "access": "public",
     "provenance": true
+  },
+  "typesVersions": {
+    "*": {
+      "ai": [
+        "./dist/ai.d.ts"
+      ],
+      "deepl": [
+        "./dist/deepl.d.ts"
+      ],
+      "google": [
+        "./dist/google.d.ts"
+      ],
+      "stub": [
+        "./dist/stub.d.ts"
+      ],
+      "hybrid": [
+        "./dist/hybrid.d.ts"
+      ]
+    }
   }
 }

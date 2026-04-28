@@ -26,23 +26,47 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./plugin": {
       "types": "./dist/plugin.d.ts",
-      "import": "./dist/plugin.js",
-      "require": "./dist/plugin.cjs"
+      "import": {
+        "types": "./dist/plugin.d.ts",
+        "default": "./dist/plugin.js"
+      },
+      "require": {
+        "types": "./dist/plugin.d.cts",
+        "default": "./dist/plugin.cjs"
+      }
     },
     "./middleware": {
       "types": "./dist/middleware.d.ts",
-      "import": "./dist/middleware.js",
-      "require": "./dist/middleware.cjs"
+      "import": {
+        "types": "./dist/middleware.d.ts",
+        "default": "./dist/middleware.js"
+      },
+      "require": {
+        "types": "./dist/middleware.d.cts",
+        "default": "./dist/middleware.cjs"
+      }
     },
     "./streaming": {
       "types": "./dist/streaming.d.ts",
-      "import": "./dist/streaming.js",
-      "require": "./dist/streaming.cjs"
+      "import": {
+        "types": "./dist/streaming.d.ts",
+        "default": "./dist/streaming.js"
+      },
+      "require": {
+        "types": "./dist/streaming.d.cts",
+        "default": "./dist/streaming.cjs"
+      }
     },
     "./package.json": "./package.json"
   },
@@ -90,5 +114,18 @@
   "publishConfig": {
     "access": "public",
     "provenance": true
+  },
+  "typesVersions": {
+    "*": {
+      "plugin": [
+        "./dist/plugin.d.ts"
+      ],
+      "middleware": [
+        "./dist/middleware.d.ts"
+      ],
+      "streaming": [
+        "./dist/streaming.d.ts"
+      ]
+    }
   }
 }

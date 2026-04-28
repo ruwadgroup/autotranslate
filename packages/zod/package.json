@@ -25,23 +25,47 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./source": {
       "types": "./dist/source.d.ts",
-      "import": "./dist/source.js",
-      "require": "./dist/source.cjs"
+      "import": {
+        "types": "./dist/source.d.ts",
+        "default": "./dist/source.js"
+      },
+      "require": {
+        "types": "./dist/source.d.cts",
+        "default": "./dist/source.cjs"
+      }
     },
     "./next": {
       "types": "./dist/next.d.ts",
-      "import": "./dist/next.js",
-      "require": "./dist/next.cjs"
+      "import": {
+        "types": "./dist/next.d.ts",
+        "default": "./dist/next.js"
+      },
+      "require": {
+        "types": "./dist/next.d.cts",
+        "default": "./dist/next.cjs"
+      }
     },
     "./remix": {
       "types": "./dist/remix.d.ts",
-      "import": "./dist/remix.js",
-      "require": "./dist/remix.cjs"
+      "import": {
+        "types": "./dist/remix.d.ts",
+        "default": "./dist/remix.js"
+      },
+      "require": {
+        "types": "./dist/remix.d.cts",
+        "default": "./dist/remix.cjs"
+      }
     },
     "./catalog/*": "./dist/catalog/*.json",
     "./package.json": "./package.json"
@@ -88,5 +112,18 @@
   "publishConfig": {
     "access": "public",
     "provenance": true
+  },
+  "typesVersions": {
+    "*": {
+      "source": [
+        "./dist/source.d.ts"
+      ],
+      "next": [
+        "./dist/next.d.ts"
+      ],
+      "remix": [
+        "./dist/remix.d.ts"
+      ]
+    }
   }
 }
