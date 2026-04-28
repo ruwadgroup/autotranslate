@@ -1,12 +1,9 @@
-# Translating JSX
+# JSX translation
 
 `<T>` is the translatable JSX block. Anything inside it — text, structural
-markers (`<Var>`, `<Plural>`, `<Branch>`), formatters (`<Num>`, `<Currency>`,
-`<DateTime>`, `<RelativeTime>`), HTML elements, and component wrappers — gets
-serialized into a canonical message tree, hashed, and looked up in the active
-catalog.
-
-## The basics
+markers (`<Var>`, `<Plural>`, `<Branch>`), formatters, HTML elements, component
+wrappers — gets serialised into a canonical message tree, hashed, and looked up
+in the active catalog.
 
 ```tsx
 import { T } from '@autotranslate/react';
@@ -14,14 +11,10 @@ import { T } from '@autotranslate/react';
 <T>Hello, world!</T>;
 ```
 
-This renders `Hello, world!` in the source locale and the matching translation
-in any target locale that has a catalog entry. On miss, it falls back to
-`children` verbatim.
+Renders the source string in the source locale and the matching translation
+elsewhere. On miss, falls back to `children` verbatim.
 
 ## Variable slots — `<Var>`
-
-`<Var>` is a structural marker for runtime values. It tells the extractor where
-the dynamic slot is so the canonical key stays stable across translations.
 
 ```tsx
 import { T, Var } from '@autotranslate/react';
@@ -31,13 +24,11 @@ import { T, Var } from '@autotranslate/react';
 </T>;
 ```
 
-- `name` is the slot identifier. It defaults to `'value'`.
+- `name` is the slot identifier. Defaults to `'value'`.
 - `children` is the runtime substitution.
-- The translator sees `Hello, {user}!` and is free to reorder the slot (e.g.
-  `¡Hola, {user}!`, `{user}さん、こんにちは！`).
+- The translator sees `Hello, {user}!` and is free to reorder the slot.
 
-When rendered outside `<T>`, `<Var>` passes its children through, so it composes
-safely with normal JSX.
+When rendered outside `<T>`, `<Var>` passes its children through.
 
 ## Plurals — `<Plural>`
 
@@ -52,20 +43,18 @@ import { Plural, T } from '@autotranslate/react';
 - `value` is the count.
 - `name` is the slot identifier (defaults to `'count'`).
 - `zero`, `one`, `two`, `few`, `many`, `other` are CLDR plural categories.
-  `other` is required at extraction time.
+  `other` is required.
 - `#` in any branch is replaced with the formatted count.
 
 The runtime selects the category via `Intl.PluralRules` for the active locale,
 so a single source declaration covers languages with simple two-form plurals
 (English) and languages with five-way plurals (Russian).
 
-Outside `<T>`, `<Plural>` returns `null` — the renderer-driven path is the only
-documented entry. If you need standalone plural selection, build it on top of
-[`getPluralCategory`](../api-reference.md#core).
+See [Plurals & branches](plurals.md) for plural-rule details and locale notes.
 
 ## Discriminator branches — `<Branch>`
 
-`<Branch>` covers status / discriminator copy that doesn't fit the plural mold:
+For status / discriminator copy that doesn't fit the plural mould:
 
 ```tsx
 import { Branch, T, Var } from '@autotranslate/react';
@@ -87,13 +76,13 @@ import { Branch, T, Var } from '@autotranslate/react';
 - Every prop other than `branch`, `name`, and `children` is a named case.
 - `children` is the default fallback when no case matches.
 
-`<Branch>` round-trips through ICU `select` for AI translation.
+Round-trips through ICU `select` for translation.
 
 ## Tag wrappers
 
 HTML elements and component wrappers inside `<T>` become **tag nodes** in the
-canonical tree. The runtime keeps the original element as a template, so props
-(`href`, `className`, event handlers) carry over to the translated output:
+canonical tree. Props (`href`, `className`, event handlers) carry over to the
+translated output:
 
 ```tsx
 <T>
@@ -102,17 +91,16 @@ canonical tree. The runtime keeps the original element as a template, so props
 ```
 
 The extractor strips props from the canonical hash — translators don't see
-`href` or `onClick`, and prop changes don't invalidate translations.
+`href`, and prop changes don't invalidate translations.
 
 For component wrappers, the extractor uses the JSX identifier (e.g. `<Strong>` →
-`tag: 'Strong'`). The runtime falls back to `type.displayName` (or `type.name`)
-when reconstructing the tag.
+`tag: 'Strong'`). The runtime falls back to `type.displayName` (or `type.name`).
 
 ## Whitespace
 
 `<T>` matches React's JSX-runtime whitespace handling. Whitespace-only lines are
 dropped, tabs become spaces, leading whitespace on continuation lines is
-trimmed, and lines are joined with single spaces.
+trimmed, lines join with single spaces.
 
 ```tsx
 <T>
@@ -121,47 +109,49 @@ trimmed, and lines are joined with single spaces.
 </T>
 ```
 
-extracts to `Hello, {user}!` with a single space between segments — identical to
-what React renders at runtime.
+extracts to `Hello, {user}!` — identical to what React renders.
 
 ## Context hints
 
-Two identical strings can mean different things in different places (e.g.
-"Submit" as a navbar action vs. a form button). Disambiguate with the `context`
-prop on `<T>`:
+Two identical strings can mean different things. Disambiguate with `context`:
 
 ```tsx
 <T context="navbar action">Submit</T>
 <T context="form button">Submit</T>
 ```
 
-The context mixes into the hash, so each call produces a distinct key.
-`description` adds a translator-facing comment without affecting the hash.
+Each call produces a distinct key. `description` adds a translator-facing
+comment without affecting the hash:
 
 ```tsx
 <T description="Action label on the cart screen.">Submit</T>
 ```
 
-For [`useT`](translating-strings.md), the same hints come through `params` keys:
+For [`useT`](strings.md), the same hints come through reserved param keys:
 `$context`, `$description`, `$maxChars`.
 
 ## Server components
 
 `<T>` works in both client and server components. For server-only translation
-without React context, use the
-[server entry](../api-reference.md#autotranslatereact-server):
+without React context, use `getT` from `@autotranslate/react/server` (or
+`@autotranslate/next` in Next):
 
 ```tsx
-import { getT } from '@autotranslate/react/server';
+import { getT } from '@autotranslate/next';
 
-export default async function Page() {
-  const t = await getT('es', () => loadCatalog('es'));
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang } = await params;
+  const t = await getT(lang);
   return <h1>{t.t('Welcome')}</h1>;
 }
 ```
 
-In Next.js, the `react-server` export condition is wired automatically. See the
-[Next.js guide](../frameworks/nextjs.md) for the full setup.
+The `react-server` export condition is wired automatically — the client / server
+entries swap based on the consuming module's environment.
 
 ## Tips
 
@@ -173,8 +163,6 @@ In Next.js, the `react-server` export condition is wired automatically. See the
   <T>{label}</T>
 
   // ✅
-  <T>{label === 'sign-in' ? <>Sign in</> : <>Sign up</>}</T>
-  // … or
   <T>
     <Branch branch={label} ['sign-in']={<>Sign in</>}>
       Sign up
@@ -182,8 +170,7 @@ In Next.js, the `react-server` export condition is wired automatically. See the
   </T>
   ```
 
-  The [`no-untranslated-jsx`](../guides/eslint.md) ESLint rule catches the bad
-  case.
+  The [`no-untranslated-jsx`](linting.md) ESLint rule catches the bad case.
 
 - **Wrap whole sentences, not pieces.** `<T>Hello, <Var>{name}</Var>!</T>`
   translates well; `<T>Hello,</T> <Var>{name}</Var><T>!</T>` doesn't — word

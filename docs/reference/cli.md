@@ -1,4 +1,4 @@
-# CLI Reference
+# CLI reference
 
 ```bash
 npx autotranslate <command> [flags]
@@ -35,12 +35,14 @@ Output:
 - `<outDir>/<source>.json` — canonical source catalog
 - `<outDir>/.meta.json` — per-key context, description, occurrences
 
-The extractor recognizes two patterns:
+The extractor recognises:
 
-- **`<T>...</T>`** — children are linearized to a `StructuredMessage` and hashed
-  via `canonicalKey`. The key is `t.<12-hex>`.
+- **`<T>...</T>`** — children linearised to a `StructuredMessage` and hashed via
+  the canonical-key derivation. Key is `t.<12-hex>`.
 - **`useT()` literal calls** — `t('literal')` where `t` is bound to a `useT()`
-  invocation in the same file. The literal becomes the key.
+  invocation in the same file.
+- **Standalone `t()`** — `t('literal')` where `t` is imported from
+  `@autotranslate/core/t` (or `/standalone`).
 
 Whitespace handling matches React's JSX runtime, so the canonical key is
 identical at extract and render time.
@@ -73,7 +75,7 @@ automatically.
 
 ## `generate-types`
 
-Emit a `.d.ts` that augments `@autotranslate/react`'s `AutotranslateCatalog`
+Emit a `.d.ts` that augments `@autotranslate/core`'s `AutotranslateCatalog`
 interface with the literal key set.
 
 ```bash
@@ -89,10 +91,10 @@ Output: `<outDir>/types.d.ts`. Reference it from your `tsconfig.json`:
 ```
 
 After generation, `useT('Sing out')` is a TypeScript error. The `(string & {})`
-arm in `CatalogKey` keeps autocomplete on without tightening compile errors when
+arm in the type preserves autocomplete without tightening compile errors when
 the typegen hasn't run yet.
 
-See the [type-safety guide](guides/type-safety.md) for the full flow.
+See [Type safety](../guides/typesafety.md).
 
 ## `check`
 
@@ -131,8 +133,7 @@ const result = await check(resolved);
 if (!result.ok) process.exit(1);
 ```
 
-The programmatic API is the only way to use a `name: 'custom'` provider — custom
-providers are functions and don't survive JSON serialization.
+The programmatic API is the only way to use a `name: 'custom'` provider.
 
 ## Exit codes
 
@@ -142,5 +143,4 @@ providers are functions and don't survive JSON serialization.
 | `1`  | Generic failure (missing config, provider error, etc.). |
 | `1`  | `check` found one or more problems.                     |
 
-Set `DEBUG=*` (or any truthy `DEBUG` value) to print the full error stack on
-failure.
+Set `DEBUG=*` to print the full error stack on failure.

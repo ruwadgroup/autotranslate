@@ -1,4 +1,4 @@
-# ESLint plugin
+# Linting
 
 `@autotranslate/eslint-plugin` catches untranslated copy and broken keys at
 write time, before the extractor runs.
@@ -15,10 +15,7 @@ pnpm add -D @autotranslate/eslint-plugin
 // eslint.config.js
 import autotranslate from '@autotranslate/eslint-plugin';
 
-export default [
-  autotranslate.configs.recommended,
-  // …other config blocks
-];
+export default [autotranslate.configs.recommended];
 ```
 
 ## Use (legacy `.eslintrc`)
@@ -41,7 +38,7 @@ translation marker (`<T>`, `<Var>`, `<Plural>`, `<Branch>`, `<Num>`,
 ```jsx
 <p>Hello</p>                    // ❌ bare text outside <T>
 <button title="Save">x</button> // ❌ untranslated attribute
-<T>Hello</T>                    // ✅
+<T>Hello</T>                    // ✓
 ```
 
 Options:
@@ -69,14 +66,14 @@ A built-in allowlist covers structural / locale-neutral attributes (`className`,
 ### `no-dynamic-key`
 
 Translator calls (`t(...)` from `useT()` / `useTranslations()` / `getT()` /
-`getTranslations()`) must use string-literal or
-template-literal-without-expressions keys. Dynamic keys break extraction.
+`getTranslations()` / standalone `t`) must use string-literal keys. Dynamic keys
+break extraction.
 
 ```js
 const t = useT();
-t('Sign out'); // ✅
-t(`Sign out`); // ✅
-t(KEY); // ✅ — KEY is a local string-literal const
+t('Sign out'); // ✓
+t(`Sign out`); // ✓
+t(KEY); // ✓ — KEY is a local string-literal const
 t(`prefix.${id}`); // ❌ — dynamic key, can't be extracted
 t(label); // ❌
 ```
@@ -86,12 +83,12 @@ scope to confirm the binding is a static string.
 
 ### `valid-icu-format`
 
-Parses ICU MessageFormat on every literal key passed to a translator. Catches
-mismatched braces and malformed plural / select arms before runtime.
+Parses ICU MessageFormat on every literal key. Catches mismatched braces and
+malformed plural / select arms before runtime.
 
 ```js
-t('Hello, {name}!'); // ✅
-t('{count, plural, one {# item} other {# items}}'); // ✅
+t('Hello, {name}!'); // ✓
+t('{count, plural, one {# item} other {# items}}'); // ✓
 t('Hello, {name'); // ❌ unclosed
 t('{count, plural, =0 {none}'); // ❌ malformed
 ```
@@ -118,9 +115,9 @@ migrations; bump to `error` once your tree is fully wrapped in `<T>`.
 - **Run on every commit.** Wire ESLint into `lint-staged` so dynamic keys and
   bare JSX literals never land in main.
 
-- **Combine with [type-safety](type-safety.md).** `no-dynamic-key` guarantees
-  the extractor can see every key; typegen guarantees every key the code
-  references is actually in the catalog.
+- **Combine with [type-safety](typesafety.md).** `no-dynamic-key` guarantees the
+  extractor can see every key; typegen guarantees every key the code references
+  is actually in the catalog.
 
 - **Custom marker components.** If you wrap `<T>` in a project-specific
   component (e.g. `<Translated>`), add it to `markers` so the rule doesn't flag

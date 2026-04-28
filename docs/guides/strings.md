@@ -1,9 +1,7 @@
-# Translating strings
+# String translation
 
 `useT` is the hook for plain-string translation — button labels, `aria-*`
-attributes, programmatic copy, anything that isn't JSX.
-
-## Basic usage
+attributes, programmatic copy.
 
 ```tsx
 import { useT } from '@autotranslate/react';
@@ -15,35 +13,26 @@ function SignOutButton() {
 ```
 
 `useT()` returns `(key, params?) => string` bound to the active locale and
-catalog. The literal string is both the source and the catalog key — the
-extractor picks it up at build time.
+catalog. The literal string is both the source and the catalog key.
 
 ## ICU placeholders
 
-Keys are ICU MessageFormat templates. Pass values via `params`:
+Keys are ICU MessageFormat templates:
 
 ```tsx
 const t = useT();
 
 t('Hello, {name}!', { name: 'Ada' });
 // → 'Hello, Ada!' (en) / '¡Hola, Ada!' (es) / 'Adaさん、こんにちは！' (ja)
-```
 
-Plurals work the same way:
-
-```tsx
 t('{count, plural, one {# message} other {# messages}}', { count: 3 });
 // → '3 messages' (en)
 ```
 
-The full ICU subset — `plural`, `select`, `number`, `date`, `time`, `tag`
-wrappers — is supported. See
-[`@autotranslate/core/icu`](../api-reference.md#autotranslatecoreicu).
+The full ICU subset — `plural`, `select`, `number`, `date`, `time`, tag wrappers
+— is supported.
 
 ## Disambiguating with context
-
-Identical strings in different contexts get different translations. Reserved
-option keys (consumed by the translator, not the formatter):
 
 ```tsx
 t('Submit', { $context: 'navbar action' });
@@ -53,7 +42,7 @@ t('Submit', { $context: 'form button' });
 The CLI extracts each as a separate entry (`Submit@@navbar action`,
 `Submit@@form button`).
 
-Other reserved keys:
+Reserved option keys (consumed by the translator, not the formatter):
 
 | Key            | Effect                                                  |
 | -------------- | ------------------------------------------------------- |
@@ -63,8 +52,7 @@ Other reserved keys:
 
 ## `useTranslations` (dictionary mode)
 
-When you'd rather organize copy in a flat dictionary file than inline literals,
-use `useTranslations(namespace)`:
+When you'd rather organise copy in a dictionary file than inline literals:
 
 ```ts
 // src/dictionary.ts
@@ -124,18 +112,7 @@ function Footer() {
 
 ## On the server
 
-For RSC and route handlers, use the async factory from the server entry:
-
-```tsx
-import { getT } from '@autotranslate/react/server';
-
-export default async function Page() {
-  const t = await getT('es', () => loadCatalog('es'));
-  return <h1>{t.t('Welcome')}</h1>;
-}
-```
-
-Or in Next.js with the bundled fs loader:
+For RSC and route handlers in Next.js:
 
 ```tsx
 import { getT } from '@autotranslate/next';
@@ -151,14 +128,26 @@ export default async function Page({
 }
 ```
 
+In other server frameworks (Remix, Hono, Bun, edge handlers):
+
+```tsx
+import { getT } from '@autotranslate/react/server';
+
+const t = await getT('es', () => loadCatalog('es'));
+return <h1>{t.t('Welcome')}</h1>;
+```
+
 `getTranslations` mirrors `useTranslations` for namespace-prefixed lookups:
 
 ```ts
-import { getTranslations } from '@autotranslate/next';
-
 const t = await getTranslations(lang, 'dashboard');
 t('title'); // → catalog['dashboard.title']
 ```
+
+## Outside React
+
+For zod errors, validators, async work, and tests, use the
+[standalone `t()`](standalone-t.md) — same catalog, no React dependency.
 
 ## Tips
 
@@ -166,12 +155,12 @@ t('title'); // → catalog['dashboard.title']
   catalog misses.
 
 - **Avoid string concatenation.** `t('Hello') + ' ' + name` strips the
-  punctuation context — translators can't move it. Use a single key with a
-  placeholder: `t('Hello, {name}!', { name })`.
+  punctuation context — translators can't move it. Use a single key:
+  `t('Hello, {name}!', { name })`.
 
-- **Catch dynamic keys at lint time.** The [`no-dynamic-key`](eslint.md) ESLint
+- **Catch dynamic keys at lint time.** The [`no-dynamic-key`](linting.md) ESLint
   rule rejects `t(variable)` and `t(\`prefix.${id}\`)` because the extractor
   can't follow them.
 
-- **Generate types.** After [`autotranslate generate-types`](type-safety.md),
+- **Generate types.** After [`autotranslate generate-types`](typesafety.md),
   `useT('Sing out')` becomes a TypeScript error.

@@ -77,8 +77,7 @@ export default async function Layout({
 ```
 
 `getRequestLocale()` reads the `x-autotranslate-locale` header set by the proxy.
-Returns `undefined` when the proxy didn't run (e.g. a route matched out of the
-proxy's matcher).
+Returns `undefined` when the proxy didn't run.
 
 ## App Router
 
@@ -130,16 +129,14 @@ export default async function LangLayout({
 }
 ```
 
-`fsCatalogLoader` reads `<cwd>/<outDir>/<locale>.json` and memoizes per (cwd,
-outDir, locale) — Next may call it on every server render, so the parse cost is
-paid once per process.
+`fsCatalogLoader` reads `<cwd>/<outDir>/<locale>.json` and memoises per (cwd,
+outDir, locale).
 
 ### Server-component translation
 
 ```tsx
 // app/[lang]/page.tsx
 import { getT } from '@autotranslate/next';
-import { notFound } from 'next/navigation';
 
 export default async function Page({
   params,
@@ -167,16 +164,36 @@ t('title'); // → catalog['dashboard.title']
 
 Mirrors the client `useTranslations(ns)` hook.
 
+## Server Actions
+
+For Server Actions that run validators or other code expecting the standalone
+`t()`, wrap with `withRequestTranslator` from `@autotranslate/zod/next`:
+
+```ts
+'use server';
+
+import { withRequestTranslator } from '@autotranslate/zod/next';
+
+export async function signUp(formData: FormData) {
+  return withRequestTranslator(async () => {
+    const data = signUpSchema.parse(Object.fromEntries(formData));
+    // …
+  });
+}
+```
+
+See [Server Actions cookbook](../cookbook/server-actions.md).
+
 ## Edge runtime
 
 The default `fs` loader uses `node:fs/promises` and won't run on the Edge.
-Supply a custom loader for edge route handlers:
+Supply a custom loader:
 
 ```ts
 // app/api/welcome/route.ts
 import { getT } from '@autotranslate/next';
-import en from '@/catalogs/en.json' assert { type: 'json' };
-import es from '@/catalogs/es.json' assert { type: 'json' };
+import en from '@/catalogs/en.json' with { type: 'json' };
+import es from '@/catalogs/es.json' with { type: 'json' };
 
 const catalogs = { en, es } as const;
 
@@ -194,16 +211,8 @@ export async function GET(
 }
 ```
 
-For dynamic locales on the edge, fetch from KV / Edge Config:
-
-```ts
-const t = await getT(lang, {
-  async load(locale) {
-    const blob = await get(`autotranslate:${locale}`);
-    return blob ?? {};
-  },
-});
-```
+For dynamic locales on the edge, fetch from KV / Edge Config — see
+[Lazy-loading](../cookbook/lazy-loading.md).
 
 ## Next config
 
@@ -226,7 +235,6 @@ wrapper exists as the canonical integration point for future build-time hooks
 at build time, so `output: 'export'` produces a fully-static multilingual site:
 
 ```ts
-// next.config.ts
 export default withAutotranslate({
   output: 'export',
 });
@@ -239,14 +247,10 @@ locale lives at a stable URL.
 
 - **Pass both `catalog` and `fallback` to the provider.** The runtime tries the
   active locale first, then falls back to source for any keys the catalog
-  misses. `fallback` is what shows up before translations catch up.
+  misses.
 
-- **Memoize loaders.** `fsCatalogLoader` already memoizes; if you write your
-  own, share it across renders too.
-
-- **Use `getRequestLocale()` for one-off reads.** When you only need to set
-  `<html lang>` or read a header, the proxy-supplied locale is cheaper than
-  re-parsing `Accept-Language`.
+- **Memoise loaders.** `fsCatalogLoader` already memoises; if you write your
+  own, share it across renders.
 
 - **Pin the matcher.** The default `/((?!api|_next|.*\\..*).*)` excludes `api`,
   `_next`, and any path with a file extension. Add other excluded prefixes
