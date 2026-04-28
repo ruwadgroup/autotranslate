@@ -6,6 +6,8 @@ a command, get translated catalogs.
 ## Start here
 
 - **[Overview](overview.md)** — what autotranslate does and where it fits
+- **[Philosophy](philosophy.md)** — code as source of truth, the design choices
+  and their reasons
 - **[Installation](installation.md)** — packages and version matrix
 - **[Quick start](quick-start.md)** — translate your first string in five
   minutes

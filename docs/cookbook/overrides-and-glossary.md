@@ -1,7 +1,29 @@
 # Overrides & brand glossaries
 
-Hand-curated copy that wins over machine translation. Two mechanisms, different
-scopes.
+Locking specific strings in specific locales. Read the
+[philosophy doc](../philosophy.md) first — overrides are an **escape hatch**,
+not the primary surface. Reach for `instruction` and `glossary` before you reach
+for `overrides`.
+
+## When overrides are the right answer
+
+When the AI got something definitively wrong in one specific locale and no
+upstream guidance fixes it cheaply. A French legal phrase that has to read
+exactly one way. A trademark whose Japanese rendering must match the registered
+form character-by-character.
+
+Try first:
+
+1. Add the term to **`glossary`** if it's something that must never translate.
+2. Tighten **`instruction`** with a one-line rule about tone, brand, or
+   terminology.
+3. Wrap a **`<Var>`** around the specific span if it's a literal you want to
+   inject untouched.
+4. Adjust the **source string** to remove ambiguity (often the cheapest fix).
+
+If the AI still gets it wrong, lock the answer in `overrides`. A codebase whose
+`overrides` file runs hundreds of lines is one whose prompt isn't doing enough
+work — revisit.
 
 ## Overrides — per-locale, per-key
 
@@ -27,27 +49,17 @@ export default defineConfig({
 });
 ```
 
-**When to reach for it**: brand voice, idioms the AI gets wrong, regulatory
-wording (terms of service phrasing), or copy a translator hand- delivered.
+**Use it for**: trademark phrasings, regulated wording (terms of service),
+specific idioms the model keeps producing wrong. Not for routine copy edits —
+those belong upstream in source / instruction / glossary.
 
 Overrides are part of your version-controlled config — they survive `pnpm i18n`
 re-runs and are diffable in PRs.
 
-## Inline overrides (one-off)
-
-Edit `.translations/{locale}.json` directly. The CLI preserves manual edits
-_until_ the source string changes:
-
-```jsonc
-// .translations/fr.json
-{
-  "Sign out": "Se déconnecter (édité à la main)",
-}
-```
-
-When the source `Sign out` changes, the cached hash invalidates and the next
-`translate` run replaces the manual edit. For _durable_ hand-edits, move them
-into `overrides`.
+> **Don't edit `.translations/{locale}.json` files by hand.** That directory is
+> a build artefact. The next translate run is allowed to rewrite it. Hand-edits
+> are not durable. If a value needs to be locked across runs, put it in
+> `overrides`.
 
 ## Brand glossary — protect specific terms
 
