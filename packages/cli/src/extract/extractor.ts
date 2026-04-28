@@ -19,12 +19,17 @@ interface MessageHints {
   readonly maxChars?: number;
 }
 
+const STANDALONE_T_SOURCES: ReadonlySet<string> = new Set([
+  '@autotranslate/core/t',
+  '@autotranslate/core/standalone',
+]);
+
 /**
  * Walk a TS / JSX file and extract translatable messages.
  *
- * - `<T>...</T>` blocks → linearized to a `StructuredMessage` and hashed.
- * - `t('literal', { $context?, $maxChars? })` calls bound to `useT()` →
- *   extracted with the literal as the source.
+ * - `<T>...</T>` → linearized to a `StructuredMessage` and hashed.
+ * - `t('literal', …)` bound to `useT()` or imported from
+ *   `@autotranslate/core/t` → extracted with the literal as the source.
  */
 export function extractFile(filePath: string, source: string): FileExtraction {
   const ast = parse(source, {
@@ -46,6 +51,16 @@ export function extractFile(filePath: string, source: string): FileExtraction {
   };
 
   traverse(ast, {
+    ImportDeclaration(path) {
+      if (!STANDALONE_T_SOURCES.has(path.node.source.value)) return;
+      for (const spec of path.node.specifiers) {
+        if (spec.type !== 'ImportSpecifier') continue;
+        const imported = spec.imported;
+        const importedName = imported.type === 'Identifier' ? imported.name : imported.value;
+        if (importedName === 't') tBindingNames.add(spec.local.name);
+      }
+    },
+
     // `const t = useT()` — `useTranslations(ns)` is intentionally excluded
     // (dictionary mode reads from the user-authored dictionary, not literals).
     VariableDeclarator(path) {

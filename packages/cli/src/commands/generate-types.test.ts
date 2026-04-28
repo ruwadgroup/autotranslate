@@ -28,7 +28,7 @@ describe('generateTypes', () => {
     const { path, keyCount } = await generateTypes({ cwd, config, outDir });
     expect(keyCount).toBe(3);
     const contents = await readFile(path, 'utf8');
-    expect(contents).toContain("declare module '@autotranslate/react'");
+    expect(contents).toContain("declare module '@autotranslate/core'");
     expect(contents).toContain('"Sign out": true;');
     expect(contents).toContain('"Hello, {name}!": true;');
     expect(contents).toContain('"t.abc123": true;');

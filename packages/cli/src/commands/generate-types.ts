@@ -9,8 +9,9 @@ export interface GenerateTypesResult {
 }
 
 /**
- * Emit a `.d.ts` that augments `@autotranslate/react`'s `AutotranslateCatalog`
- * with the literal catalog keys.
+ * Emit a `.d.ts` augmenting `@autotranslate/core`'s `AutotranslateCatalog`
+ * with the literal catalog keys. `useT`, `t`, and zod integrations all read
+ * from the same interface.
  */
 export async function generateTypes(resolved: ResolvedConfig): Promise<GenerateTypesResult> {
   const { config, outDir } = resolved;
@@ -24,9 +25,9 @@ export async function generateTypes(resolved: ResolvedConfig): Promise<GenerateT
     keys.length === 0
       ? `${banner}\nexport {};\n`
       : `${banner}
-import '@autotranslate/react';
+import '@autotranslate/core';
 
-declare module '@autotranslate/react' {
+declare module '@autotranslate/core' {
   interface AutotranslateCatalog {
 ${keys.map((k) => `    ${JSON.stringify(k)}: true;`).join('\n')}
   }

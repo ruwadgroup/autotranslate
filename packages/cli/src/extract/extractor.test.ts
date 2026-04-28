@@ -86,6 +86,39 @@ export function C() { return <span>{t('Skipped')}</span>; }
     expect(messages).toEqual({});
   });
 
+  it('extracts standalone t() imports from @autotranslate/core/t', () => {
+    const { messages } = extractFile(
+      FILE,
+      `
+import { t } from '@autotranslate/core/t';
+export function validate() { return t('Password is required'); }
+      `,
+    );
+    expect(messages['Password is required']).toBe('Password is required');
+  });
+
+  it('extracts standalone t() imports from @autotranslate/core/standalone', () => {
+    const { messages } = extractFile(
+      FILE,
+      `
+import { t } from '@autotranslate/core/standalone';
+export function validate() { return t('Required field'); }
+      `,
+    );
+    expect(messages['Required field']).toBe('Required field');
+  });
+
+  it('respects local aliasing of standalone t', () => {
+    const { messages } = extractFile(
+      FILE,
+      `
+import { t as tt } from '@autotranslate/core/t';
+export function validate() { return tt('Aliased message'); }
+      `,
+    );
+    expect(messages['Aliased message']).toBe('Aliased message');
+  });
+
   it('captures context and description JSX attributes into manifest', () => {
     const { manifest } = extractFile(
       FILE,

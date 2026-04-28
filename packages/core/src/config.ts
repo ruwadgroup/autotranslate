@@ -21,7 +21,7 @@ const aiProviderSchema = z.object({
 const deeplProviderSchema = z.object({
   name: z.literal('deepl'),
   apiKey: z.string().min(1),
-  endpoint: z.string().url().optional(),
+  endpoint: z.url().optional(),
   formality: z.enum(['default', 'more', 'less', 'prefer_more', 'prefer_less']).optional(),
   context: z.string().optional(),
   localeMap: z.record(z.string(), z.string()).optional(),
@@ -30,7 +30,7 @@ const deeplProviderSchema = z.object({
 const googleProviderSchema = z.object({
   name: z.literal('google'),
   apiKey: z.string().min(1),
-  endpoint: z.string().url().optional(),
+  endpoint: z.url().optional(),
   localeMap: z.record(z.string(), z.string()).optional(),
 });
 
@@ -83,8 +83,6 @@ export function parseConfig(input: unknown): AutotranslateConfig {
   return autotranslateConfigSchema.parse(input);
 }
 
-export function safeParseConfig(
-  input: unknown,
-): z.SafeParseReturnType<AutotranslateConfigInput, AutotranslateConfig> {
+export function safeParseConfig(input: unknown): z.ZodSafeParseResult<AutotranslateConfig> {
   return autotranslateConfigSchema.safeParse(input);
 }

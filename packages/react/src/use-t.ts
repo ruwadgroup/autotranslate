@@ -1,22 +1,9 @@
+import type { CatalogKey } from '@autotranslate/core';
 import { createTranslator } from '@autotranslate/core';
 import { useCallback, useMemo } from 'react';
 import { useTranslationContext } from './context';
 
-/**
- * Open interface augmented by `autotranslate generate-types` to expose the
- * known catalog keys to TypeScript. Empty by design — augmentation requires
- * an `interface`.
- */
-// biome-ignore lint/suspicious/noEmptyInterface: open for module augmentation
-export interface AutotranslateCatalog {}
-
-/**
- * Union of generated catalog keys when typegen has run, or `string` otherwise.
- * The `(string & {})` arm preserves autocomplete while still accepting any string.
- */
-export type CatalogKey = keyof AutotranslateCatalog extends never
-  ? string
-  : keyof AutotranslateCatalog | (string & {});
+export type { AutotranslateCatalog, CatalogKey } from '@autotranslate/core';
 
 /**
  * Hook returning a translator function bound to the active locale + catalog.
