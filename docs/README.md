@@ -49,10 +49,21 @@ Task-oriented recipes for the patterns that actually come up.
 - **[Testing translated UI](cookbook/testing.md)**
 - **[Adding a new locale](cookbook/adding-a-locale.md)**
 - **[Overrides & brand glossaries](cookbook/overrides-and-glossary.md)**
+- **[Branded glossary (deeper)](cookbook/branded-glossary.md)**
+- **[Multi-tenant translations](cookbook/multi-tenant.md)**
+- **[A/B copy testing](cookbook/ab-copy.md)**
 - **[CI / CD pipelines](cookbook/ci-cd.md)**
 - **[Lazy-loading large catalogs](cookbook/lazy-loading.md)**
 - **[Rich text & HTML in translations](cookbook/rich-text-and-html.md)**
+- **[Custom translation provider](cookbook/custom-provider.md)**
 - **[Debugging missing keys](cookbook/debugging.md)**
+
+## Migrating
+
+- **[From react-i18next](migrating/react-i18next.md)**
+- **[From next-intl](migrating/next-intl.md)**
+- **[From lingui](migrating/lingui.md)**
+- **[From gt-next / gt-react](migrating/gt-next.md)**
 
 ## Reference
 
