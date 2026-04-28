@@ -164,6 +164,44 @@ t('title'); // → catalog['dashboard.title']
 
 Mirrors the client `useTranslations(ns)` hook.
 
+## Streaming dev mode
+
+Translate new strings on first miss without re-running `pnpm i18n`. Mount the
+streaming handler at any API path you like:
+
+```ts
+// app/api/__autotranslate/translate/route.ts
+export { POST } from '@autotranslate/next/streaming';
+```
+
+Wire the runtime in your provider:
+
+```tsx
+'use client';
+
+import { TranslationProvider, createDevOnMissing } from '@autotranslate/react';
+
+const onMissing =
+  process.env.NODE_ENV !== 'production'
+    ? createDevOnMissing({ endpoint: '/api/__autotranslate/translate' })
+    : undefined;
+
+<TranslationProvider
+  locale={locale}
+  catalog={catalog}
+  fallback={fallback}
+  onMissing={onMissing}
+>
+  {children}
+</TranslationProvider>;
+```
+
+In dev, `useT('A new string never seen before')` POSTs to the endpoint; the
+handler runs translate for that key, writes to the chunked catalog, clears the
+in-process loader cache, and the next render picks up the translation.
+Production: `onMissing` is `undefined`, the handler returns 404. No translation
+calls happen at runtime.
+
 ## Server Actions
 
 For Server Actions that run validators or other code expecting the standalone
