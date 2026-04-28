@@ -3,23 +3,13 @@ import type { Catalog, Locale } from '@autotranslate/core';
 const inflight = new Map<string, Promise<void>>();
 
 export interface NextStreamingOptions {
-  /** Forced disable in production. Defaults to NODE_ENV !== 'production'. */
   readonly enabled?: boolean;
-  /** Working directory for `loadConfig`. Defaults to `process.cwd()`. */
   readonly cwd?: string;
 }
 
 /**
- * Returns a `POST` handler that translates a new key on demand and writes
- * it to the chunked catalog. Mount at `/api/__autotranslate/translate` (or
- * any path you prefer; pass the same path to `createDevOnMissing`).
- *
- * ```ts
- * // app/api/__autotranslate/translate/route.ts
- * export { POST } from '@autotranslate/next/streaming';
- * ```
- *
- * Disabled outside dev — production requests get 404.
+ * `POST` handler that translates a new key on demand and writes it to the
+ * chunked catalog. Mount at any API route. Returns 404 outside dev.
  */
 export function createStreamingHandler(
   options: NextStreamingOptions = {},

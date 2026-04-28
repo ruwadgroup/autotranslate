@@ -5,12 +5,7 @@ import type { ViteDevServer } from 'vite';
 const ENDPOINT = '/__autotranslate/translate';
 const inflight = new Map<string, Promise<void>>();
 
-/**
- * Vite middleware that translates a single (key, source) on demand and
- * writes it to the chunked catalog. Lazy-loads `@autotranslate/cli` and
- * the resolved provider so dev startup isn't penalised when streaming is
- * unused.
- */
+/** Vite middleware: translate one (key, source) on demand and write to the chunked catalog. */
 export function attachStreamingMiddleware(server: ViteDevServer, cwd: string): void {
   server.middlewares.use(ENDPOINT, async (req, res) => {
     if (req.method !== 'POST') {
