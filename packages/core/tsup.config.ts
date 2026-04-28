@@ -7,6 +7,8 @@ export default defineConfig({
     locale: 'src/locale.ts',
     icu: 'src/icu.ts',
     internal: 'src/internal.ts',
+    standalone: 'src/standalone.ts',
+    'standalone.browser': 'src/standalone.browser.ts',
   },
   format: ['esm', 'cjs'],
   dts: { compilerOptions: { composite: false, incremental: false } },
