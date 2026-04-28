@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import { Command } from 'commander';
+import ora from 'ora';
 import { check } from './commands/check';
 import { extract } from './commands/extract';
 import { generateTypes, relativeFromCwd } from './commands/generate-types';
@@ -58,9 +59,23 @@ program
   .option('-l, --locale <locale...>', 'restrict to specific target locales')
   .action(async (opts: { locale?: string[] }) => {
     const resolved = await loadConfig();
+    let inFlight = 0;
+    let done = 0;
+    const spinner = ora({ text: 'translating…', color: 'cyan' }).start();
     const result = await translate(resolved, {
       ...(opts.locale ? { only: opts.locale } : {}),
+      onProgress: (event) => {
+        if (event.status === 'started') inFlight += 1;
+        else {
+          inFlight -= 1;
+          done += 1;
+        }
+        spinner.text = `translating… ${chalk.cyan(`${done}`)} done${
+          inFlight > 0 ? chalk.dim(`, ${inFlight} in flight`) : ''
+        }`;
+      },
     });
+    spinner.stop();
     for (const [locale, stats] of Object.entries(result.stats)) {
       console.log(
         chalk.green('✓'),
