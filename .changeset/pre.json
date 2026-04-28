@@ -17,6 +17,7 @@
   },
   "changesets": [
     "experiments-package",
+    "fix-package-exports-types",
     "glossary-hybrid",
     "migration-guides-cookbook",
     "next-streaming-dev-mode",

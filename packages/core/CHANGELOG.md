@@ -1,5 +1,38 @@
 # @autotranslate/core
 
+## 1.0.0-beta.1
+
+### Patch Changes
+
+- [#76](https://github.com/tamimbinhakim/autotranslate/pull/76)
+  [`8d2a506`](https://github.com/tamimbinhakim/autotranslate/commit/8d2a5060cb8d1f4c9b61b46dc638460206930efd)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Fix subpath type
+  resolution under legacy `moduleResolution`
+
+  Reported:
+  `Cannot find module '@autotranslate/core/config' or its corresponding type declarations.ts(2307)`
+  when consuming the package from a TypeScript project with
+  `moduleResolution: 'node10'` (the older default).
+
+  **Root cause.** Subpath exports (`@autotranslate/core/config`,
+  `@autotranslate/react/server`, etc.) declared their types via the `exports`
+  field only. Modern resolvers (`bundler` / `node16` / `nodenext`) read this
+  field; legacy `node10` does not, so the types were unresolvable on older
+  tsconfigs.
+
+  **Fixes applied to every public package:**
+  1. **Nest `types` per condition.** Each subpath now provides explicit
+     `import.types` (→ `.d.ts`) and `require.types` (→ `.d.cts`) so consumers
+     resolve the correct declaration shape for their module system.
+  2. **Add `typesVersions`** mapping each subpath to its `.d.ts` for legacy
+     `node10` resolvers. This is the documented compat path.
+
+  After this release, all subpath imports resolve cleanly under `node10`,
+  `node16`, `nodenext`, and `bundler` resolution. Verified with
+  `@arethetypeswrong/cli`.
+
+  No runtime change. Patch-level bump.
+
 ## 1.0.0-beta.0
 
 ### Major Changes
