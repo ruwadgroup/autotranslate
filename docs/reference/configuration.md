@@ -1,8 +1,8 @@
 # Configuration
 
-`autotranslate.config.ts` lives at your project root. It's loaded by the CLI,
-the Vite plugin, and the Next.js plugin. The schema is validated by Zod, so
-typos and bad shapes fail loudly at config-load time.
+`autotranslate.config.ts` lives at your project root. The CLI, the Vite plugin,
+and the Next.js plugin all read it. The schema is validated by Zod — typos and
+bad shapes fail at config-load time.
 
 ## `defineConfig`
 
@@ -22,22 +22,21 @@ export default defineConfig({
 ```
 
 `defineConfig` is a type-preserving identity helper — it doesn't change the
-runtime shape, but it preserves literal types so downstream typegen can narrow
-at the call site.
+runtime shape but preserves literal types so downstream typegen can narrow.
 
 ## Top-level options
 
-| Option        | Type                                     | Default            | Description                                           |
-| ------------- | ---------------------------------------- | ------------------ | ----------------------------------------------------- |
-| `source`      | `Locale`                                 | `'en'`             | The locale your code is written in.                   |
-| `targets`     | `Locale[]` (≥ 1)                         | (required)         | Locales to translate into.                            |
-| `content`     | `string[]` (≥ 1)                         | (required)         | Globs of source files to scan.                        |
-| `outDir`      | `string`                                 | `'.translations'`  | Where catalogs are written.                           |
-| `provider`    | `ProviderConfig`                         | `{ name: 'stub' }` | Translation provider settings.                        |
-| `concurrency` | `number` (1–64)                          | `8`                | Max parallel provider requests.                       |
-| `overrides`   | `Record<string, Record<string, string>>` | —                  | Per-locale manual overrides applied after MT.         |
-| `instruction` | `string`                                 | —                  | Free-form system instruction passed to AI providers.  |
-| `dictionary`  | `string`                                 | —                  | Path to a TS / JS / JSON dictionary file (see below). |
+| Option        | Type                                     | Default            | Description                                          |
+| ------------- | ---------------------------------------- | ------------------ | ---------------------------------------------------- |
+| `source`      | `Locale`                                 | `'en'`             | The locale your code is written in.                  |
+| `targets`     | `Locale[]` (≥ 1)                         | (required)         | Locales to translate into.                           |
+| `content`     | `string[]` (≥ 1)                         | (required)         | Globs of source files to scan.                       |
+| `outDir`      | `string`                                 | `'.translations'`  | Where catalogs are written.                          |
+| `provider`    | `ProviderConfig`                         | `{ name: 'stub' }` | Translation provider settings.                       |
+| `concurrency` | `number` (1–64)                          | `8`                | Max parallel provider requests.                      |
+| `overrides`   | `Record<string, Record<string, string>>` | —                  | Per-locale manual overrides applied after MT.        |
+| `instruction` | `string`                                 | —                  | Free-form system instruction passed to AI providers. |
+| `dictionary`  | `string`                                 | —                  | Path to a TS / JS / JSON dictionary file.            |
 
 ### `source` / `targets`
 
@@ -48,7 +47,7 @@ validation happens at runtime via `Intl.Locale`.
 ### `content`
 
 Globs relative to the project root. The CLI uses `fast-glob`; standard `*` /
-`**/*` patterns work. Exclude paths via `!`-prefixed patterns:
+`**/*` patterns work. Exclude paths with `!`:
 
 ```ts
 content: ['src/**/*.{ts,tsx}', '!src/**/*.test.tsx'],
@@ -68,7 +67,7 @@ Resolves relative to the project root. The CLI writes:
 ### `overrides`
 
 Manual per-locale strings applied **after** machine translation. Useful for
-brand terms, idioms the model gets wrong, or locale-specific copy.
+brand terms and idioms the model gets wrong.
 
 ```ts
 overrides: {
@@ -80,6 +79,8 @@ overrides: {
   },
 },
 ```
+
+See [Overrides & glossaries](../cookbook/overrides-and-glossary.md).
 
 ### `instruction`
 
@@ -114,8 +115,7 @@ export default defineConfig({
 });
 ```
 
-```ts
-// component.tsx
+```tsx
 const t = useTranslations('dashboard');
 t('title'); // → catalog['dashboard.title']
 ```
@@ -127,8 +127,7 @@ the shape varies.
 
 ### `stub`
 
-Identity / pseudo-localization. No network, no credentials. Useful for CI and as
-the default before you wire up AI.
+Identity / pseudo-localisation. No network, no credentials. Default.
 
 ```ts
 provider: { name: 'stub' }
@@ -137,7 +136,7 @@ provider: { name: 'stub', pseudo: true }   // surfaces untranslated UI
 
 ### `ai`
 
-Vercel AI SDK-backed. `model` is `<vendor>:<model-id>`.
+Vercel AI SDK-backed.
 
 ```ts
 provider: {
@@ -147,9 +146,8 @@ provider: {
 }
 ```
 
-Supported vendors: `anthropic`, `openai`, `google`, `openrouter`. Peer deps
-(`@ai-sdk/anthropic`, etc.) load lazily — install only what you use. See the
-[Providers guide](guides/providers.md) for details.
+`model` is `<vendor>:<model-id>`. Supported vendors: `anthropic`, `openai`,
+`google`, `openrouter`. See [Providers guide](../guides/providers.md).
 
 ### `deepl`
 
@@ -157,13 +155,12 @@ Supported vendors: `anthropic`, `openai`, `google`, `openrouter`. Peer deps
 provider: {
   name: 'deepl',
   apiKey: process.env.DEEPL_API_KEY,
-  endpoint: 'https://api-free.deepl.com/v2/translate', // free tier
+  endpoint: 'https://api-free.deepl.com/v2/translate',
   formality: 'prefer_more',
 }
 ```
 
-DeepL handles plain-string entries only. Plural / select / tag entries throw —
-route those through the `ai` provider.
+Plain-string entries only.
 
 ### `google`
 
@@ -178,9 +175,9 @@ Same scope as DeepL — plain-string entries only.
 
 ### `custom`
 
-Custom providers are functions and don't survive JSON serialization, so
-declaring `name: 'custom'` in the config tells the CLI to expect the provider to
-be supplied programmatically:
+Custom providers are functions and don't survive JSON serialisation, so
+declaring `name: 'custom'` tells the CLI to expect the provider to be supplied
+programmatically:
 
 ```ts
 import { translate } from '@autotranslate/cli';
@@ -188,7 +185,7 @@ import { translate } from '@autotranslate/cli';
 await translate(resolved, { provider: myCustomProvider });
 ```
 
-See [`defineProvider`](guides/providers.md#custom-providers) for authoring.
+See [Custom provider cookbook](../cookbook/custom-provider.md).
 
 ## Loading the config in code
 

@@ -43,7 +43,15 @@ milestone matters to you.
 - [ ] Hybrid mode — MT for short / unambiguous strings, AI for the rest
 - [ ] Glossary support (per-tenant terminology)
 
-## v0.6 — MCP + agentic workflow
+## v0.6 — Standalone `t()` + Zod integration
+
+- [x] `@autotranslate/core/standalone` — `bindTranslator`, `withTranslator`,
+      `currentTranslator`, sync `t()`
+- [x] `@autotranslate/zod` — Zod v4 error map, Next + Remix adapters
+- [x] Cookbook (locale switcher, form validation, server actions, testing,
+      lazy-loading, custom provider, debugging, …)
+
+## v0.7 — MCP + agentic workflow
 
 - [ ] `@autotranslate/mcp` — tools for `extract`, `translate`, `check`,
       `add-locale`
@@ -53,7 +61,7 @@ milestone matters to you.
 
 - [ ] Public API freeze
 - [ ] Migration guides from `react-i18next`, `next-intl`, `lingui`, `gt-next`
-- [ ] Cookbook with framework recipes
+- [ ] More cookbook recipes — multi-tenant, A/B copy, branded glossaries
 - [ ] Performance — translator < 50µs/call, catalog gzip < 5kb for 100 strings
 
 ## Beyond v1

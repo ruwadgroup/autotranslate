@@ -59,14 +59,17 @@ npx autotranslate translate
 
 Full documentation lives in [`docs/`](docs/):
 
-- **[Getting Started](docs/getting-started.md)** — install, configure, and ship
-  your first translated string.
-- **[Guides](docs/guides/)** — `<T>`, `useT`, formatters, providers,
-  type-safety.
-- **[Frameworks](docs/frameworks/)** — Next.js, Vite, RSC, edge, React Native.
-- **[CLI Reference](docs/cli.md)** — every command, every flag.
-- **[Configuration](docs/configuration.md)** — `autotranslate.config.ts` schema.
-- **[API Reference](docs/api-reference.md)** — typed exports per package.
+- **[Overview](docs/overview.md)** — what autotranslate does and where it fits
+- **[Quick start](docs/quick-start.md)** — translate your first string in five
+  minutes
+- **[Concepts](docs/concepts.md)** — catalogs, keys, locales, ICU on one page
+- **[Guides](docs/README.md#guides)** — `<T>`, `useT`, standalone `t()`,
+  formatters, providers, type-safety, linting
+- **[Frameworks](docs/README.md#frameworks)** — Next.js, Vite, Remix
+- **[Integrations](docs/integrations/zod.md)** — Zod validation errors
+- **[Cookbook](docs/README.md#cookbook)** — locale switcher, form validation,
+  server actions, testing, CI/CD, lazy-loading, custom providers, debugging
+- **[Reference](docs/README.md#reference)** — configuration, CLI, public API
 
 ## Installation
 

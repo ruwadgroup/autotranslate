@@ -3,7 +3,7 @@
 `<Num>`, `<Currency>`, `<DateTime>`, and `<RelativeTime>` are locale-aware
 formatters built on `Intl.NumberFormat`, `Intl.DateTimeFormat`, and
 `Intl.RelativeTimeFormat`. Inside `<T>`, they behave as opaque variable slots —
-the formatter renders itself, and the canonical message records the slot name.
+the formatter renders itself, the canonical message records the slot name.
 
 ## `<Num>`
 
@@ -37,8 +37,7 @@ import { Currency } from '@autotranslate/react';
 // ja-JP → 'US$49.99'
 ```
 
-`currency` is a required ISO 4217 code (`'USD'`, `'EUR'`, `'JPY'`, …). Otherwise
-the props match `<Num>`.
+`currency` is a required ISO 4217 code. Otherwise the props match `<Num>`.
 
 ## `<DateTime>`
 
@@ -76,9 +75,9 @@ import { RelativeTime } from '@autotranslate/react';
 // ja-JP → '2 時間前'
 ```
 
-`value` is the target instant. The formatter picks the largest unit whose
-magnitude is at least 1 (year, month, week, day, hour, minute, second). `now`
-overrides the anchor (default: `Date.now()`).
+The formatter picks the largest unit whose magnitude is at least 1 (year, month,
+week, day, hour, minute, second). `now` overrides the anchor (default:
+`Date.now()`).
 
 | Prop       | Type                             |
 | ---------- | -------------------------------- |
@@ -92,8 +91,8 @@ overrides the anchor (default: `Date.now()`).
 ## Inside `<T>`
 
 Formatters compose with `<T>` like any other marker — the canonical message
-records a `var` slot, and the runtime renders the formatter component as the
-slot value:
+records a `var` slot, the runtime renders the formatter component as the slot
+value:
 
 ```tsx
 <T>
@@ -112,13 +111,10 @@ identifier:
 </T>
 ```
 
-The `_` separator (rather than `#`) keeps the slot name a valid ICU argument
-identifier, so trees round-trip through `treeToICU` and back cleanly.
+## Standalone
 
-## Standalone usage
-
-Formatters render correctly outside `<T>`. They read the active locale from
-`useTranslationContext` directly:
+Formatters render correctly outside `<T>`. They read the active locale from the
+provider directly:
 
 ```tsx
 function AccountAge({ created }: { created: Date }) {
@@ -130,20 +126,17 @@ function AccountAge({ created }: { created: Date }) {
 }
 ```
 
-This is occasionally useful for `aria-label`s and tooltips that don't sit inside
-translatable copy.
+Useful for `aria-label`s and tooltips that don't sit inside translatable copy.
 
 ## Tips
 
-- **`<Num>` and `<Currency>` ignore extra `Intl.NumberFormat` options that the
-  runtime doesn't validate.** Pass `style: 'percent'`, `notation: 'compact'`,
-  etc. and they'll flow through to the underlying formatter.
-
-- **Memoize options** outside the render path if `options` is rebuilt every
-  render — the formatter's `useMemo` cache is keyed on the object identity, so a
-  fresh object every render means a fresh formatter every render.
+- **Memoise `options`** outside the render path if it's rebuilt every render —
+  the formatter's `useMemo` cache keys on object identity.
 
 - **Use `<DateTime>` over `toLocaleString()`** in JSX so the canonical message
   records the slot.
   `t('Last updated {date}', { date: d.toLocaleString(locale) })` works but bakes
   the formatted string into the params.
+
+- **Pass through `Intl.NumberFormat` options.** `style: 'percent'`,
+  `notation: 'compact'`, `maximumFractionDigits`, etc. all flow through.

@@ -22,9 +22,9 @@ export default defineConfig({
 });
 ```
 
-That's it. The plugin reads `autotranslate.config.{ts,mts,js,mjs}` from the Vite
-project root for `source`, `targets`, and `outDir`, then exposes the catalogs as
-a virtual module.
+The plugin reads `autotranslate.config.{ts,mts,js,mjs}` from the Vite project
+root for `source`, `targets`, and `outDir`, then exposes the catalogs as a
+virtual module.
 
 ## Use the virtual module
 
@@ -43,9 +43,9 @@ export { locales, source };
 The virtual module exports:
 
 - `catalogs: Readonly<Record<Locale, Catalog>>` — every locale's catalog,
-  bundled at build time.
-- `source: Locale` — the source-locale tag.
-- `locales: ReadonlyArray<Locale>` — `[source, ...targets]`.
+  bundled at build time
+- `source: Locale` — the source-locale tag
+- `locales: ReadonlyArray<Locale>` — `[source, ...targets]`
 
 ## TypeScript
 
@@ -60,7 +60,7 @@ Add the client types reference once in your app's tsconfig:
 }
 ```
 
-This declares the `'virtual:autotranslate'` module so imports type-check.
+Declares the `'virtual:autotranslate'` module so imports type-check.
 
 ## Wire it into the runtime
 
@@ -99,7 +99,7 @@ picks up new translations without a manual refresh.
 ## Options
 
 The plugin auto-discovers from `autotranslate.config.ts`, so the option object
-is rarely needed. Override individual fields when you need to:
+is rarely needed.
 
 ```ts
 autotranslate({
@@ -110,24 +110,23 @@ autotranslate({
 });
 ```
 
-| Option    | Type                  | Default                             |
-| --------- | --------------------- | ----------------------------------- |
-| `cwd`     | `string`              | Vite project root.                  |
-| `outDir`  | `string`              | from config (`.translations`).      |
-| `source`  | `string`              | from config (`'en'`).               |
-| `locales` | `ReadonlyArray<...>`  | `[source, ...targets]` from config. |
-| `config`  | `AutotranslateConfig` | inline config — skips disk lookup.  |
+| Option    | Type                  | Default                            |
+| --------- | --------------------- | ---------------------------------- |
+| `cwd`     | `string`              | Vite project root                  |
+| `outDir`  | `string`              | from config (`.translations`)      |
+| `source`  | `string`              | from config (`'en'`)               |
+| `locales` | `ReadonlyArray<...>`  | `[source, ...targets]` from config |
+| `config`  | `AutotranslateConfig` | inline config — skips disk lookup  |
 
 When `config` is supplied the plugin skips the `autotranslate.config.*` search
-entirely. Useful if you import the config in `vite.config.ts` for other reasons
-(e.g. exposing locale lists to a build-time generator).
+entirely.
 
 ## Build-time inlining
 
 At build time the plugin reads each `<outDir>/<locale>.json` and inlines them as
 JSON literals in the virtual module. Same effect as
-`import.meta.glob('../.translations/*.json', { eager: true })` but without the
-path-stripping dance and with proper TypeScript types.
+`import.meta.glob('../.translations/*.json', { eager: true })` but with proper
+TypeScript types.
 
 For very large catalogs, code-split per-locale by lazy-loading the virtual
 module:
@@ -137,14 +136,12 @@ const { catalogs } = await import('virtual:autotranslate');
 ```
 
 Vite produces one chunk per dynamic import, so each locale's JSON only ships
-when first requested.
+when first requested. See [Lazy-loading](../cookbook/lazy-loading.md).
 
-## Server entry
+## SSR / pre-rendering
 
-For SSR or pre-rendering with Vite (e.g. via Vike, Astro), the virtual module
-works on the server too. Use
-[`@autotranslate/react/server`](../api-reference.md#autotranslatereact-server)
-for context-free translation:
+The virtual module works on the server too. Use `getT` from
+`@autotranslate/react/server`:
 
 ```tsx
 import { getT } from '@autotranslate/react/server';
