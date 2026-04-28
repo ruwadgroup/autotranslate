@@ -7,15 +7,29 @@ migration is mostly removing keys.
 
 ## At a glance
 
-| react-i18next                                                 | autotranslate                                                   |
-| ------------------------------------------------------------- | --------------------------------------------------------------- |
-| `i18next.use(initReactI18next).init({...})`                   | `<TranslationProvider locale catalog>`                          |
-| `useTranslation()`                                            | `useT()`                                                        |
-| `t('hello.world')` (JSON: `{ "hello": { "world": "Hello"}}`)  | `t('Hello')`                                                    |
-| `<Trans>Hello <strong>{{name}}</strong></Trans>`              | `<T>Hello <strong><Var>{name}</Var></strong></T>`               |
-| `t('items', { count })` with `items_one` / `items_other` JSON | `t('{count, plural, one {# item} other {# items}}', { count })` |
-| `i18next.changeLanguage('fr')`                                | re-render with `<TranslationProvider locale="fr">`              |
-| `public/locales/{lng}/translation.json` (handwritten)         | `.translations/{locale}/**.json` (generated)                    |
+<!-- prettier-ignore -->
+```tsx
+// Plain string lookup
+t('hello.world');                                 // react-i18next — needs JSON: { hello: { world: 'Hello' } }
+t('Hello');                                       // autotranslate — the literal IS the key
+
+// Rich text
+<Trans>Hello <strong>{{name}}</strong></Trans>;   // react-i18next
+<T>Hello <strong><Var>{name}</Var></strong></T>;  // autotranslate
+
+// Plural — react-i18next: needs `items_one` / `items_other` keys
+t('items', { count });
+// autotranslate: one inline ICU source covers every CLDR form
+t('{count, plural, one {# item} other {# items}}', { count });
+
+// Language switch
+i18next.changeLanguage('fr');                                  // react-i18next — mutates global state
+<TranslationProvider locale="fr" catalog={catalogs.fr} />;     // autotranslate — re-render with new locale
+
+// On-disk shape
+// react-i18next   public/locales/{lng}/translation.json   (handwritten)
+// autotranslate   .translations/{locale}/**.json          (generated)
+```
 
 ## Step-by-step
 

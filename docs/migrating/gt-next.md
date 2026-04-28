@@ -6,14 +6,27 @@ repo) and using the broader autotranslate toolchain.
 
 ## At a glance
 
-| gt-next                                                     | autotranslate                                     |
-| ----------------------------------------------------------- | ------------------------------------------------- |
-| `<T>Hello, {name}</T>` (managed by gt cloud)                | `<T>Hello, <Var>{name}</Var></T>` (self-hosted)   |
-| `<Var>` slots                                               | `<Var>` slots ✓ same                              |
-| `<Plural>`                                                  | `<Plural>` ✓ same                                 |
-| Cloud-hosted translation catalogs (gt-next runtime fetches) | `.translations/{locale}/**.json` in your repo     |
-| `gtTranslate` + project ID (cloud-managed)                  | Your provider config in `autotranslate.config.ts` |
-| `useGT()`, `getGT()`                                        | `useT()`, `getT(locale)`                          |
+<!-- prettier-ignore -->
+```tsx
+// JSX — autotranslate requires explicit <Var> for dynamic slots
+<T>Hello, {name}</T>;                          // gt-next
+<T>Hello, <Var>{name}</Var></T>;               // autotranslate
+
+// Hook
+const t = useGT();                             // gt-next
+const t = useT();                              // autotranslate
+
+// Server
+const t = await getGT();                       // gt-next
+const t = await getT(locale);                  // autotranslate
+
+// Where catalogs live
+// gt-next         cloud-hosted, fetched at runtime
+// autotranslate   .translations/{locale}/**.json in your repo, build-time AI translate
+
+// Translation provider — you choose, no SaaS markup
+provider: { name: 'ai', model: 'anthropic:claude-haiku-4-5' }   // autotranslate
+```
 
 ## Why migrate
 

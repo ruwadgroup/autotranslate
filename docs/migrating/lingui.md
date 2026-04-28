@@ -7,14 +7,32 @@ macros, ICU MessageFormat. The migration is mostly **swapping macros for `<T>` /
 
 ## At a glance
 
-| lingui                                               | autotranslate                                                   |
-| ---------------------------------------------------- | --------------------------------------------------------------- |
-| `<Trans>Hello <strong>{name}</strong>!</Trans>`      | `<T>Hello <strong><Var>{name}</Var></strong>!</T>`              |
-| ``t`Hello, ${name}!` `` (macro, tagged template)     | `t('Hello, {name}!', { name })` (literal call)                  |
-| `plural(count, { one: '# item', other: '# items' })` | `t('{count, plural, one {# item} other {# items}}', { count })` |
-| `lingui extract && lingui compile`                   | `autotranslate extract && autotranslate translate`              |
-| `.po` / `.json` catalogs (extracted from macros)     | `.translations/{locale}/**.json` (chunked, generated)           |
-| `<I18nProvider i18n={i18n}>`                         | `<TranslationProvider locale catalog>`                          |
+<!-- prettier-ignore -->
+```tsx
+// Rich text
+<Trans>Hello <strong>{name}</strong>!</Trans>;                 // lingui (Trans macro)
+<T>Hello <strong><Var>{name}</Var></strong>!</T>;              // autotranslate — wrap dynamic in <Var>
+
+// Plain string
+t`Hello, ${name}!`;                                            // lingui — tagged template
+t('Hello, {name}!', { name });                                 // autotranslate — literal + ICU placeholder
+
+// Plural
+plural(count, { one: '# item', other: '# items' });            // lingui
+t('{count, plural, one {# item} other {# items}}', { count }); // autotranslate
+
+// Build pipeline
+lingui extract && lingui compile                               // lingui
+autotranslate extract && autotranslate translate               // autotranslate
+
+// Catalog
+// lingui          locale/{locale}/messages.po (or .json)
+// autotranslate   .translations/{locale}/**.json (chunked)
+
+// Provider
+<I18nProvider i18n={i18n}>;                                    // lingui
+<TranslationProvider locale={locale} catalog={catalog}>;       // autotranslate
+```
 
 ## Step-by-step
 
