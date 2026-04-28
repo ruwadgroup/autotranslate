@@ -30,6 +30,6 @@ body:
         - "@autotranslate/vite"
         - "@autotranslate/providers"
         - "@autotranslate/eslint-plugin"
-        - "@autotranslate/mcp"
+        - "@autotranslate/zod"
         - new package
     validations: { required: true }
