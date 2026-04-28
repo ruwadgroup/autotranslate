@@ -1,13 +1,13 @@
 import { readFile } from 'node:fs/promises';
-import { relative, resolve } from 'node:path';
+import { relative } from 'node:path';
 import type { CatalogEntry, Manifest } from '@autotranslate/core';
 import fg from 'fast-glob';
-import { writeCatalog, writeManifest } from '../catalog';
+import { writeChunkedCatalog, writeManifest } from '../catalog';
 import { extractDictionary } from '../extract/dictionary';
 import { extractFile } from '../extract/extractor';
 import type { ExtractResult, ResolvedConfig } from '../types';
 
-/** Scan source files, build the source-locale catalog, persist to disk. */
+/** Scan source files, build the source-locale catalog, persist as chunks. */
 export async function extract(resolved: ResolvedConfig): Promise<ExtractResult> {
   const { cwd, config, outDir } = resolved;
   const files = await fg(config.content, {
@@ -37,7 +37,7 @@ export async function extract(resolved: ResolvedConfig): Promise<ExtractResult> 
     }
   }
 
-  await writeCatalog(resolve(outDir, `${config.source}.json`), messages);
+  await writeChunkedCatalog(outDir, config.source, messages, manifest);
   await writeManifest(outDir, manifest);
 
   return { source: messages, manifest, fileCount: files.length };
