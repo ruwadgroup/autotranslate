@@ -9,11 +9,7 @@ export interface HybridProviderOptions {
   readonly plain: Provider;
 }
 
-/**
- * Routes structured-tree entries to the `ai` provider and plain strings to
- * the `plain` provider (typically DeepL or Google). Same source language,
- * same target — just two pipes by entry shape.
- */
+/** Routes structured-tree entries to `ai` and plain strings to `plain` (DeepL or Google). */
 export function createHybridProvider(options: HybridProviderOptions): Provider {
   const { ai, plain } = options;
   return {

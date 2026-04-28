@@ -10,7 +10,7 @@ import {
   useMemo,
 } from 'react';
 
-/** Map of experiment id → active variant id. Build it from your flag system. */
+/** Map of experiment id → active variant id. */
 export type ExperimentAssignments = Readonly<Record<string, string>>;
 
 interface ExperimentContextValue {
@@ -26,21 +26,13 @@ const ExperimentContext = createContext<ExperimentContextValue>({
 });
 
 export interface ExperimentProviderProps {
-  /** Active variant id per experiment. Resolve from your flag system upstream. */
   readonly assignments: ExperimentAssignments;
-  /**
-   * Default variant id when an experiment isn't in `assignments`. Defaults
-   * to `'control'`. Pass a function for per-experiment defaults.
-   */
+  /** Default when an experiment isn't in `assignments`. Defaults to `'control'`. */
   readonly defaultVariant?: string | ((experimentId: string) => string);
   readonly children: ReactNode;
 }
 
-/**
- * Exposes experiment assignments to `<Experiment>`, `<Variant>`, and
- * `useExperiment`. Resolve the assignments upstream — Vercel `flags`,
- * GrowthBook, LaunchDarkly, your own header — and pass the resolved map.
- */
+/** Exposes experiment assignments to `<Experiment>`, `<Variant>`, and `useExperiment`. */
 export function ExperimentProvider({
   assignments,
   defaultVariant = DEFAULT_VARIANT,
@@ -60,10 +52,7 @@ export function useExperimentContext(): ExperimentContextValue {
   return useContext(ExperimentContext);
 }
 
-/**
- * Read the active variant for an experiment. Returns the default (typically
- * `'control'`) when the provider has no assignment for it.
- */
+/** Read the active variant for an experiment. */
 export function useExperiment(experimentId: string): string {
   const { assignments, defaultVariant } = useExperimentContext();
   return assignments[experimentId] ?? defaultVariant(experimentId);
@@ -74,11 +63,7 @@ export interface ExperimentProps {
   readonly children: ReactNode;
 }
 
-/**
- * Render the matching `<Variant>` for the active assignment. Falls back to
- * the variant whose `id` matches the provider's default (typically
- * `'control'`); renders nothing if no fallback variant is declared.
- */
+/** Render the matching `<Variant>`. Falls back to the default variant or `null`. */
 export function Experiment({ name, children }: ExperimentProps): ReactNode {
   const active = useExperiment(name);
   const { defaultVariant } = useExperimentContext();
@@ -100,10 +85,7 @@ export interface VariantProps {
   readonly children: ReactNode;
 }
 
-/**
- * One arm of an `<Experiment>`. Rendered only when its `id` matches the
- * active assignment for the surrounding `<Experiment name>`.
- */
+/** One arm of an `<Experiment>`. */
 export function Variant({ children }: VariantProps): ReactNode {
   return children;
 }
