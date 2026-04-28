@@ -25,46 +25,100 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./config": {
       "types": "./dist/config.d.ts",
-      "import": "./dist/config.js",
-      "require": "./dist/config.cjs"
+      "import": {
+        "types": "./dist/config.d.ts",
+        "default": "./dist/config.js"
+      },
+      "require": {
+        "types": "./dist/config.d.cts",
+        "default": "./dist/config.cjs"
+      }
     },
     "./locale": {
       "types": "./dist/locale.d.ts",
-      "import": "./dist/locale.js",
-      "require": "./dist/locale.cjs"
+      "import": {
+        "types": "./dist/locale.d.ts",
+        "default": "./dist/locale.js"
+      },
+      "require": {
+        "types": "./dist/locale.d.cts",
+        "default": "./dist/locale.cjs"
+      }
     },
     "./icu": {
       "types": "./dist/icu.d.ts",
-      "import": "./dist/icu.js",
-      "require": "./dist/icu.cjs"
+      "import": {
+        "types": "./dist/icu.d.ts",
+        "default": "./dist/icu.js"
+      },
+      "require": {
+        "types": "./dist/icu.d.cts",
+        "default": "./dist/icu.cjs"
+      }
     },
     "./internal": {
       "types": "./dist/internal.d.ts",
-      "import": "./dist/internal.js",
-      "require": "./dist/internal.cjs"
+      "import": {
+        "types": "./dist/internal.d.ts",
+        "default": "./dist/internal.js"
+      },
+      "require": {
+        "types": "./dist/internal.d.cts",
+        "default": "./dist/internal.cjs"
+      }
     },
     "./standalone": {
       "types": "./dist/standalone.d.ts",
       "browser": {
-        "import": "./dist/standalone.browser.js",
-        "require": "./dist/standalone.browser.cjs"
+        "import": {
+          "types": "./dist/standalone.browser.d.ts",
+          "default": "./dist/standalone.browser.js"
+        },
+        "require": {
+          "types": "./dist/standalone.browser.d.cts",
+          "default": "./dist/standalone.browser.cjs"
+        }
       },
-      "import": "./dist/standalone.js",
-      "require": "./dist/standalone.cjs"
+      "import": {
+        "types": "./dist/standalone.d.ts",
+        "default": "./dist/standalone.js"
+      },
+      "require": {
+        "types": "./dist/standalone.d.cts",
+        "default": "./dist/standalone.cjs"
+      }
     },
     "./t": {
       "types": "./dist/standalone.d.ts",
       "browser": {
-        "import": "./dist/standalone.browser.js",
-        "require": "./dist/standalone.browser.cjs"
+        "import": {
+          "types": "./dist/standalone.browser.d.ts",
+          "default": "./dist/standalone.browser.js"
+        },
+        "require": {
+          "types": "./dist/standalone.browser.d.cts",
+          "default": "./dist/standalone.browser.cjs"
+        }
       },
-      "import": "./dist/standalone.js",
-      "require": "./dist/standalone.cjs"
+      "import": {
+        "types": "./dist/standalone.d.ts",
+        "default": "./dist/standalone.js"
+      },
+      "require": {
+        "types": "./dist/standalone.d.cts",
+        "default": "./dist/standalone.cjs"
+      }
     },
     "./package.json": "./package.json"
   },
@@ -102,5 +156,27 @@
   "publishConfig": {
     "access": "public",
     "provenance": true
+  },
+  "typesVersions": {
+    "*": {
+      "config": [
+        "./dist/config.d.ts"
+      ],
+      "locale": [
+        "./dist/locale.d.ts"
+      ],
+      "icu": [
+        "./dist/icu.d.ts"
+      ],
+      "internal": [
+        "./dist/internal.d.ts"
+      ],
+      "standalone": [
+        "./dist/standalone.d.ts"
+      ],
+      "t": [
+        "./dist/standalone.d.ts"
+      ]
+    }
   }
 }
