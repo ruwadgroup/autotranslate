@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import type tsModule from 'typescript/lib/tsserverlibrary';
+import type * as tsModule from 'typescript';
 
 interface PluginConfig {
   readonly outDir?: string;
