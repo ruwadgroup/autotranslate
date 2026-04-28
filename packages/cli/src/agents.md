@@ -15,8 +15,11 @@ Key rules:
   literal string as the key. The standalone `t()` from `@autotranslate/core/t`
   works outside React but requires `withTranslator(...)` /
   `bindTranslator(...)` upstream to set the active locale.
-- Catalogs live in `.translations/{locale}.json`. Missing keys fall back to
-  source — the runtime never throws on a miss.
+- Catalogs live as a chunked tree under `.translations/<locale>/**/*.json`
+  (one chunk per source file, alphabetically-first occurrence). Use the
+  framework adapter's loader (`@autotranslate/next`'s `fsCatalogLoader`,
+  `@autotranslate/vite`'s virtual module) — never `import` raw chunk files
+  directly. Missing keys fall back to source; runtime never throws.
 - Run `pnpm i18n` (extract + translate + generate-types) after changing any
   translatable string.
 -->
@@ -207,10 +210,10 @@ for a more helpful error message.
 
 ```tsx
 import { TranslationProvider } from '@autotranslate/react';
-import en from '../.translations/en.json';
-import fr from '../.translations/fr.json';
+import { catalogs } from 'virtual:autotranslate'; // Vite plugin
+// or use `await getT(locale)` from `@autotranslate/next` on the server
 
-<TranslationProvider locale="fr" catalog={fr} fallback={en}>
+<TranslationProvider locale="fr" catalog={catalogs.fr} fallback={catalogs.en}>
   {/* … */}
 </TranslationProvider>;
 ```
@@ -462,17 +465,31 @@ need exact regulatory wording.
 
 ```
 .translations/
-├── en.json               # source-locale canonical catalog
-├── es.json               # AI-translated targets
-├── fr.json
-├── ja.json
-├── .meta.json            # context, descriptions, occurrences (file:line)
-├── .cache/<sig>.json     # per-(source, target, provider) diff cache
-└── types.d.ts            # generated TS augmentation (after generate-types)
+├── en/                       # source-locale, chunked
+│   ├── components/Header.json
+│   ├── pages/Checkout.json
+│   ├── _external/zod.json    # keys from @autotranslate/zod/source
+│   └── _external/_unknown.json
+├── es/  …                    # mirrors en/
+├── fr/  …
+├── .meta.json                # per-key context, description, occurrences
+├── .cache/<provider-sig>/<source-target>/<chunk>.json
+│                             # { chunkHash, items: { key: { sourceHash, translation } } }
+└── types.d.ts                # generated TS augmentation
 ```
+
+Chunks are picked by alphabetically-first occurrence's source file. Files
+exceeding 300 keys auto-split (`Foo.0.json`, `Foo.1.json`). Cache mirrors the
+chunk tree — `chunkHash` short-circuits no-op runs (zero API calls when source
+unchanged); within a chunk, unchanged neighbours ride along as cached context
+for AI consistency.
 
 Commit `.translations/` to your repo. Treat it as version-controlled content.
 Re-runs only translate keys whose source hash changed.
+
+**0.1.0 → 0.2.0 migration**: silent. The first `translate` after upgrade
+reshapes flat `<locale>.json` files into the chunked tree. Cache resets — first
+run is a cold pass.
 
 ## Public API surface
 

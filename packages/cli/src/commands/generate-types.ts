@@ -1,6 +1,6 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, relative } from 'node:path';
-import { isMissing } from '../catalog';
+import { isMissing, readChunkedCatalog } from '../catalog';
 import type { ResolvedConfig } from '../types';
 
 export interface GenerateTypesResult {
@@ -15,8 +15,16 @@ export interface GenerateTypesResult {
  */
 export async function generateTypes(resolved: ResolvedConfig): Promise<GenerateTypesResult> {
   const { config, outDir } = resolved;
-  const sourcePath = join(outDir, `${config.source}.json`);
-  const catalog = await readCatalog(sourcePath);
+  const sourceDir = join(outDir, config.source);
+  const flatPath = join(outDir, `${config.source}.json`);
+
+  if (!(await pathExists(sourceDir)) && !(await pathExists(flatPath))) {
+    throw new Error(
+      `Source catalog not found at ${sourceDir}. Run \`autotranslate extract\` first.`,
+    );
+  }
+
+  const catalog = await readChunkedCatalog(outDir, config.source);
   const keys = Object.keys(catalog).sort();
 
   const target = join(outDir, 'types.d.ts');
@@ -39,14 +47,12 @@ ${keys.map((k) => `    ${JSON.stringify(k)}: true;`).join('\n')}
   return { path: target, keyCount: keys.length };
 }
 
-async function readCatalog(path: string): Promise<Record<string, unknown>> {
+async function pathExists(path: string): Promise<boolean> {
   try {
-    const raw = await readFile(path, 'utf8');
-    return JSON.parse(raw) as Record<string, unknown>;
+    await stat(path);
+    return true;
   } catch (error) {
-    if (isMissing(error)) {
-      throw new Error(`Source catalog not found at ${path}. Run \`autotranslate extract\` first.`);
-    }
+    if (isMissing(error)) return false;
     throw error;
   }
 }

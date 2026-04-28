@@ -8,6 +8,8 @@
  * Application code should not import from this entry point.
  */
 
+export type { ChunkPathOptions } from './chunking';
+export { buildChunkLayout, chunkPathFor } from './chunking';
 export {
   BRANCH_RESERVED_PROPS,
   canonicalize,
@@ -16,7 +18,6 @@ export {
   mergeAdjacentText,
   TREE_KEY_PREFIX,
 } from './jsx-tree';
-
 export {
   applyContextToKey,
   CONTEXT_KEY_SEPARATOR,

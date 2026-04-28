@@ -1,7 +1,6 @@
-import { resolve } from 'node:path';
 import { isStructured } from '@autotranslate/core';
 import { ICUParseError, parseICU } from '@autotranslate/core/icu';
-import { localeCatalogPath, readCatalog } from '../catalog';
+import { readChunkedCatalog } from '../catalog';
 import type { CheckProblem, CheckResult, ResolvedConfig } from '../types';
 
 /**
@@ -10,7 +9,7 @@ import type { CheckProblem, CheckResult, ResolvedConfig } from '../types';
  */
 export async function check(resolved: ResolvedConfig): Promise<CheckResult> {
   const { config, outDir } = resolved;
-  const sourceCatalog = await readCatalog(resolve(outDir, `${config.source}.json`));
+  const sourceCatalog = await readChunkedCatalog(outDir, config.source);
   const sourceKeys = new Set(Object.keys(sourceCatalog));
 
   const problems: CheckProblem[] = [];
@@ -24,7 +23,7 @@ export async function check(resolved: ResolvedConfig): Promise<CheckResult> {
 
   for (const target of config.targets) {
     if (target === config.source) continue;
-    const targetCatalog = await readCatalog(localeCatalogPath(outDir, target));
+    const targetCatalog = await readChunkedCatalog(outDir, target);
     const targetKeys = new Set(Object.keys(targetCatalog));
 
     for (const key of sourceKeys) {

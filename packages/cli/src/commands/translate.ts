@@ -1,13 +1,23 @@
-import { resolve } from 'node:path';
-import type { CatalogEntry, Locale, Manifest } from '@autotranslate/core';
+import { stat } from 'node:fs/promises';
+import { join } from 'node:path';
+import type { CatalogEntry, Locale, Manifest, MessageMeta } from '@autotranslate/core';
+import { buildChunkLayout } from '@autotranslate/core/internal';
 import type { Provider, TranslationItem } from '@autotranslate/providers';
-import { type CacheFile, cacheFilePath, contentHash, readCache, writeCache } from '../cache';
+import {
+  type CacheItem,
+  cacheChunkPath,
+  computeChunkHash,
+  contentHash,
+  pruneLegacyCache,
+  readCacheChunk,
+  writeCacheChunk,
+} from '../cache';
 import {
   type CatalogFile,
-  localeCatalogPath,
-  readCatalog,
+  isMissing,
+  readChunkedCatalog,
   readManifest,
-  writeCatalog,
+  writeChunkedCatalog,
 } from '../catalog';
 import { resolveProvider } from '../provider-resolver';
 import type { LocaleStats, ResolvedConfig, TranslateResult, TranslateStats } from '../types';
@@ -26,10 +36,15 @@ export async function translate(
 ): Promise<TranslateResult> {
   const { config, outDir } = resolved;
   const provider = options.provider ?? (await resolveProvider(resolved));
-  const sourcePath = resolve(outDir, `${config.source}.json`);
-  const sourceCatalog = await readCatalog(sourcePath);
+  const sourceCatalog = await readChunkedCatalog(outDir, config.source);
   const manifest = await readManifest(outDir);
-  const sourceKeys = Object.keys(sourceCatalog);
+
+  // One-shot 0.1.0 layout cleanup: migrate source from flat to chunked,
+  // delete the legacy flat cache. Cheap no-ops on subsequent runs.
+  if (await fileExists(join(outDir, `${config.source}.json`))) {
+    await writeChunkedCatalog(outDir, config.source, sourceCatalog, manifest);
+  }
+  await pruneLegacyCache(outDir);
 
   const targets = options.only
     ? config.targets.filter((t) => options.only?.includes(t))
@@ -46,7 +61,6 @@ export async function translate(
       target,
       source: config.source,
       sourceCatalog,
-      sourceKeys,
       outDir,
       overrides: config.overrides,
       instruction: config.instruction,
@@ -62,7 +76,6 @@ interface TranslateLocaleArgs {
   readonly target: Locale;
   readonly source: Locale;
   readonly sourceCatalog: CatalogFile;
-  readonly sourceKeys: ReadonlyArray<string>;
   readonly outDir: string;
   readonly overrides: ResolvedConfig['config']['overrides'];
   readonly instruction: string | undefined;
@@ -70,90 +83,110 @@ interface TranslateLocaleArgs {
 }
 
 async function translateLocale(args: TranslateLocaleArgs): Promise<TranslateStats> {
-  const {
-    provider,
-    target,
-    source,
-    sourceCatalog,
-    sourceKeys,
-    outDir,
-    overrides,
-    instruction,
-    manifest,
-  } = args;
+  const { provider, target, source, sourceCatalog, outDir, overrides, instruction, manifest } =
+    args;
 
-  const cachePath = cacheFilePath(outDir, {
-    source,
-    target,
-    providerSignature: provider.signature,
-  });
-  const cache = await readCache(cachePath);
-  const targetPath = localeCatalogPath(outDir, target);
-  const existing = await readCatalog(targetPath);
+  const filtered: Record<string, MessageMeta | undefined> = {};
+  for (const k of Object.keys(sourceCatalog)) filtered[k] = manifest[k];
+  const layout = buildChunkLayout(filtered);
 
   const targetOverrides = overrides?.[target] ?? {};
-  const items: TranslationItem[] = [];
-  const next: CatalogFile = {};
-  const nextCache: CacheFile = {};
-  let cached = 0;
-  let overridden = 0;
-
-  for (const key of sourceKeys) {
-    const sourceEntry = sourceCatalog[key];
-    if (sourceEntry === undefined) continue;
-    const hash = contentHash(sourceEntry);
-
-    const override = targetOverrides[key];
-    if (override !== undefined) {
-      next[key] = override;
-      nextCache[key] = { contentHash: hash, translation: override };
-      overridden++;
-      continue;
-    }
-
-    const cacheHit = cache[key];
-    if (cacheHit && cacheHit.contentHash === hash) {
-      next[key] = cacheHit.translation;
-      nextCache[key] = cacheHit;
-      cached++;
-      continue;
-    }
-
-    const meta = manifest[key];
-    const item: { -readonly [K in keyof TranslationItem]: TranslationItem[K] } = {
-      key,
-      source: sourceEntry,
-    };
-    if (meta?.context) item.context = meta.context;
-    if (meta?.description) item.description = meta.description;
-    if (typeof meta?.maxChars === 'number') item.maxChars = meta.maxChars;
-    items.push(item);
-  }
+  const ctx = { source, target, providerSignature: provider.signature };
 
   let fetched = 0;
-  if (items.length > 0) {
-    const result = await provider.translate({
-      source,
-      target,
-      items,
-      ...(instruction ? { instruction } : {}),
-    });
-    for (const item of items) {
-      const translation = result.translations[item.key];
-      if (translation === undefined) continue;
-      next[item.key] = translation;
-      nextCache[item.key] = { contentHash: contentHash(item.source), translation };
-      fetched++;
+  let cached = 0;
+  let overridden = 0;
+  const fullCatalog: CatalogFile = {};
+
+  for (const [chunkPath, keys] of layout) {
+    const chunkSource: CatalogFile = {};
+    for (const k of keys) {
+      const v = sourceCatalog[k];
+      if (v !== undefined) chunkSource[k] = v;
     }
+    const chunkHash = computeChunkHash(chunkSource);
+    const cachePath = cacheChunkPath(outDir, ctx, chunkPath);
+    const cache = await readCacheChunk(cachePath);
+
+    const result: CatalogFile = {};
+    const newCacheItems: Record<string, CacheItem> = {};
+    const itemsToFetch: TranslationItem[] = [];
+
+    // Tier 1 — chunk hash unchanged: serve everything from cache + overrides.
+    const chunkUnchanged = cache.chunkHash !== '' && cache.chunkHash === chunkHash;
+
+    for (const k of keys) {
+      const sourceEntry = chunkSource[k];
+      if (sourceEntry === undefined) continue;
+      const sourceHash = contentHash(sourceEntry);
+
+      if (targetOverrides[k] !== undefined) {
+        result[k] = targetOverrides[k] ?? sourceEntry;
+        newCacheItems[k] = { sourceHash, translation: result[k] };
+        overridden += 1;
+        continue;
+      }
+
+      const hit = cache.items[k];
+      if (hit && hit.sourceHash === sourceHash) {
+        result[k] = hit.translation;
+        newCacheItems[k] = hit;
+        cached += 1;
+        continue;
+      }
+
+      // Cache miss / per-key change. Skip in Tier 1 mode (consistency is
+      // already implied by the chunkHash match — the only reason to be here
+      // is a programmer-induced anomaly).
+      if (chunkUnchanged && hit) {
+        result[k] = hit.translation;
+        newCacheItems[k] = hit;
+        cached += 1;
+        continue;
+      }
+
+      const meta = manifest[k];
+      const item: TranslationItem = {
+        key: k,
+        source: sourceEntry,
+        ...(meta?.context ? { context: meta.context } : {}),
+        ...(meta?.description ? { description: meta.description } : {}),
+        ...(typeof meta?.maxChars === 'number' ? { maxChars: meta.maxChars } : {}),
+      };
+      itemsToFetch.push(item);
+    }
+
+    if (itemsToFetch.length > 0) {
+      const apiResult = await provider.translate({
+        source,
+        target,
+        items: itemsToFetch,
+        ...(instruction ? { instruction } : {}),
+      });
+      for (const item of itemsToFetch) {
+        const translation = apiResult.translations[item.key];
+        if (translation === undefined) continue;
+        result[item.key] = translation;
+        newCacheItems[item.key] = { sourceHash: contentHash(item.source), translation };
+        fetched += 1;
+      }
+    }
+
+    Object.assign(fullCatalog, result);
+    await writeCacheChunk(cachePath, { chunkHash, items: newCacheItems });
   }
 
-  // Carry over orphaned keys; `check` flags them for cleanup.
-  for (const [k, v] of Object.entries(existing)) {
-    if (!(k in next)) next[k] = v as CatalogEntry;
-  }
-
-  await writeCatalog(targetPath, next);
-  await writeCache(cachePath, nextCache);
-
+  await writeChunkedCatalog(outDir, target, fullCatalog, manifest);
   return { fetched, cached, overridden };
 }
+
+async function fileExists(path: string): Promise<boolean> {
+  try {
+    return (await stat(path)).isFile();
+  } catch (error) {
+    if (isMissing(error)) return false;
+    throw error;
+  }
+}
+
+export type { CatalogEntry };
