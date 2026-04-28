@@ -1,5 +1,15 @@
 # @autotranslate/eslint-plugin
 
+## 0.1.1
+
+### Patch Changes
+
+- Updated dependencies
+  [[`01133fd`](https://github.com/tamimbinhakim/autotranslate/commit/01133fd6b48ed7741eef14ce8a52689d05a113a2),
+  [`21aadff`](https://github.com/tamimbinhakim/autotranslate/commit/21aadfffaf317b8a2ae95fdbc81ee04e98242412),
+  [`0f5e052`](https://github.com/tamimbinhakim/autotranslate/commit/0f5e052b821b4eab781c8d843dd28b644ee719b5)]:
+  - @autotranslate/core@0.2.0
+
 ## 0.1.0
 
 ### Minor Changes
