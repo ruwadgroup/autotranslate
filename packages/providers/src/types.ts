@@ -9,10 +9,21 @@ export interface TranslationItem {
   readonly maxChars?: number;
 }
 
+export interface TranslationContextItem {
+  readonly source: CatalogEntry;
+  readonly translation: CatalogEntry;
+}
+
 export interface TranslationRequest {
   readonly source: Locale;
   readonly target: Locale;
   readonly items: ReadonlyArray<TranslationItem>;
+  /**
+   * Already-translated neighbours from the same chunk. The provider may
+   * include them in the prompt as reference for tone / consistency, but
+   * must NOT include them in the returned translations map.
+   */
+  readonly context?: ReadonlyArray<TranslationContextItem>;
   /** System instruction (tone, audience, brand voice). */
   readonly instruction?: string;
   readonly signal?: AbortSignal;

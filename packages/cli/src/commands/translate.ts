@@ -2,7 +2,7 @@ import { stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { CatalogEntry, Locale, Manifest, MessageMeta } from '@autotranslate/core';
 import { buildChunkLayout } from '@autotranslate/core/internal';
-import type { Provider, TranslationItem } from '@autotranslate/providers';
+import type { Provider, TranslationContextItem, TranslationItem } from '@autotranslate/providers';
 import {
   type CacheItem,
   cacheChunkPath,
@@ -111,6 +111,7 @@ async function translateLocale(args: TranslateLocaleArgs): Promise<TranslateStat
     const result: CatalogFile = {};
     const newCacheItems: Record<string, CacheItem> = {};
     const itemsToFetch: TranslationItem[] = [];
+    const contextItems: TranslationContextItem[] = [];
 
     // Tier 1 — chunk hash unchanged: serve everything from cache + overrides.
     const chunkUnchanged = cache.chunkHash !== '' && cache.chunkHash === chunkHash;
@@ -132,6 +133,8 @@ async function translateLocale(args: TranslateLocaleArgs): Promise<TranslateStat
         result[k] = hit.translation;
         newCacheItems[k] = hit;
         cached += 1;
+        // Use as context for any sibling that needs translation.
+        contextItems.push({ source: sourceEntry, translation: hit.translation });
         continue;
       }
 
@@ -161,6 +164,7 @@ async function translateLocale(args: TranslateLocaleArgs): Promise<TranslateStat
         source,
         target,
         items: itemsToFetch,
+        ...(contextItems.length > 0 ? { context: contextItems } : {}),
         ...(instruction ? { instruction } : {}),
       });
       for (const item of itemsToFetch) {

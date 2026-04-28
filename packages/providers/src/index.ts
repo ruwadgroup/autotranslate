@@ -6,6 +6,7 @@ export type { StubProviderOptions } from './stub';
 export { createStubProvider } from './stub';
 export type {
   Provider,
+  TranslationContextItem,
   TranslationItem,
   TranslationRequest,
   TranslationResult,

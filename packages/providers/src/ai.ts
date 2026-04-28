@@ -67,6 +67,11 @@ async function translateBatch(
     ...(typeof item.maxChars === 'number' ? { maxChars: item.maxChars } : {}),
   }));
 
+  const contextPayload = (request.context ?? []).map((c) => ({
+    icu: typeof c.source === 'string' ? c.source : treeToICU(c.source),
+    translatedIcu: typeof c.translation === 'string' ? c.translation : treeToICU(c.translation),
+  }));
+
   const responseSchema = z.object({
     translations: z.array(
       z.object({
@@ -76,14 +81,26 @@ async function translateBatch(
     ),
   });
 
+  const prompt =
+    contextPayload.length > 0
+      ? `${JSON.stringify({ reference: contextPayload })}\n\n${JSON.stringify({ translate: requestPayload })}`
+      : JSON.stringify(requestPayload);
+
   // `LanguageModel` shape varies between ai-sdk v4 and v5; the runtime contract
   // is what matters.
   const { object } = await generateObject({
     model: model as Parameters<typeof generateObject>[0]['model'],
     schema: responseSchema,
-    system: buildSystemPrompt(request.source, request.target, instruction),
-    prompt: JSON.stringify(requestPayload),
+    system: buildSystemPrompt(request.source, request.target, instruction, contextPayload.length),
+    prompt,
     ...(request.signal ? { abortSignal: request.signal } : {}),
+    // Anthropic's prompt cache kicks in above ~1024 tokens. Mark the system
+    // prompt as ephemeral — no-op for shorter prompts, cheap savings on
+    // Sonnet/Haiku for longer instruction blocks. Other vendors ignore the
+    // providerOptions key.
+    providerOptions: {
+      anthropic: { cacheControl: { type: 'ephemeral' } },
+    },
   });
 
   const out: Record<string, CatalogEntry> = {};
@@ -96,14 +113,28 @@ async function translateBatch(
   return out;
 }
 
-function buildSystemPrompt(source: string, target: string, instruction?: string): string {
+function buildSystemPrompt(
+  source: string,
+  target: string,
+  instruction?: string,
+  contextCount = 0,
+): string {
   const base =
     `You are a professional translator. Translate ICU MessageFormat strings ` +
     `from ${source} to ${target}. ` +
     `Preserve all placeholders ({name}, {count, plural, ...}), tag wrappers ` +
     `(<a>...</a>, <strong>...</strong>), and the overall ICU structure ` +
     `exactly. Translate only the natural-language text. Do not add commentary.`;
-  return instruction ? `${base}\n\nAdditional guidance: ${instruction}` : base;
+  const contextNote =
+    contextCount > 0
+      ? `\n\nThe input contains a "reference" array of already-translated ${target} ` +
+        `strings from the same context. Match their tone, voice, and terminology. ` +
+        `Translate ONLY the items in the "translate" array; do not include reference ` +
+        `entries in the response.`
+      : '';
+  return instruction
+    ? `${base}${contextNote}\n\nAdditional guidance: ${instruction}`
+    : `${base}${contextNote}`;
 }
 
 async function defaultResolveModel(model: string, apiKey?: string): Promise<unknown> {
