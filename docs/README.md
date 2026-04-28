@@ -10,6 +10,8 @@ a command, get translated catalogs.
   and their reasons
 - **[Stability](../STABILITY.md)** — what's public, what's internal, what's
   allowed to change in pre-1.0
+- **[Performance](performance.md)** — measured numbers for translator hot path
+  and catalog gzip size
 - **[Installation](installation.md)** — packages and version matrix
 - **[Quick start](quick-start.md)** — translate your first string in five
   minutes

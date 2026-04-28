@@ -80,6 +80,7 @@
     "dev": "tsup --watch",
     "test": "vitest",
     "test:ci": "vitest run --coverage",
+    "bench": "vitest bench --run",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist .turbo *.tsbuildinfo"
   },
