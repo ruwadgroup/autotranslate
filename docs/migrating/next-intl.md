@@ -6,16 +6,49 @@ authoring, AI-generated catalogs, same ICU runtime, broader framework reach**.
 
 ## At a glance
 
-| next-intl                                         | autotranslate                                       |
-| ------------------------------------------------- | --------------------------------------------------- |
-| `messages/{locale}.json` (handwritten)            | `.translations/{locale}/**.json` (generated)        |
-| `useTranslations('namespace')`                    | `useTranslations('namespace')` ✓ same               |
-| `t('messageKey')`                                 | `t('Message text')` (literal IS the key)            |
-| `getTranslations({ locale, namespace })` (server) | `getTranslations(locale, namespace)` (server)       |
-| `<NextIntlClientProvider messages={messages}>`    | `<TranslationProvider locale catalog>`              |
-| `next-intl/middleware` for routing                | `@autotranslate/next/middleware` (very similar API) |
-| `formatRichText`, `<Trans>`-equivalent rich text  | `<T>` JSX block                                     |
-| ICU MessageFormat in JSON values                  | ICU MessageFormat in source strings (same syntax)   |
+```
+// On-disk shape
+messages/{locale}.json         // next-intl — handwritten
+.translations/{locale}/**.json // autotranslate — generated
+```
+
+```ts
+// Hook (client) — same name, different argument semantics
+const t = useTranslations('Cart');
+t('checkout'); // next-intl — looks up `Cart.checkout` in the JSON
+t('Check out'); // autotranslate — the literal IS the key (or namespaced via dictionary)
+```
+
+```ts
+// Server-side
+const t = await getTranslations({ locale, namespace: 'Cart' }); // next-intl
+const t = await getTranslations(locale, 'Cart'); // autotranslate
+```
+
+```tsx
+// Provider
+<NextIntlClientProvider messages={messages}>;             // next-intl
+<TranslationProvider locale={locale} catalog={catalog}>;  // autotranslate
+```
+
+```ts
+// Locale routing
+import createMiddleware from 'next-intl/middleware'; // next-intl
+import { createNextMiddleware } from '@autotranslate/next/middleware'; // autotranslate
+//   ↑ same API shape — same `prefix` / `cookie` strategies
+```
+
+```tsx
+// Rich text
+t.rich('welcome', { brand: (chunks) => <strong>{chunks}</strong> }); // next-intl
+<T>
+  Welcome to <strong>autotranslate</strong>
+</T>; // autotranslate
+//   ↑ <T> walks children, hashes the tree, no `t.rich` API needed
+```
+
+ICU MessageFormat works identically — same syntax for plurals / select /
+placeholders. The cataloged values just live in a different file shape.
 
 ## Step-by-step
 
