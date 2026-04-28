@@ -16,13 +16,6 @@ const DIAGNOSTIC_CODE = 99001;
 
 const init: tsModule.server.PluginModuleFactory = ({ typescript: ts }) => ({
   create(info) {
-    const proxy: tsModule.LanguageService = Object.create(null);
-    for (const k of Object.keys(info.languageService) as Array<keyof tsModule.LanguageService>) {
-      const fn = info.languageService[k];
-      // biome-ignore lint/suspicious/noExplicitAny: dynamic LS proxy
-      (proxy as any)[k] = (...args: unknown[]) => (fn as any).apply(info.languageService, args);
-    }
-
     const config = (info.config ?? {}) as PluginConfig;
     const outDir = config.outDir ?? '.translations';
     const sourceLocale = config.source ?? 'en';
@@ -50,7 +43,7 @@ const init: tsModule.server.PluginModuleFactory = ({ typescript: ts }) => ({
       return keys;
     };
 
-    proxy.getSemanticDiagnostics = (fileName) => {
+    const getSemanticDiagnostics = (fileName: string): tsModule.Diagnostic[] => {
       const prior = info.languageService.getSemanticDiagnostics(fileName);
       const program = info.languageService.getProgram();
       const sourceFile = program?.getSourceFile(fileName);
@@ -92,7 +85,15 @@ const init: tsModule.server.PluginModuleFactory = ({ typescript: ts }) => ({
       return [...prior, ...extra];
     };
 
-    return proxy;
+    // Decorator pattern: forward every method to the host's language service,
+    // override only `getSemanticDiagnostics`. A Proxy keeps `this` correctly
+    // bound on internal calls without manually iterating method names.
+    return new Proxy(info.languageService, {
+      get(target, prop, receiver) {
+        if (prop === 'getSemanticDiagnostics') return getSemanticDiagnostics;
+        return Reflect.get(target, prop, receiver);
+      },
+    });
   },
 });
 
