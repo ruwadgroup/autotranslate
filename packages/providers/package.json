@@ -49,6 +49,11 @@
       "import": "./dist/stub.js",
       "require": "./dist/stub.cjs"
     },
+    "./hybrid": {
+      "types": "./dist/hybrid.d.ts",
+      "import": "./dist/hybrid.js",
+      "require": "./dist/hybrid.cjs"
+    },
     "./package.json": "./package.json"
   },
   "files": [

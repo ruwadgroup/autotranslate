@@ -26,17 +26,18 @@ runtime shape but preserves literal types so downstream typegen can narrow.
 
 ## Top-level options
 
-| Option        | Type                                     | Default            | Description                                          |
-| ------------- | ---------------------------------------- | ------------------ | ---------------------------------------------------- |
-| `source`      | `Locale`                                 | `'en'`             | The locale your code is written in.                  |
-| `targets`     | `Locale[]` (≥ 1)                         | (required)         | Locales to translate into.                           |
-| `content`     | `string[]` (≥ 1)                         | (required)         | Globs of source files to scan.                       |
-| `outDir`      | `string`                                 | `'.translations'`  | Where catalogs are written.                          |
-| `provider`    | `ProviderConfig`                         | `{ name: 'stub' }` | Translation provider settings.                       |
-| `concurrency` | `number` (1–64)                          | `8`                | Max parallel provider requests.                      |
-| `overrides`   | `Record<string, Record<string, string>>` | —                  | Per-locale manual overrides applied after MT.        |
-| `instruction` | `string`                                 | —                  | Free-form system instruction passed to AI providers. |
-| `dictionary`  | `string`                                 | —                  | Path to a TS / JS / JSON dictionary file.            |
+| Option        | Type                                     | Default            | Description                                                |
+| ------------- | ---------------------------------------- | ------------------ | ---------------------------------------------------------- |
+| `source`      | `Locale`                                 | `'en'`             | The locale your code is written in.                        |
+| `targets`     | `Locale[]` (≥ 1)                         | (required)         | Locales to translate into.                                 |
+| `content`     | `string[]` (≥ 1)                         | (required)         | Globs of source files to scan.                             |
+| `outDir`      | `string`                                 | `'.translations'`  | Where catalogs are written.                                |
+| `provider`    | `ProviderConfig`                         | `{ name: 'stub' }` | Translation provider settings.                             |
+| `concurrency` | `number` (1–64)                          | `8`                | Max parallel provider requests.                            |
+| `overrides`   | `Record<string, Record<string, string>>` | —                  | Per-locale manual overrides applied after MT.              |
+| `instruction` | `string`                                 | —                  | Free-form system instruction passed to AI providers.       |
+| `glossary`    | `string[]`                               | —                  | Branded terms the AI must never translate / transliterate. |
+| `dictionary`  | `string`                                 | —                  | Path to a TS / JS / JSON dictionary file.                  |
 
 ### `source` / `targets`
 

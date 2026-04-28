@@ -58,6 +58,8 @@ export async function translate(
   }
   await pruneLegacyCache(outDir);
 
+  const mergedInstruction = mergeInstruction(config.instruction, config.glossary);
+
   const requested = options.only
     ? config.targets.filter((t) => options.only?.includes(t))
     : config.targets;
@@ -96,7 +98,7 @@ export async function translate(
       keys: task.keys,
       outDir,
       overrides: config.overrides,
-      instruction: config.instruction,
+      instruction: mergedInstruction,
     });
     Object.assign(targetCatalogs.get(task.target) ?? {}, result.catalog);
     const s = stats[task.target] ?? { fetched: 0, cached: 0, overridden: 0 };
@@ -260,6 +262,17 @@ async function fileExists(path: string): Promise<boolean> {
     if (isMissing(error)) return false;
     throw error;
   }
+}
+
+function mergeInstruction(
+  instruction: string | undefined,
+  glossary: ReadonlyArray<string> | undefined,
+): string | undefined {
+  if (!glossary || glossary.length === 0) return instruction;
+  const preamble =
+    'Glossary — preserve these terms exactly; never translate or transliterate:\n' +
+    glossary.map((term) => `- ${term}`).join('\n');
+  return instruction ? `${preamble}\n\n${instruction}` : preamble;
 }
 
 export type { CatalogEntry };
