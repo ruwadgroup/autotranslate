@@ -1,23 +1,27 @@
 # Performance
 
-Numbers measured against `@autotranslate/core@0.7.x` on Node 24, Apple Silicon.
-Reproduce locally with `pnpm --filter @autotranslate/core bench`.
+Numbers measured against `@autotranslate/core@1.0.0-beta.2` on Node 24, Apple
+Silicon. Reproduce locally with `pnpm --filter @autotranslate/core bench`.
 
 ## Translator hot path
 
-| Operation                                    | Throughput    | Per-call |
-| -------------------------------------------- | ------------- | -------- |
-| Plain string lookup (catalog hit)            | ~2.4M ops/sec | ~0.42 µs |
-| Plain string lookup (miss → source fallback) | ~43M ops/sec  | ~0.02 µs |
-| ICU plural format (`one` / `other`)          | ~480K ops/sec | ~2.07 µs |
+| Operation                                    | Throughput  | Per-call |
+| -------------------------------------------- | ----------- | -------- |
+| Plain string lookup (catalog hit)            | ~1.0M ops/s | ~1.0 µs  |
+| Plain string lookup (miss → source fallback) | ~1.1M ops/s | ~0.9 µs  |
+| ICU plural format (`one` / `other`)          | ~1.0M ops/s | ~1.0 µs  |
 
-The pure-lookup path is dominated by the runtime's `splitParams` (filtering
-reserved `$context` / `$description` / `$maxChars` keys) and the catalog
-`Record<string, ...>` access. ICU runs through FormatJS's `MessageFormat`
-parser; the per-call cost is the format step, not the parse — parsed messages
-cache per call site within the parser.
+The pure-lookup path now hashes the literal source key on every call (12-char
+SHA-256 prefix) before reading the catalog. That hashing is the dominant cost —
+before `1.0.0-beta.2` the lookup ran ~2.5× faster (no hash, but the catalog was
+keyed by literal source strings).
 
-**Target**: < 50 µs/call. **Actual**: well under, including ICU.
+ICU runs through FormatJS's `MessageFormat` parser; per-call cost is the format
+step, not the parse — parsed messages cache per call site within the parser.
+Hashing brings the ICU path down to roughly the same throughput as plain lookup
+(the format cost is now the smaller side).
+
+**Target**: < 50 µs/call. **Actual**: ~50× under, including ICU.
 
 ## Catalog size
 
@@ -29,9 +33,10 @@ cache per call site within the parser.
 
 **Target**: < 5 KB gzipped per 100 strings. **Actual**: ~10× under.
 
-The chunked layout writes one file per source-file occurrence, so real catalogs
-are usually much smaller than the 100-string benchmark — most chunks are 5–30
-strings. Gzip ratios stay ≥ 80% on typical UI copy.
+The hash-bucket layout writes 16 files per locale by default (`0.json` …
+`f.json`), so each chunk is roughly `total / 16` keys. Gzip ratios stay ≥ 80% on
+typical UI copy. See `chunkBits` in the [config reference](reference/config.md)
+to widen or narrow the bucket count.
 
 ## Translation pipeline
 

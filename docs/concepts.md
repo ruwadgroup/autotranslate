@@ -8,24 +8,43 @@ A catalog is a JSON file mapping keys to strings (or structured trees) for one
 locale.
 
 ```jsonc
-// .translations/es.json
+// .translations/es/3.json
 {
-  "Sign out": "Cerrar sesión",
-  "Hello, {name}!": "¡Hola, {name}!",
-  "t.abc123": [
+  "3a4f9b8c2d1e": "Cerrar sesión",
+  "3b7c1d4e2f8a": "¡Hola, {name}!",
+  "t.3abc123def45": [
     /* structured tree */
   ],
 }
 ```
 
-Catalogs live under `outDir` (default `.translations/`). One file per locale,
-plus:
+Keys are 12-char SHA-256 prefixes of the source string (or the canonical
+structured tree for `<T>` blocks). The literal source is what you write in code;
+hashing happens at extract / lookup time, transparent to you.
 
-- `.meta.json` — per-key context, description, occurrences (file:line)
-- `.cache/<sig>.json` — per-(source, target, provider) cache so re-runs are fast
+Catalogs live under `outDir` (default `.translations/`). The on-disk shape is
+**hash-bucketed**: one folder per locale, 16 files per folder by default, named
+by the first hex digit of the key:
+
+```
+.translations/
+  en/   0.json   1.json   ...   f.json    # source locale
+  es/   0.json   1.json   ...   f.json    # mirror — same keys, translated values
+  fr/   0.json   1.json   ...   f.json
+  .meta.json                                # per-key context, description, occurrences
+  .cache/<sig>.json                         # per-(source, target, provider) cache
+```
+
+Same hash → same bucket file across every locale. So `en/3.json`, `es/3.json`,
+and `fr/3.json` carry the same key set, just with different translated values —
+you can `diff en/3.json es/3.json` to audit cross-locale parity.
 
 Commit `.translations/` to your repo. Reviewers diff translations the same way
 they diff code.
+
+Bucket count is tunable via `catalog.chunkBits` (default `4` = 16 buckets; `0`
+for a single flat file per locale; up to `12` for 4096 buckets on
+enterprise-scale catalogs).
 
 ## Keys
 
@@ -35,19 +54,20 @@ Two kinds of key, both derived from your source.
 
 ```ts
 const t = useT();
-t('Sign out'); // key: "Sign out"
+t('Sign out'); // storage key: hash12("Sign out") = "3a4f9b8c2d1e"
 t('Hello, {name}!', { name });
 ```
 
-The literal string is the key. It's also the default rendering when the catalog
-misses, so `Sign out` shows up as `Sign out` in any locale that doesn't have a
-translation yet.
+The literal string in your code IS the key from your perspective; the runtime
+hashes it (12-char SHA-256 prefix) before looking it up in the catalog. The
+literal also serves as the fallback when the catalog misses — `Sign out` shows
+up as `Sign out` in any locale that doesn't have a translation yet.
 
 Disambiguate identical strings with `$context`:
 
 ```ts
-t('Submit', { $context: 'navbar' }); // key: "Submit@@navbar"
-t('Submit', { $context: 'form' }); // key: "Submit@@form"
+t('Submit', { $context: 'navbar' }); // storage key: hash12("Submit@@navbar")
+t('Submit', { $context: 'form' }); // storage key: hash12("Submit@@form")
 ```
 
 ### Structural keys (from `<T>`)
