@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import { isAbsolute, relative, resolve } from 'node:path';
 import type { CatalogEntry, Manifest } from '@autotranslate/core';
+import { sourceKey } from '@autotranslate/core/internal';
 import { createJiti } from 'jiti';
 
 export interface DictionaryExtraction {
@@ -46,8 +47,9 @@ function flatten(
     const value = node[key];
     const path = prefix ? `${prefix}.${key}` : key;
     if (typeof value === 'string') {
-      messages[path] = value;
-      manifest[path] = { occurrences: [{ file: display, line: 0 }] };
+      const hashed = sourceKey(path);
+      messages[hashed] = value;
+      manifest[hashed] = { occurrences: [{ file: display, line: 0 }] };
     } else if (isPlainRecord(value)) {
       flatten(value, path, messages, manifest, display);
     }

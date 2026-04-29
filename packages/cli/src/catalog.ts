@@ -1,6 +1,6 @@
 import { mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { buildChunkLayout, type ChunkPathOptions } from '@autotranslate/core/internal';
+import { buildChunkLayout, type ChunkPathOptions, migrateKey } from '@autotranslate/core/internal';
 import type { CatalogEntry, Manifest, MessageMeta } from './types';
 
 export type CatalogFile = Record<string, CatalogEntry>;
@@ -26,13 +26,22 @@ async function readJsonFile(path: string): Promise<CatalogFile> {
 export async function readChunkedCatalog(outDir: string, locale: string): Promise<CatalogFile> {
   const localeDir = join(outDir, locale);
   if (await isDirectory(localeDir)) {
-    const out: CatalogFile = {};
+    const merged: CatalogFile = {};
     for (const file of await listJsonFilesRecursive(localeDir)) {
-      Object.assign(out, await readJsonFile(file));
+      Object.assign(merged, await readJsonFile(file));
     }
-    return out;
+    return rekeyCatalog(merged);
   }
-  return readJsonFile(join(outDir, `${locale}.json`));
+  return rekeyCatalog(await readJsonFile(join(outDir, `${locale}.json`)));
+}
+
+function rekeyCatalog(input: CatalogFile): CatalogFile {
+  const out: CatalogFile = {};
+  for (const k of Object.keys(input)) {
+    const v = input[k];
+    if (v !== undefined) out[migrateKey(k)] = v;
+  }
+  return out;
 }
 
 export interface WriteChunkedResult {
@@ -88,7 +97,12 @@ export async function writeChunkedCatalog(
 
 export async function readManifest(outDir: string): Promise<Manifest> {
   const data = await readJsonFile(join(outDir, META_FILENAME));
-  return data as unknown as Manifest;
+  const out: Manifest = {};
+  for (const k of Object.keys(data)) {
+    const meta = (data as unknown as Manifest)[k];
+    if (meta !== undefined) out[migrateKey(k)] = meta;
+  }
+  return out;
 }
 
 export async function writeManifest(outDir: string, manifest: Manifest): Promise<void> {

@@ -1,6 +1,7 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import type { Catalog, Locale } from '@autotranslate/core';
+import { migrateCatalog } from '@autotranslate/core/internal';
 
 const cache = new Map<string, Promise<Catalog>>();
 
@@ -25,13 +26,13 @@ export function fsCatalogLoader(cwd: string, outDir: string): (locale: Locale) =
 async function readLocale(outDir: string, locale: Locale): Promise<Catalog> {
   const localeDir = join(outDir, locale);
   if (await isDirectory(localeDir)) {
-    const out: Catalog = {};
+    const merged: Catalog = {};
     for (const file of await listJsonFiles(localeDir)) {
-      Object.assign(out, await readJson(file));
+      Object.assign(merged, await readJson(file));
     }
-    return out;
+    return migrateCatalog(merged);
   }
-  return readJson(join(outDir, `${locale}.json`));
+  return migrateCatalog(await readJson(join(outDir, `${locale}.json`)));
 }
 
 async function listJsonFiles(dir: string): Promise<string[]> {

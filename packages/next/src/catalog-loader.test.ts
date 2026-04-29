@@ -1,6 +1,7 @@
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { sourceKey } from '@autotranslate/core';
 import { afterEach, describe, expect, it } from 'vitest';
 import { clearCatalogCache, fsCatalogLoader } from './catalog-loader';
 
@@ -25,7 +26,9 @@ describe('fsCatalogLoader', () => {
   it('reads JSON catalogs from disk', async () => {
     const { cwd, outDir } = await fixture({ es: { Hi: 'Hola' } });
     const load = fsCatalogLoader(cwd, outDir);
-    expect(await load('es')).toEqual({ Hi: 'Hola' });
+    // The loader migrates literal-keyed catalogs (the old shape) into the
+    // current hashed layout transparently.
+    expect(await load('es')).toEqual({ [sourceKey('Hi')]: 'Hola' });
   });
 
   it('returns an empty object when the catalog file is missing', async () => {
@@ -43,7 +46,7 @@ describe('fsCatalogLoader', () => {
     await writeFile(join(cwd, outDir, 'es.json'), JSON.stringify({ Hi: 'changed' }));
     const second = await load('es');
     expect(second).toEqual(first);
-    expect(second).toEqual({ Hi: 'Hola' });
+    expect(second).toEqual({ [sourceKey('Hi')]: 'Hola' });
   });
 
   it('clearCatalogCache forces a fresh read', async () => {
@@ -52,6 +55,6 @@ describe('fsCatalogLoader', () => {
     await load('es');
     await writeFile(join(cwd, outDir, 'es.json'), JSON.stringify({ Hi: 'changed' }));
     clearCatalogCache();
-    expect(await load('es')).toEqual({ Hi: 'changed' });
+    expect(await load('es')).toEqual({ [sourceKey('Hi')]: 'changed' });
   });
 });

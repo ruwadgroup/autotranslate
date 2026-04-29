@@ -1,11 +1,13 @@
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { sourceKey } from '@autotranslate/core';
 import type { Plugin } from 'vite';
 import { describe, expect, it } from 'vitest';
 import autotranslate, { VIRTUAL_MODULE_ID } from './index';
 
 const RESOLVED = `\0${VIRTUAL_MODULE_ID}`;
+const HI = sourceKey('Hi');
 
 async function fixture(catalogs: Record<string, Record<string, unknown>>): Promise<string> {
   const cwd = await mkdtemp(join(tmpdir(), 'autotranslate-vite-'));
@@ -50,8 +52,8 @@ describe('@autotranslate/vite', () => {
     });
     const plugin = autotranslate({ cwd, source: 'en', locales: ['en', 'es'] });
     const code = (await asFn(plugin, 'load')(RESOLVED)) as string;
-    expect(code).toContain('"en":{"Hi":"Hi"}');
-    expect(code).toContain('"es":{"Hi":"Hola"}');
+    expect(code).toContain(`"en":{"${HI}":"Hi"}`);
+    expect(code).toContain(`"es":{"${HI}":"Hola"}`);
     expect(code).toContain('export const source = "en"');
     expect(code).toContain('export const locales = ["en","es"]');
   });
@@ -81,8 +83,8 @@ describe('@autotranslate/vite', () => {
       },
     });
     const code = (await asFn(plugin, 'load')(RESOLVED)) as string;
-    expect(code).toContain('"en":{"Hi":"Hi"}');
-    expect(code).toContain('"es":{"Hi":"Hola"}');
+    expect(code).toContain(`"en":{"${HI}":"Hi"}`);
+    expect(code).toContain(`"es":{"${HI}":"Hola"}`);
   });
 
   it('skips load for unrelated ids', async () => {

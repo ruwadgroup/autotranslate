@@ -1,6 +1,7 @@
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { sourceKey } from '@autotranslate/core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { extractDictionary } from './dictionary';
 
@@ -28,11 +29,11 @@ describe('extractDictionary', () => {
     );
     const { messages, manifest } = await extractDictionary(cwd, 'src/d.json');
     expect(messages).toEqual({
-      'common.save': 'Save',
-      'common.cancel': 'Cancel',
-      'dashboard.stats.visitors': '{count} visitors',
+      [sourceKey('common.save')]: 'Save',
+      [sourceKey('common.cancel')]: 'Cancel',
+      [sourceKey('dashboard.stats.visitors')]: '{count} visitors',
     });
-    expect(manifest['common.save']?.occurrences?.[0]?.file).toBe(join('src', 'd.json'));
+    expect(manifest[sourceKey('common.save')]?.occurrences?.[0]?.file).toBe(join('src', 'd.json'));
   });
 
   it('throws when the file is missing', async () => {

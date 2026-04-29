@@ -23,15 +23,17 @@ describe('generateTypes', () => {
     const { cwd, outDir, config } = await setup({
       'Sign out': 'Sign out',
       'Hello, {name}!': 'Hello, {name}!',
-      't.abc123': [{ type: 'text', value: 'x' }],
+      't.abcdef012345': [{ type: 'text', value: 'x' }],
     });
     const { path, keyCount } = await generateTypes({ cwd, config, outDir });
     expect(keyCount).toBe(3);
     const contents = await readFile(path, 'utf8');
     expect(contents).toContain("declare module '@autotranslate/core'");
+    // Source strings exposed verbatim so `t('Sign out')` narrows.
     expect(contents).toContain('"Sign out": true;');
     expect(contents).toContain('"Hello, {name}!": true;');
-    expect(contents).toContain('"t.abc123": true;');
+    // Tree entries surface their hashed key — there's no readable string form.
+    expect(contents).toContain('"t.abcdef012345": true;');
   });
 
   it('emits an empty module when the catalog is empty', async () => {

@@ -1,6 +1,7 @@
 import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { sourceKey } from '@autotranslate/core';
 import { parseConfig } from '@autotranslate/core/config';
 import { createStubProvider } from '@autotranslate/providers/stub';
 import { describe, expect, it } from 'vitest';
@@ -9,6 +10,10 @@ import type { ResolvedConfig } from '../types';
 import { translate } from './translate';
 
 const FIXTURE_FILE = 'src/Component.tsx';
+
+const SIGN_OUT = sourceKey('Sign out');
+const GREETING = sourceKey('greeting');
+const HI = sourceKey('Hi');
 
 async function setupFixture(
   source: Record<string, string>,
@@ -33,21 +38,21 @@ async function setupFixture(
 describe('translate', () => {
   it('writes translated catalogs and a cache chunk', async () => {
     const { resolved, outDir } = await setupFixture({
-      'Sign out': 'Sign out',
-      greeting: 'Hello, {name}!',
+      [SIGN_OUT]: 'Sign out',
+      [GREETING]: 'Hello, {name}!',
     });
     const result = await translate(resolved, { provider: createStubProvider() });
     expect(result.stats.es).toEqual({ fetched: 2, cached: 0, overridden: 0 });
     expect(await readChunkedCatalog(outDir, 'es')).toEqual({
-      'Sign out': 'Sign out',
-      greeting: 'Hello, {name}!',
+      [SIGN_OUT]: 'Sign out',
+      [GREETING]: 'Hello, {name}!',
     });
   });
 
   it('skips already-cached entries on a second run via chunk-hash short-circuit', async () => {
     const { resolved } = await setupFixture({
-      'Sign out': 'Sign out',
-      greeting: 'Hello, {name}!',
+      [SIGN_OUT]: 'Sign out',
+      [GREETING]: 'Hello, {name}!',
     });
     const provider = createStubProvider();
     await translate(resolved, { provider });
@@ -57,18 +62,18 @@ describe('translate', () => {
 
   it('re-translates only changed strings when the source content changes', async () => {
     const { resolved, outDir } = await setupFixture({
-      'Sign out': 'Sign out',
-      greeting: 'Hello, {name}!',
+      [SIGN_OUT]: 'Sign out',
+      [GREETING]: 'Hello, {name}!',
     });
     const provider = createStubProvider();
     await translate(resolved, { provider });
     await writeChunkedCatalog(
       outDir,
       'en',
-      { 'Sign out': 'Log out', greeting: 'Hello, {name}!' },
+      { [SIGN_OUT]: 'Log out', [GREETING]: 'Hello, {name}!' },
       {
-        'Sign out': { occurrences: [{ file: FIXTURE_FILE, line: 1 }] },
-        greeting: { occurrences: [{ file: FIXTURE_FILE, line: 2 }] },
+        [SIGN_OUT]: { occurrences: [{ file: FIXTURE_FILE, line: 1 }] },
+        [GREETING]: { occurrences: [{ file: FIXTURE_FILE, line: 2 }] },
       },
     );
     const second = await translate(resolved, { provider });
@@ -77,16 +82,16 @@ describe('translate', () => {
 
   it('applies per-locale overrides', async () => {
     const { resolved, outDir } = await setupFixture(
-      { 'Sign out': 'Sign out' },
+      { [SIGN_OUT]: 'Sign out' },
       { es: { 'Sign out': 'Cerrar sesión' } },
     );
     const result = await translate(resolved, { provider: createStubProvider() });
     expect(result.stats.es).toEqual({ fetched: 0, cached: 0, overridden: 1 });
-    expect(await readChunkedCatalog(outDir, 'es')).toEqual({ 'Sign out': 'Cerrar sesión' });
+    expect(await readChunkedCatalog(outDir, 'es')).toEqual({ [SIGN_OUT]: 'Cerrar sesión' });
   });
 
   it('honors the `only` filter', async () => {
-    const { resolved } = await setupFixture({ Hi: 'Hi' });
+    const { resolved } = await setupFixture({ [HI]: 'Hi' });
     const config = parseConfig({
       targets: ['es', 'fr'],
       content: ['src/**/*.tsx'],

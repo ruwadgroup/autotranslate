@@ -1,6 +1,7 @@
 import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { sourceKey } from '@autotranslate/core';
 import { parseConfig } from '@autotranslate/core/config';
 import {
   defineProvider,
@@ -13,6 +14,14 @@ import { writeChunkedCatalog, writeManifest } from '../catalog';
 import { translate } from './translate';
 
 const FIXTURE_FILE = 'src/Component.tsx';
+
+// All four hash to bucket '4' under the default chunkBits=4 layout. We need
+// the test fixtures to share a bucket so the context-prefix path actually
+// fires (it pulls neighbours from the same chunk file).
+const SIGN_OUT = sourceKey('Sign out');
+const FAREWELL = sourceKey('Farewell');
+const ABOUT = sourceKey('About');
+const LOG_OUT = sourceKey('Log out');
 
 function captureProvider(): {
   provider: Provider;
@@ -40,14 +49,14 @@ describe('translate — context prefix', () => {
     const cwd = await mkdtemp(join(tmpdir(), 'autotranslate-ctx-'));
     const outDir = join(cwd, '.translations');
     const manifest = {
-      'Sign out': { occurrences: [{ file: FIXTURE_FILE, line: 1 }] },
-      Hello: { occurrences: [{ file: FIXTURE_FILE, line: 2 }] },
-      Goodbye: { occurrences: [{ file: FIXTURE_FILE, line: 3 }] },
+      [SIGN_OUT]: { occurrences: [{ file: FIXTURE_FILE, line: 1 }] },
+      [FAREWELL]: { occurrences: [{ file: FIXTURE_FILE, line: 2 }] },
+      [ABOUT]: { occurrences: [{ file: FIXTURE_FILE, line: 3 }] },
     };
     await writeChunkedCatalog(
       outDir,
       'en',
-      { 'Sign out': 'Sign out', Hello: 'Hello', Goodbye: 'Goodbye' },
+      { [SIGN_OUT]: 'Sign out', [FAREWELL]: 'Farewell', [ABOUT]: 'About' },
       manifest,
     );
     await writeManifest(outDir, manifest);
@@ -58,29 +67,37 @@ describe('translate — context prefix', () => {
       provider: { name: 'stub' },
     });
 
-    // First run translates all three.
+    // First run: all three keys land in the same bucket → one provider call.
     const first = captureProvider();
     await translate({ cwd, config, outDir }, { provider: first.provider });
     expect(first.calls).toHaveLength(1);
     expect(first.calls[0]?.items).toHaveLength(3);
     expect(first.calls[0]?.context ?? []).toEqual([]);
 
-    // Second run with one source string changed.
+    // Replace one key with a new string in the same bucket. The other two
+    // entries persist; cache hits make them context for the new fetch.
+    const newManifest = {
+      [LOG_OUT]: { occurrences: [{ file: FIXTURE_FILE, line: 1 }] },
+      [FAREWELL]: { occurrences: [{ file: FIXTURE_FILE, line: 2 }] },
+      [ABOUT]: { occurrences: [{ file: FIXTURE_FILE, line: 3 }] },
+    };
     await writeChunkedCatalog(
       outDir,
       'en',
-      { 'Sign out': 'Log out', Hello: 'Hello', Goodbye: 'Goodbye' },
-      manifest,
+      { [LOG_OUT]: 'Log out', [FAREWELL]: 'Farewell', [ABOUT]: 'About' },
+      newManifest,
     );
+    await writeManifest(outDir, newManifest);
+
     const second = captureProvider();
     await translate({ cwd, config, outDir }, { provider: second.provider });
 
     expect(second.calls).toHaveLength(1);
     expect(second.calls[0]?.items).toHaveLength(1);
-    expect(second.calls[0]?.items[0]?.key).toBe('Sign out');
+    expect(second.calls[0]?.items[0]?.key).toBe(LOG_OUT);
     const context = second.calls[0]?.context ?? [];
     expect(context).toHaveLength(2);
     const sources = context.map((c: TranslationContextItem) => c.source).sort();
-    expect(sources).toEqual(['Goodbye', 'Hello']);
+    expect(sources).toEqual(['About', 'Farewell']);
   });
 });

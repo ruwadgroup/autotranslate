@@ -31,8 +31,9 @@ describe('getT', () => {
   });
 
   it('accepts a custom loader (no fs)', async () => {
+    const { buildCatalog } = await import('@autotranslate/core');
     const t = await getT('es', {
-      load: (locale) => (locale === 'es' ? { Hi: 'Hola' } : {}),
+      load: (locale) => (locale === 'es' ? buildCatalog({ Hi: 'Hola' }) : {}),
     });
     expect(t.t('Hi')).toBe('Hola');
   });

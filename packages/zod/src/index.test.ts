@@ -1,15 +1,19 @@
-import { createTranslator } from '@autotranslate/core';
+import { buildCatalog, createTranslator } from '@autotranslate/core';
 import { withTranslator } from '@autotranslate/core/standalone';
 import { describe, expect, it } from 'vitest';
 import * as z from 'zod';
-import enFallback from './catalog/en.json' with { type: 'json' };
+import enFallbackRaw from './catalog/en.json' with { type: 'json' };
 import { createZodErrorMap, zodErrorMap } from './index';
 
-const userCatalog = {
+// The shipped en.json is keyed by literal `zod.*` codes for human review;
+// hash it once for the runtime catalog shape.
+const enFallback = buildCatalog(enFallbackRaw as Record<string, string>);
+
+const userCatalog = buildCatalog({
   'zod.invalid_type': 'Type invalide : {expected} attendu, {received} reçu',
   'zod.too_small.string':
     '{minimum, plural, =1 {Doit contenir au moins 1 caractère} other {Doit contenir au moins # caractères}}',
-};
+});
 
 describe('createZodErrorMap', () => {
   it('translates known issues via the bound translator', () => {

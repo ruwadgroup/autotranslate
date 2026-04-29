@@ -1,6 +1,7 @@
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { sourceKey } from '@autotranslate/core';
 import { parseConfig } from '@autotranslate/core/config';
 import { describe, expect, it } from 'vitest';
 import { readChunkedCatalog } from '../catalog';
@@ -30,10 +31,10 @@ export function A() {
 
     expect(result.fileCount).toBe(1);
     expect(Object.keys(result.source)).toHaveLength(2);
-    expect(result.source['Sign out']).toBe('Sign out');
+    expect(result.source[sourceKey('Sign out')]).toBe('Sign out');
 
     const merged = await readChunkedCatalog(outDir, 'en');
     expect(Object.keys(merged)).toHaveLength(2);
-    expect(merged['Sign out']).toBe('Sign out');
+    expect(merged[sourceKey('Sign out')]).toBe('Sign out');
   });
 });

@@ -5,6 +5,7 @@ import { check } from './commands/check';
 import { extract } from './commands/extract';
 import { generateTypes, relativeFromCwd } from './commands/generate-types';
 import { init } from './commands/init';
+import { migrate } from './commands/migrate';
 import { translate } from './commands/translate';
 import { ConfigNotFoundError, loadConfig } from './config-loader';
 
@@ -122,6 +123,30 @@ program
     }
     console.log(chalk.red('✗'), `${result.problems.length} problem(s)`);
     process.exitCode = 1;
+  });
+
+program
+  .command('migrate-format')
+  .description('Re-shape catalogs into the 1.0.0-beta.2 hash-bucketed layout.')
+  .action(async () => {
+    const resolved = await loadConfig();
+    const result = await migrate(resolved);
+    if (result.locales.length === 0) {
+      console.log(chalk.yellow('!'), 'no catalogs found; nothing to migrate.');
+      return;
+    }
+    console.log(
+      chalk.green('✓'),
+      'migrated',
+      chalk.cyan(`${result.keyCount}`),
+      'keys across',
+      chalk.cyan(`${result.locales.length}`),
+      'locale(s):',
+      chalk.dim(result.locales.join(', ')),
+    );
+    if (result.cacheCleared) {
+      console.log(chalk.dim('  cleared the provider cache so the next translate run is clean.'));
+    }
   });
 
 program.parseAsync().catch((error) => {

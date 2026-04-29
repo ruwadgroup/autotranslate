@@ -1,77 +1,68 @@
+import { TREE_KEY_PREFIX } from './jsx-tree';
 import type { MessageMeta } from './types';
 
 export interface ChunkPathOptions {
-  /** Hard cap before alphabetical splitting. Default 300. */
-  readonly maxStringsPerChunk?: number;
+  /**
+   * Number of bits of the key hash used to pick a bucket. Determines bucket
+   * count: 2^bits. Range 0–12.
+   *
+   * - `0` → 1 bucket (single flat file per locale)
+   * - `4` → 16 buckets (default — sweet spot for 100–10k strings)
+   * - `8` → 256 buckets (very large catalogs)
+   * - `12` → 4096 buckets (enterprise-scale lazy-load surface)
+   */
+  readonly chunkBits?: number;
 }
 
-const FALLBACK_CHUNK = '_external/_unknown';
-const DEFAULT_MAX = 300;
+const DEFAULT_BITS = 4;
+const MAX_BITS = 12;
 
 /**
- * Pick the chunk path for a message based on its alphabetically-first
- * occurrence's source file. Returns a relative path with no extension.
+ * Bucket name for a key. Strips the `t.` tree prefix before reading the hash;
+ * trees and plain strings hash into the same bucket space.
  */
-export function chunkPathFor(meta: MessageMeta | undefined): string {
-  const occurrences = meta?.occurrences;
-  if (!occurrences || occurrences.length === 0) return FALLBACK_CHUNK;
-  const files = occurrences
-    .map((o) => o.file)
-    .filter((f): f is string => typeof f === 'string' && f.length > 0);
-  if (files.length === 0) return FALLBACK_CHUNK;
-  files.sort();
-  return chunkPathFromFile(files[0] ?? '');
+export function bucketFor(key: string, chunkBits: number = DEFAULT_BITS): string {
+  const bits = clampBits(chunkBits);
+  if (bits === 0) return 'all';
+  const hash = key.startsWith(TREE_KEY_PREFIX) ? key.slice(TREE_KEY_PREFIX.length) : key;
+  const hexChars = Math.max(1, Math.ceil(bits / 4));
+  return hash.slice(0, hexChars).toLowerCase();
 }
 
-function chunkPathFromFile(file: string): string {
-  let path = file.replace(/\\/g, '/').replace(/^(?:\.\/)+/, '');
-  if (path.startsWith('/')) path = path.slice(1);
-
-  const externalMatch = path.match(/(?:^|\/)node_modules\/@autotranslate\/([^/]+)/);
-  if (externalMatch) return `_external/${externalMatch[1]}`;
-
-  const lastSlash = path.lastIndexOf('/');
-  const dir = lastSlash >= 0 ? path.slice(0, lastSlash) : '';
-  const base = lastSlash >= 0 ? path.slice(lastSlash + 1) : path;
-  const dot = base.lastIndexOf('.');
-  const stem = dot > 0 ? base.slice(0, dot) : base;
-  if (!stem) return FALLBACK_CHUNK;
-  return dir ? `${dir}/${stem}` : stem;
+function clampBits(bits: number): number {
+  if (!Number.isFinite(bits) || bits <= 0) return 0;
+  if (bits >= MAX_BITS) return MAX_BITS;
+  return Math.floor(bits);
 }
 
 /**
- * Group keys into chunks by source-file. Splits any oversized chunk into
- * alphabetical parts. Returns chunkPath → keys, sorted within each chunk.
+ * Group keys into hash-bucket chunks. Same key → same bucket across every
+ * locale, so adding a string only writes to one bucket file per locale.
+ *
+ * Returns `bucketName → keys`, alphabetized within each bucket for stable
+ * diffs across runs.
  */
 export function buildChunkLayout(
   manifest: Readonly<Record<string, MessageMeta | undefined>>,
   options: ChunkPathOptions = {},
 ): Map<string, ReadonlyArray<string>> {
-  const max = options.maxStringsPerChunk ?? DEFAULT_MAX;
-  const initial = new Map<string, string[]>();
+  const bits = options.chunkBits ?? DEFAULT_BITS;
+  const layout = new Map<string, string[]>();
 
-  for (const [key, meta] of Object.entries(manifest)) {
-    const path = chunkPathFor(meta);
-    let bucket = initial.get(path);
-    if (!bucket) {
-      bucket = [];
-      initial.set(path, bucket);
+  for (const key of Object.keys(manifest)) {
+    const bucket = bucketFor(key, bits);
+    let entries = layout.get(bucket);
+    if (!entries) {
+      entries = [];
+      layout.set(bucket, entries);
     }
-    bucket.push(key);
+    entries.push(key);
   }
 
   const out = new Map<string, ReadonlyArray<string>>();
-  for (const [path, keys] of initial) {
+  for (const [bucket, keys] of layout) {
     keys.sort();
-    if (keys.length <= max) {
-      out.set(path, keys);
-      continue;
-    }
-    const parts = Math.ceil(keys.length / max);
-    const partSize = Math.ceil(keys.length / parts);
-    for (let i = 0; i < parts; i++) {
-      out.set(`${path}.${i}`, keys.slice(i * partSize, (i + 1) * partSize));
-    }
+    out.set(bucket, keys);
   }
   return out;
 }
