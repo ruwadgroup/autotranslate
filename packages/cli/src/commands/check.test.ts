@@ -1,6 +1,7 @@
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { sourceKey } from '@autotranslate/core';
 import { parseConfig } from '@autotranslate/core/config';
 import { describe, expect, it } from 'vitest';
 import { check } from './check';
@@ -35,7 +36,11 @@ describe('check', () => {
     const config = parseConfig({ targets: ['es'], content: ['x'], provider: { name: 'stub' } });
     const result = await check({ cwd, config, outDir });
     expect(result.ok).toBe(false);
-    expect(result.problems).toContainEqual({ locale: 'es', key: 'Bye', kind: 'missing' });
+    expect(result.problems).toContainEqual({
+      locale: 'es',
+      key: sourceKey('Bye'),
+      kind: 'missing',
+    });
   });
 
   it('reports orphans in target locales', async () => {
@@ -45,7 +50,7 @@ describe('check', () => {
     });
     const config = parseConfig({ targets: ['es'], content: ['x'], provider: { name: 'stub' } });
     const result = await check({ cwd, config, outDir });
-    expect(result.problems).toContainEqual({ locale: 'es', key: 'Old', kind: 'orphan' });
+    expect(result.problems).toContainEqual({ locale: 'es', key: sourceKey('Old'), kind: 'orphan' });
   });
 
   it('reports invalid ICU strings in source', async () => {
@@ -54,6 +59,8 @@ describe('check', () => {
     });
     const config = parseConfig({ targets: ['es'], content: ['x'], provider: { name: 'stub' } });
     const result = await check({ cwd, config, outDir });
-    expect(result.problems.some((p) => p.kind === 'invalid-icu' && p.key === 'broken')).toBe(true);
+    expect(
+      result.problems.some((p) => p.kind === 'invalid-icu' && p.key === sourceKey('broken')),
+    ).toBe(true);
   });
 });

@@ -1,3 +1,4 @@
+import { sourceKey } from '@autotranslate/core';
 import { describe, expect, it } from 'vitest';
 import { extractFile } from './extractor';
 
@@ -70,8 +71,8 @@ export function C() {
 }
       `,
     );
-    expect(messages['Sign out']).toBe('Sign out');
-    expect(manifest['Sign out']?.occurrences?.[0]?.file).toBe(FILE);
+    expect(messages[sourceKey('Sign out')]).toBe('Sign out');
+    expect(manifest[sourceKey('Sign out')]?.occurrences?.[0]?.file).toBe(FILE);
   });
 
   it('only follows variables actually bound to useT()', () => {
@@ -94,7 +95,7 @@ import { t } from '@autotranslate/core/t';
 export function validate() { return t('Password is required'); }
       `,
     );
-    expect(messages['Password is required']).toBe('Password is required');
+    expect(messages[sourceKey('Password is required')]).toBe('Password is required');
   });
 
   it('extracts standalone t() imports from @autotranslate/core/standalone', () => {
@@ -105,7 +106,7 @@ import { t } from '@autotranslate/core/standalone';
 export function validate() { return t('Required field'); }
       `,
     );
-    expect(messages['Required field']).toBe('Required field');
+    expect(messages[sourceKey('Required field')]).toBe('Required field');
   });
 
   it('respects local aliasing of standalone t', () => {
@@ -116,7 +117,7 @@ import { t as tt } from '@autotranslate/core/t';
 export function validate() { return tt('Aliased message'); }
       `,
     );
-    expect(messages['Aliased message']).toBe('Aliased message');
+    expect(messages[sourceKey('Aliased message')]).toBe('Aliased message');
   });
 
   it('captures context and description JSX attributes into manifest', () => {
@@ -271,9 +272,9 @@ export function C() {
 }
       `,
     );
-    expect(messages.Submit).toBe('Submit');
-    expect(messages['Submit@@navbar']).toBe('Submit');
-    expect(manifest['Submit@@navbar']?.context).toBe('navbar');
-    expect(manifest['Submit@@navbar']?.maxChars).toBe(12);
+    expect(messages[sourceKey('Submit')]).toBe('Submit');
+    expect(messages[sourceKey('Submit', 'navbar')]).toBe('Submit');
+    expect(manifest[sourceKey('Submit', 'navbar')]?.context).toBe('navbar');
+    expect(manifest[sourceKey('Submit', 'navbar')]?.maxChars).toBe(12);
   });
 });

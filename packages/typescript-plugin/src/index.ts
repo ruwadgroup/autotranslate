@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import type * as tsModule from 'typescript';
@@ -66,7 +67,11 @@ const init: tsModule.server.PluginModuleFactory = ({ typescript: ts }) => ({
           const first = node.arguments[0];
           if (first && ts.isStringLiteralLike(first)) {
             const literal = first.text;
-            if (literal && !known.has(literal) && !literal.startsWith('t.')) {
+            // Catalog stores hash12 of the source string. Plain-string keys
+            // produced by the extractor are 12-hex shortHash digests; tree
+            // keys carry the `t.` prefix and are skipped (they're never
+            // expressed as raw `t('...')` literals in user code).
+            if (literal && !known.has(shortHash(literal)) && !literal.startsWith('t.')) {
               extra.push({
                 file: sourceFile,
                 start: first.getStart(),
@@ -149,6 +154,10 @@ function walkJsonFiles(dir: string): string[] {
     else if (entry.isFile() && entry.name.endsWith('.json')) out.push(full);
   }
   return out;
+}
+
+function shortHash(input: string): string {
+  return createHash('sha256').update(input).digest('hex').slice(0, 12);
 }
 
 function mergeKeys(out: Set<string>, file: string): void {

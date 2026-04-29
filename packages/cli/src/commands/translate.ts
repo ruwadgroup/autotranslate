@@ -183,9 +183,13 @@ async function translateChunk(args: TranslateChunkArgs): Promise<TranslateChunkR
     if (sourceEntry === undefined) continue;
     const sourceHash = contentHash(sourceEntry);
 
-    if (targetOverrides[k] !== undefined) {
-      result[k] = targetOverrides[k] ?? sourceEntry;
-      newCacheItems[k] = { sourceHash, translation: result[k] };
+    // Overrides are user-keyed by source string for ergonomics; storage is
+    // keyed by hash. Look up overrides via the literal source value.
+    const literalSource = typeof sourceEntry === 'string' ? sourceEntry : undefined;
+    const overrideValue = literalSource ? targetOverrides[literalSource] : undefined;
+    if (overrideValue !== undefined) {
+      result[k] = overrideValue;
+      newCacheItems[k] = { sourceHash, translation: overrideValue };
       overridden += 1;
       continue;
     }

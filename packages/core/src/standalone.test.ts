@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createTranslator } from './runtime';
+import { buildCatalog, createTranslator } from './runtime';
 import { bindTranslator, currentTranslator, t, withTranslator } from './standalone';
 
 describe('standalone', () => {
@@ -8,14 +8,14 @@ describe('standalone', () => {
   });
 
   it('runs the callback with the bound translator', () => {
-    const translator = createTranslator({ locale: 'es', catalog: { Hello: 'Hola' } });
+    const translator = createTranslator({ locale: 'es', catalog: buildCatalog({ Hello: 'Hola' }) });
     const result = withTranslator(translator, () => t('Hello'));
     expect(result).toBe('Hola');
   });
 
   it('restores the previous binding on exit', () => {
-    const fr = createTranslator({ locale: 'fr', catalog: { Hello: 'Bonjour' } });
-    const es = createTranslator({ locale: 'es', catalog: { Hello: 'Hola' } });
+    const fr = createTranslator({ locale: 'fr', catalog: buildCatalog({ Hello: 'Bonjour' }) });
+    const es = createTranslator({ locale: 'es', catalog: buildCatalog({ Hello: 'Hola' }) });
     withTranslator(fr, () => {
       expect(t('Hello')).toBe('Bonjour');
       withTranslator(es, () => {
@@ -27,8 +27,8 @@ describe('standalone', () => {
   });
 
   it('isolates concurrent async chains via AsyncLocalStorage', async () => {
-    const fr = createTranslator({ locale: 'fr', catalog: { Hello: 'Bonjour' } });
-    const es = createTranslator({ locale: 'es', catalog: { Hello: 'Hola' } });
+    const fr = createTranslator({ locale: 'fr', catalog: buildCatalog({ Hello: 'Bonjour' }) });
+    const es = createTranslator({ locale: 'es', catalog: buildCatalog({ Hello: 'Hola' }) });
     const [a, b] = await Promise.all([
       withTranslator(fr, async () => {
         await new Promise((r) => setTimeout(r, 1));
@@ -44,7 +44,7 @@ describe('standalone', () => {
   });
 
   it('bindTranslator sets the translator for the rest of the chain', () => {
-    const translator = createTranslator({ locale: 'es', catalog: { Hi: 'Hola' } });
+    const translator = createTranslator({ locale: 'es', catalog: buildCatalog({ Hi: 'Hola' }) });
     withTranslator(createTranslator({ locale: 'en', catalog: {} }), () => {
       bindTranslator(translator);
       expect(t('Hi')).toBe('Hola');
@@ -54,7 +54,7 @@ describe('standalone', () => {
   it('forwards ICU params', () => {
     const translator = createTranslator({
       locale: 'en',
-      catalog: { greeting: 'Hello, {name}!' },
+      catalog: buildCatalog({ greeting: 'Hello, {name}!' }),
     });
     expect(withTranslator(translator, () => t('greeting', { name: 'Ada' }))).toBe('Hello, Ada!');
   });

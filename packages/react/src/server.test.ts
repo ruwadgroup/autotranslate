@@ -1,3 +1,4 @@
+import { buildCatalog } from '@autotranslate/core';
 import { describe, expect, it } from 'vitest';
 import { createTranslator, getT } from './server';
 
@@ -5,7 +6,7 @@ describe('createTranslator (server)', () => {
   it('returns a translator bound to the catalog', () => {
     const t = createTranslator({
       locale: 'es',
-      catalog: { Hi: 'Hola' },
+      catalog: buildCatalog({ Hi: 'Hola' }),
     });
     expect(t.t('Hi')).toBe('Hola');
   });
@@ -13,7 +14,7 @@ describe('createTranslator (server)', () => {
 
 describe('getT', () => {
   it('awaits the catalog loader', async () => {
-    const t = await getT('es', async () => ({ Hi: 'Hola' }));
+    const t = await getT('es', async () => buildCatalog({ Hi: 'Hola' }));
     expect(t.t('Hi')).toBe('Hola');
   });
 
@@ -21,7 +22,7 @@ describe('getT', () => {
     const t = await getT(
       'es',
       () => ({}),
-      () => ({ Hi: 'Hi' }),
+      () => buildCatalog({ Hi: 'Hi' }),
     );
     expect(t.t('Hi')).toBe('Hi');
   });

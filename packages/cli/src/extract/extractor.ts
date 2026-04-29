@@ -1,5 +1,5 @@
 import { type CatalogEntry, canonicalKey, type Manifest } from '@autotranslate/core';
-import { applyContextToKey } from '@autotranslate/core/internal';
+import { sourceKey } from '@autotranslate/core/internal';
 import { parse } from '@babel/parser';
 import _traverse from '@babel/traverse';
 import type * as t from '@babel/types';
@@ -96,7 +96,7 @@ export function extractFile(filePath: string, source: string): FileExtraction {
       const literal = arg.value;
       if (literal === '') return;
       const meta = readCallHints(path.node.arguments[1]);
-      const key = applyContextToKey(literal, meta.context);
+      const key = sourceKey(literal, meta.context);
       messages[key] = literal;
       const existing = manifest[key];
       manifest[key] = mergeMeta(existing, meta);

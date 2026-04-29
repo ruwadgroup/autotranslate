@@ -1,12 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
 import { canonicalKey, type StructuredMessage } from './jsx-tree';
-import { applyContextToKey, CONTEXT_KEY_SEPARATOR, createTranslator } from './runtime';
+import {
+  applyContextToKey,
+  buildCatalog,
+  CONTEXT_KEY_SEPARATOR,
+  createTranslator,
+  sourceKey,
+} from './runtime';
 
 describe('createTranslator', () => {
   it('returns translated strings', () => {
     const t = createTranslator({
       locale: 'es',
-      catalog: { 'Sign out': 'Cerrar sesión' },
+      catalog: buildCatalog({ 'Sign out': 'Cerrar sesión' }),
     });
     expect(t.t('Sign out')).toBe('Cerrar sesión');
   });
@@ -14,8 +20,8 @@ describe('createTranslator', () => {
   it('falls back to the source catalog on miss', () => {
     const t = createTranslator({
       locale: 'es',
-      catalog: { Hello: 'Hola' },
-      fallback: { Goodbye: 'Goodbye' },
+      catalog: buildCatalog({ Hello: 'Hola' }),
+      fallback: buildCatalog({ Goodbye: 'Goodbye' }),
     });
     expect(t.t('Goodbye')).toBe('Goodbye');
   });
@@ -33,13 +39,13 @@ describe('createTranslator', () => {
       onMissing,
     });
     expect(t.t('Whatever')).toBe('CUSTOM');
-    expect(onMissing).toHaveBeenCalledWith('Whatever', 'es');
+    expect(onMissing).toHaveBeenCalledWith(sourceKey('Whatever'), 'es');
   });
 
   it('formats ICU parameters', () => {
     const t = createTranslator({
       locale: 'en',
-      catalog: { greeting: 'Hello, {name}!' },
+      catalog: buildCatalog({ greeting: 'Hello, {name}!' }),
     });
     expect(t.t('greeting', { name: 'Ada' })).toBe('Hello, Ada!');
   });
@@ -60,22 +66,24 @@ describe('createTranslator', () => {
 
   it('returns structured trees from tree() and undefined for plain strings', () => {
     const tree: StructuredMessage = [{ type: 'text', value: 'hi' }];
+    const treeKey = canonicalKey(tree);
     const t = createTranslator({
       locale: 'en',
-      catalog: { tree: tree, str: 'plain' },
+      catalog: { [treeKey]: tree, [sourceKey('str')]: 'plain' },
     });
-    expect(t.tree('tree')).toEqual(tree);
+    expect(t.tree(treeKey)).toEqual(tree);
     expect(t.tree('str')).toBeUndefined();
     expect(t.tree('missing')).toBeUndefined();
   });
 
   it('exposes the raw catalog entry', () => {
     const tree: StructuredMessage = [{ type: 'text', value: 'hi' }];
+    const treeKey = canonicalKey(tree);
     const t = createTranslator({
       locale: 'en',
-      catalog: { tree, str: 'plain' },
+      catalog: { [treeKey]: tree, [sourceKey('str')]: 'plain' },
     });
-    expect(t.raw('tree')).toBe(tree);
+    expect(t.raw(treeKey)).toBe(tree);
     expect(t.raw('str')).toBe('plain');
     expect(t.raw('missing')).toBeUndefined();
   });
@@ -84,8 +92,8 @@ describe('createTranslator', () => {
     const t = createTranslator({
       locale: 'es',
       catalog: {
-        Submit: 'Enviar',
-        [`Submit${CONTEXT_KEY_SEPARATOR}navbar`]: 'Enviar (nav)',
+        [sourceKey('Submit')]: 'Enviar',
+        [sourceKey('Submit', 'navbar')]: 'Enviar (nav)',
       },
     });
     expect(t.t('Submit')).toBe('Enviar');
@@ -97,7 +105,7 @@ describe('createTranslator', () => {
   it('strips reserved $-prefixed options before ICU formatting', () => {
     const t = createTranslator({
       locale: 'en',
-      catalog: { greeting: 'Hello, {name}!' },
+      catalog: buildCatalog({ greeting: 'Hello, {name}!' }),
     });
     expect(
       t.t('greeting', { name: 'Ada', $context: 'home', $maxChars: 30, $description: 'hi' }),
@@ -113,5 +121,31 @@ describe('applyContextToKey', () => {
   it('returns the bare key when context is empty / undefined', () => {
     expect(applyContextToKey('Submit', undefined)).toBe('Submit');
     expect(applyContextToKey('Submit', '')).toBe('Submit');
+  });
+});
+
+describe('sourceKey', () => {
+  it('produces a stable 12-hex hash', () => {
+    const key = sourceKey('Sign out');
+    expect(key).toHaveLength(12);
+    expect(key).toMatch(/^[0-9a-f]{12}$/);
+    expect(sourceKey('Sign out')).toBe(key);
+  });
+
+  it('mixes context into the hash', () => {
+    expect(sourceKey('Submit')).not.toBe(sourceKey('Submit', 'navbar'));
+  });
+});
+
+describe('buildCatalog', () => {
+  it('hashes literal keys; passes tree keys through', () => {
+    const catalog = buildCatalog({
+      Hello: 'Hola',
+      'Sign out': 'Cerrar sesión',
+      't.aaaabbbbcccc': 'unchanged',
+    });
+    expect(catalog[sourceKey('Hello')]).toBe('Hola');
+    expect(catalog[sourceKey('Sign out')]).toBe('Cerrar sesión');
+    expect(catalog['t.aaaabbbbcccc']).toBe('unchanged');
   });
 });

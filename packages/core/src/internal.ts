@@ -9,7 +9,7 @@
  */
 
 export type { ChunkPathOptions } from './chunking';
-export { buildChunkLayout, chunkPathFor } from './chunking';
+export { bucketFor, buildChunkLayout } from './chunking';
 export {
   BRANCH_RESERVED_PROPS,
   canonicalize,
@@ -21,4 +21,7 @@ export {
 export {
   applyContextToKey,
   CONTEXT_KEY_SEPARATOR,
+  migrateCatalog,
+  migrateKey,
+  sourceKey,
 } from './runtime';

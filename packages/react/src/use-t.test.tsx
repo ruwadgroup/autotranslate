@@ -1,3 +1,4 @@
+import { buildCatalog } from '@autotranslate/core';
 import { renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
@@ -5,8 +6,9 @@ import { TranslationProvider } from './provider';
 import { useLocale, useT, useTranslations } from './use-t';
 
 function wrapper(props: { locale: string; catalog?: Record<string, string> }) {
+  const catalog = props.catalog ? buildCatalog(props.catalog) : undefined;
   return ({ children }: { children: ReactNode }) => (
-    <TranslationProvider locale={props.locale} catalog={props.catalog}>
+    <TranslationProvider locale={props.locale} catalog={catalog}>
       {children}
     </TranslationProvider>
   );
