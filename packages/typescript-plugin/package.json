@@ -1,6 +1,6 @@
 {
   "name": "@autotranslate/typescript-plugin",
-  "version": "1.0.0-beta.0",
+  "version": "1.0.0-beta.1",
   "description": "TypeScript Language Service plugin: warns when t('literal') keys are missing from the source catalog.",
   "license": "MIT",
   "author": "Tamim Bin Hakim <tamimbinhakim.work@gmail.com>",

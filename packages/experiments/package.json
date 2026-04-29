@@ -1,6 +1,6 @@
 {
   "name": "@autotranslate/experiments",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "description": "Copy experiments for autotranslate. Variants live in your catalog; activate them with any flag system.",
   "license": "MIT",
   "author": "Tamim Bin Hakim <tamimbinhakim.work@gmail.com>",

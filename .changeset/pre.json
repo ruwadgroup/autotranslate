@@ -19,6 +19,7 @@
     "experiments-package",
     "fix-package-exports-types",
     "glossary-hybrid",
+    "hash-bucketed-catalogs",
     "migration-guides-cookbook",
     "next-streaming-dev-mode",
     "remove-mcp",
