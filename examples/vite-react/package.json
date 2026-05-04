@@ -23,7 +23,7 @@
     "react-dom": "^19.2.5"
   },
   "devDependencies": {
-    "@ai-sdk/openai": "^3.0.0",
+    "@ai-sdk/openai": "^3.0.60",
     "@autotranslate/cli": "workspace:*",
     "@autotranslate/vite": "workspace:*",
     "@types/node": "^25.6.0",
