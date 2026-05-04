@@ -110,7 +110,7 @@
   "dependencies": {
     "@autotranslate/core": "workspace:*",
     "@formatjs/icu-messageformat-parser": "^3.5.5",
-    "zod": "^4.0.0"
+    "zod": "^4.4.3"
   },
   "peerDependencies": {
     "ai": ">=5.0.0 <7.0.0",
