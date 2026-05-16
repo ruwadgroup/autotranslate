@@ -24,4 +24,4 @@ export {
   migrateCatalog,
   migrateKey,
   sourceKey,
-} from './runtime';
+} from './key';

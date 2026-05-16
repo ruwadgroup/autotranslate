@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { CatalogKey } from './catalog-key';
-import { createTranslator, type Translator, type TranslatorOptions } from './runtime';
+import { createTranslator, type Translator, type TranslatorOptions } from './translator';
 
 const storage = new AsyncLocalStorage<Translator>();
 

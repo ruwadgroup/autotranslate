@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildCatalog, createTranslator } from './runtime';
 import { bindTranslator, currentTranslator, t, withTranslator } from './standalone';
+import { buildCatalog, createTranslator } from './translator';
 
 describe('standalone', () => {
   it('throws when no translator is bound', () => {

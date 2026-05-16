@@ -1,14 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { canonicalKey, type StructuredMessage } from './jsx-tree';
-import {
-  applyContextToKey,
-  buildCatalog,
-  CONTEXT_KEY_SEPARATOR,
-  createTranslator,
-  getMissCount,
-  resetMissStats,
-  sourceKey,
-} from './runtime';
+import { applyContextToKey, CONTEXT_KEY_SEPARATOR, sourceKey } from './key';
+import { getMissCount, resetMissStats } from './miss';
+import { buildCatalog, createTranslator } from './translator';
 
 describe('createTranslator', () => {
   it('returns translated strings', () => {

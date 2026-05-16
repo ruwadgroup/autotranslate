@@ -2,10 +2,10 @@ import { readFile } from 'node:fs/promises';
 import { relative } from 'node:path';
 import type { CatalogEntry, Manifest } from '@autotranslate/core';
 import fg from 'fast-glob';
-import { writeChunkedCatalog, writeManifest } from '../catalog';
-import { extractDictionary } from '../extract/dictionary';
-import { extractFile } from '../extract/extractor';
-import type { ExtractResult, ResolvedConfig } from '../types';
+import { writeChunkedCatalog, writeManifest } from '../../catalog';
+import type { ExtractResult, ResolvedConfig } from '../../types';
+import { extractDictionary } from './dictionary';
+import { extractFile } from './extractor';
 
 /** Scan source files, build the source-locale catalog, persist as chunks. */
 export async function extract(resolved: ResolvedConfig): Promise<ExtractResult> {

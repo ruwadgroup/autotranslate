@@ -1,5 +1,5 @@
 import type { CatalogKey } from './catalog-key';
-import { createTranslator, type Translator, type TranslatorOptions } from './runtime';
+import { createTranslator, type Translator, type TranslatorOptions } from './translator';
 
 let slot: Translator | undefined;
 
