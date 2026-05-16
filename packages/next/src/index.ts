@@ -4,8 +4,9 @@ import { fsCatalogLoader } from './catalog-loader';
 import type { GetTOptions } from './types';
 import { LOCALE_HEADER } from './types';
 
-export const VERSION = '0.0.0';
-
+// Wire format this build was compiled against. Cross-checked against the
+// loaded core at first `getT` call so a transitive version skew throws
+// instead of corrupting the runtime. Bump in lockstep with core.
 const EXPECTED_CORE_WIRE_FORMAT = 2;
 
 let handshakeChecked = false;
@@ -25,20 +26,14 @@ export { clearCatalogCache, fsCatalogLoader } from './catalog-loader';
 export type { CatalogLoader, GetTOptions, NextLocaleConfig, ProxyOptions } from './types';
 export { LOCALE_HEADER } from './types';
 
-/**
- * Read the active locale set by the proxy middleware. Returns `undefined`
- * when the proxy didn't run.
- */
+/** Locale set by the proxy middleware. `undefined` when the proxy didn't run. */
 export async function getRequestLocale(): Promise<Locale | undefined> {
   const { headers } = await import('next/headers');
   const h = await headers();
   return h.get(LOCALE_HEADER) ?? undefined;
 }
 
-/**
- * Build a translator bound to `locale`. The default loader reads
- * `<cwd>/<outDir>/<locale>.json`.
- */
+/** Translator bound to `locale`. Default loader reads `<cwd>/<outDir>`. */
 export async function getT(locale: Locale, options: GetTOptions = {}): Promise<Translator> {
   assertVersionHandshake();
   const cwd = options.cwd ?? process.cwd();
@@ -57,14 +52,7 @@ export async function getT(locale: Locale, options: GetTOptions = {}): Promise<T
   });
 }
 
-/**
- * Dictionary-mode helper. Mirrors the client `useTranslations(ns)` hook.
- *
- * ```ts
- * const t = await getTranslations(locale, 'dashboard');
- * t('title'); // → catalog['dashboard.title']
- * ```
- */
+/** Dictionary-mode helper. Server-side counterpart of `useTranslations(ns)`. */
 export async function getTranslations(
   locale: Locale,
   namespace?: string,

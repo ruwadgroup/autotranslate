@@ -1,5 +1,3 @@
-export const VERSION = '0.0.0';
-
 export type { AutotranslateCatalog, CatalogKey } from './catalog-key';
 export { hash, shortHash } from './hash';
 

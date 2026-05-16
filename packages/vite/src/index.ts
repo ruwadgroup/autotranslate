@@ -9,8 +9,6 @@ import {
   VIRTUAL_MODULE_ID,
 } from './types';
 
-export const VERSION = '0.0.0';
-
 export type { AutotranslatePluginOptions } from './types';
 export { VIRTUAL_MODULE_ID } from './types';
 

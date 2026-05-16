@@ -1,5 +1,3 @@
-export const VERSION = '0.0.0';
-
 export { check } from './commands/check';
 export { extract } from './commands/extract';
 export type { GenerateTypesResult } from './commands/generate-types';

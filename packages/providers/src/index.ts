@@ -1,5 +1,3 @@
-export const VERSION = '0.0.0';
-
 export { pseudoLocalize, pseudoLocalizeTree } from './pseudo';
 export type { StubProviderOptions } from './stub';
 

@@ -6,16 +6,11 @@ import { migrateCatalog } from '@autotranslate/core/internal';
 const cache = new Map<string, Promise<Catalog>>();
 
 /**
- * Default fs-backed catalog loader. Reads the chunked tree under
- * `<cwd>/<outDir>/<locale>/**\/*.json` and merges into one catalog. Falls
- * back to the legacy flat `<cwd>/<outDir>/<locale>.json` when the directory
- * is missing — supports 0.1.0 layouts mid-upgrade.
- *
- * Search order for the catalog root:
- *   1. `<cwd>/<outDir>` — the documented happy path.
- *   2. Each path in `extraRoots` — useful for monorepo standalone builds
- *      where `server.js` chdirs away from the project root before any
- *      catalog read happens.
+ * Default fs-backed catalog loader. Reads `<cwd>/<outDir>/<locale>/**\/*.json`
+ * and merges into one catalog. Falls back to the flat `<locale>.json` for
+ * 0.1.0 layouts mid-upgrade. `extraRoots` are tried in order when the primary
+ * root has no entry — for monorepo standalone builds where `server.js` chdirs
+ * away from the project root before any catalog read.
  */
 export function fsCatalogLoader(
   cwd: string,
@@ -42,8 +37,8 @@ async function readFirstAvailable(roots: ReadonlyArray<string>, locale: Locale):
     const flatFile = join(root, `${locale}.json`);
     if (await fileExists(flatFile)) return migrateCatalog(await readJson(flatFile));
   }
-  // Return an empty catalog so callers fall through to source-locale rendering
-  // rather than throwing — keeps prod alive even if the catalog is misplaced.
+  // Empty catalog → callers fall through to source-locale rendering instead
+  // of throwing. Keeps prod alive even when the catalog is misplaced.
   return {};
 }
 
@@ -104,7 +99,6 @@ function isMissing(error: unknown): boolean {
   );
 }
 
-/** Drop the in-process catalog cache. Exposed for tests. */
 export function clearCatalogCache(): void {
   cache.clear();
 }

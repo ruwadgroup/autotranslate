@@ -12,11 +12,7 @@ export interface FindResult {
   readonly context?: string;
 }
 
-/**
- * Locate a catalog key by its 12-hex hash. Returns the source string plus
- * every recorded call site from the manifest — the inverse lookup the
- * hash-bucketed layout otherwise makes painful.
- */
+/** Look up a catalog key by 12-hex hash. Returns the source string and call sites. */
 export async function find(resolved: ResolvedConfig, query: string): Promise<FindResult | null> {
   const key = normaliseQuery(query);
   if (!key) return null;

@@ -1,7 +1,5 @@
 'use client';
 
-export const VERSION = '0.0.0';
-
 export type { AutotranslateCatalog, CatalogKey } from '@autotranslate/core';
 export type { TranslationContextValue } from './context';
 export { TranslationContext, useTranslationContext } from './context';

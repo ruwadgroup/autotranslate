@@ -20,12 +20,9 @@ export interface TProps {
 }
 
 /**
- * Translatable JSX block.
- *
- * Walks `children` to derive a canonical message, looks up the translation in
- * the active catalog (with source-locale fallback), and renders the translated
- * tree using the original `<Var>` / `<Plural>` / tag elements as templates.
- * Falls back to `children` on miss.
+ * Translatable JSX block. Walks `children`, derives a canonical key, and
+ * renders the catalog entry using the original `<Var>` / `<Plural>` / tag
+ * elements as templates. Falls back to `children` on miss.
  */
 export function T({ children, context }: TProps): ReactElement {
   const { locale, catalog, fallback, debugMarkers } = useTranslationContext();
@@ -46,9 +43,8 @@ export function T({ children, context }: TProps): ReactElement {
     : children;
 
   if (debugMarkers) {
-    // `display: contents` keeps the span out of the layout tree so existing
-    // CSS rules continue to match. Only meant for dev — production should
-    // leave `debugMarkers` off so the markup stays clean.
+    // `display: contents` keeps the wrapper out of the layout tree so existing
+    // CSS rules keep matching. Dev-only — production should leave this off.
     return (
       <span data-autotranslate={key} style={DEBUG_SPAN_STYLE}>
         {rendered}

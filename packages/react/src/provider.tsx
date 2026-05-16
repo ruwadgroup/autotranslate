@@ -3,10 +3,8 @@ import { WIRE_FORMAT_VERSION } from '@autotranslate/core';
 import { type ReactElement, type ReactNode, useMemo } from 'react';
 import { TranslationContext } from './context';
 
-// Wire-format version this build of @autotranslate/react was compiled for.
-// Cross-checked against `@autotranslate/core` at provider mount. A skew
-// (e.g. transitive @autotranslate/react@beta.1 alongside core@beta.2) throws
-// a clear error instead of corrupting the runtime.
+// Wire format this build was compiled for. Cross-checked at provider mount
+// so a transitive version skew throws instead of corrupting the runtime.
 const EXPECTED_CORE_WIRE_FORMAT = 2;
 
 let handshakeChecked = false;
@@ -30,11 +28,7 @@ export interface TranslationProviderProps {
   readonly fallback?: Catalog;
   /** Called when a key misses both `catalog` and `fallback`. Dev-only hooks live here. */
   readonly onMissing?: (key: string, locale: Locale) => string;
-  /**
-   * Wrap `<T>` output in `<span data-autotranslate="<hex12>">` so the hash key
-   * is inspectable in devtools. Pair with `autotranslate find <hex12>` to
-   * locate the source string and call site. Intended for development only.
-   */
+  /** Wrap `<T>` in `<span data-autotranslate="<hex12>">` for devtools. Pair with `autotranslate find <hex12>`. Dev only. */
   readonly debugMarkers?: boolean;
   readonly children: ReactNode;
 }

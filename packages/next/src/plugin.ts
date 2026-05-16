@@ -1,34 +1,18 @@
 /**
- * Next.js config wrapper. Adds the autotranslate catalog directory to
- * `outputFileTracingIncludes` so `output: "standalone"` (and Vercel's
- * default tracing) ships the runtime catalogs alongside the server bundle.
- *
- * Without this, `getT()` calls `fsCatalogLoader(process.cwd(), ".translations")`
- * inside a standalone server that has already done `process.chdir(__dirname)` —
- * cwd points at the server.js directory, and `.translations/` was never copied
- * there. The result is a silent 404 on every catalog read.
+ * Next.js config wrapper. Merges `<outDir>/**` into `outputFileTracingIncludes`
+ * so `output: "standalone"` (and Vercel's default tracing) ship the catalog
+ * alongside the server bundle. Without this, the standalone server's
+ * `chdir(__dirname)` leaves cwd pointing somewhere `.translations/` isn't —
+ * silent 404 on every catalog read.
  *
  * ```ts
- * import { withAutotranslate } from '@autotranslate/next/plugin';
- *
- * export default withAutotranslate({
- *   reactStrictMode: true,
- * });
+ * export default withAutotranslate({ reactStrictMode: true });
  * ```
- *
- * To opt out of trace-includes (e.g. you ship the catalog separately or
- * deploy without standalone output), pass `{ traceIncludes: false }`.
  */
 export interface WithAutotranslateOptions {
-  /**
-   * Catalog directory, relative to the Next project root. Must match the
-   * `outDir` in `autotranslate.config.ts`. Defaults to `.translations`.
-   */
+  /** Catalog directory relative to the Next root. Defaults to `.translations`. */
   readonly outDir?: string;
-  /**
-   * Whether to merge `<outDir>/**` into `outputFileTracingIncludes` so the
-   * standalone output includes the runtime catalogs. Defaults to `true`.
-   */
+  /** Opt out of trace-includes merging. Defaults to `true`. */
   readonly traceIncludes?: boolean;
 }
 
