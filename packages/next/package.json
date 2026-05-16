@@ -91,6 +91,8 @@
   },
   "peerDependencies": {
     "@autotranslate/cli": "workspace:*",
+    "@autotranslate/core": "workspace:*",
+    "@autotranslate/react": "workspace:*",
     "next": ">=15.0.0",
     "react": ">=18.0.0"
   },

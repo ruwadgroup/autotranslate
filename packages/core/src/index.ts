@@ -5,7 +5,15 @@ export { hash, shortHash } from './hash';
 
 export { canonicalKey, isStructured, renderTreeToString } from './jsx-tree';
 export type { Translator, TranslatorOptions } from './runtime';
-export { buildCatalog, createTranslator, sourceKey } from './runtime';
+export {
+  buildCatalog,
+  createTranslator,
+  getMissBreakdown,
+  getMissCount,
+  resetMissStats,
+  sourceKey,
+  WIRE_FORMAT_VERSION,
+} from './runtime';
 
 export type {
   BranchNode,

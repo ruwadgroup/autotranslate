@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import ora from 'ora';
 import { check } from './commands/check';
 import { extract } from './commands/extract';
+import { find } from './commands/find';
 import { generateTypes, relativeFromCwd } from './commands/generate-types';
 import { init } from './commands/init';
 import { migrate } from './commands/migrate';
@@ -123,6 +124,39 @@ program
     }
     console.log(chalk.red('✗'), `${result.problems.length} problem(s)`);
     process.exitCode = 1;
+  });
+
+program
+  .command('find <hash>')
+  .description('Look up a catalog key by its 12-hex hash. Prints the source string + call sites.')
+  .action(async (hash: string) => {
+    const resolved = await loadConfig();
+    const result = await find(resolved, hash);
+    if (!result) {
+      console.log(chalk.yellow('!'), `no catalog entry for ${chalk.cyan(hash)}`);
+      console.log(
+        chalk.dim('  expected a 12-hex hash, optionally prefixed with t. (e.g. 9f3a1c2b4d5e).'),
+      );
+      process.exitCode = 1;
+      return;
+    }
+    console.log(chalk.green('✓'), chalk.cyan(result.key));
+    if (typeof result.source === 'string') {
+      console.log('  source:', chalk.white(JSON.stringify(result.source)));
+    } else if (Array.isArray(result.source)) {
+      console.log('  source:', chalk.dim('<structured tree>'));
+    } else {
+      console.log('  source:', chalk.dim('(no source-locale entry — orphan)'));
+    }
+    if (result.context) console.log('  context:', chalk.white(result.context));
+    if (result.description) console.log('  description:', chalk.white(result.description));
+    if (result.occurrences.length === 0) {
+      console.log(chalk.dim('  no call sites recorded — re-run `autotranslate extract`.'));
+    } else {
+      for (const o of result.occurrences) {
+        console.log('  at', chalk.cyan(`${o.file}:${o.line}${o.column ? `:${o.column}` : ''}`));
+      }
+    }
   });
 
 program

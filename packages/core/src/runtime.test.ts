@@ -5,6 +5,8 @@ import {
   buildCatalog,
   CONTEXT_KEY_SEPARATOR,
   createTranslator,
+  getMissCount,
+  resetMissStats,
   sourceKey,
 } from './runtime';
 
@@ -29,6 +31,28 @@ describe('createTranslator', () => {
   it('returns the key when both catalog and fallback miss', () => {
     const t = createTranslator({ locale: 'es', catalog: {} });
     expect(t.t('Untranslated')).toBe('Untranslated');
+  });
+
+  it('formats ICU on the source key when the catalog misses', () => {
+    resetMissStats();
+    const t = createTranslator({ locale: 'en', catalog: {} });
+    expect(t.t('Hello, {name}!', { name: 'Ada' })).toBe('Hello, Ada!');
+    expect(t.t('{count, plural, one {# item} other {# items}}', { count: 2 })).toBe('2 items');
+  });
+
+  it('records misses for default-fallback renders', () => {
+    resetMissStats();
+    const t = createTranslator({ locale: 'es', catalog: {} });
+    t.t('Untranslated');
+    t.t('Untranslated');
+    expect(getMissCount()).toBe(2);
+  });
+
+  it('does not record misses when onMissing is supplied', () => {
+    resetMissStats();
+    const t = createTranslator({ locale: 'es', catalog: {}, onMissing: () => 'X' });
+    t.t('Whatever');
+    expect(getMissCount()).toBe(0);
   });
 
   it('invokes onMissing when configured', () => {

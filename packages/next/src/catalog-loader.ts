@@ -10,29 +10,58 @@ const cache = new Map<string, Promise<Catalog>>();
  * `<cwd>/<outDir>/<locale>/**\/*.json` and merges into one catalog. Falls
  * back to the legacy flat `<cwd>/<outDir>/<locale>.json` when the directory
  * is missing — supports 0.1.0 layouts mid-upgrade.
+ *
+ * Search order for the catalog root:
+ *   1. `<cwd>/<outDir>` — the documented happy path.
+ *   2. Each path in `extraRoots` — useful for monorepo standalone builds
+ *      where `server.js` chdirs away from the project root before any
+ *      catalog read happens.
  */
-export function fsCatalogLoader(cwd: string, outDir: string): (locale: Locale) => Promise<Catalog> {
+export function fsCatalogLoader(
+  cwd: string,
+  outDir: string,
+  options: { readonly extraRoots?: ReadonlyArray<string> } = {},
+): (locale: Locale) => Promise<Catalog> {
+  const roots = [resolve(cwd, outDir), ...(options.extraRoots ?? [])];
+
   return async (locale) => {
-    const key = `${cwd}\0${outDir}\0${locale}`;
+    const key = `${roots.join('|')}\0${locale}`;
     let cached = cache.get(key);
     if (!cached) {
-      cached = readLocale(resolve(cwd, outDir), locale);
+      cached = readFirstAvailable(roots, locale);
       cache.set(key, cached);
     }
     return cached;
   };
 }
 
-async function readLocale(outDir: string, locale: Locale): Promise<Catalog> {
-  const localeDir = join(outDir, locale);
-  if (await isDirectory(localeDir)) {
-    const merged: Catalog = {};
-    for (const file of await listJsonFiles(localeDir)) {
-      Object.assign(merged, await readJson(file));
-    }
-    return migrateCatalog(merged);
+async function readFirstAvailable(roots: ReadonlyArray<string>, locale: Locale): Promise<Catalog> {
+  for (const root of roots) {
+    const localeDir = join(root, locale);
+    if (await isDirectory(localeDir)) return readLocaleDir(localeDir);
+    const flatFile = join(root, `${locale}.json`);
+    if (await fileExists(flatFile)) return migrateCatalog(await readJson(flatFile));
   }
-  return migrateCatalog(await readJson(join(outDir, `${locale}.json`)));
+  // Return an empty catalog so callers fall through to source-locale rendering
+  // rather than throwing — keeps prod alive even if the catalog is misplaced.
+  return {};
+}
+
+async function readLocaleDir(localeDir: string): Promise<Catalog> {
+  const merged: Catalog = {};
+  for (const file of await listJsonFiles(localeDir)) {
+    Object.assign(merged, await readJson(file));
+  }
+  return migrateCatalog(merged);
+}
+
+async function fileExists(path: string): Promise<boolean> {
+  try {
+    return (await stat(path)).isFile();
+  } catch (error) {
+    if (isMissing(error)) return false;
+    throw error;
+  }
 }
 
 async function listJsonFiles(dir: string): Promise<string[]> {

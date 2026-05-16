@@ -1,10 +1,25 @@
 import type { Locale, Translator } from '@autotranslate/core';
-import { createTranslator } from '@autotranslate/core';
+import { createTranslator, WIRE_FORMAT_VERSION } from '@autotranslate/core';
 import { fsCatalogLoader } from './catalog-loader';
 import type { GetTOptions } from './types';
 import { LOCALE_HEADER } from './types';
 
 export const VERSION = '0.0.0';
+
+const EXPECTED_CORE_WIRE_FORMAT = 2;
+
+let handshakeChecked = false;
+function assertVersionHandshake(): void {
+  if (handshakeChecked) return;
+  handshakeChecked = true;
+  if (WIRE_FORMAT_VERSION !== EXPECTED_CORE_WIRE_FORMAT) {
+    throw new Error(
+      `[autotranslate] version mismatch: @autotranslate/next expects ` +
+        `@autotranslate/core wire format ${EXPECTED_CORE_WIRE_FORMAT}, but the loaded core ` +
+        `reports ${WIRE_FORMAT_VERSION}. Pin both packages to the same release.`,
+    );
+  }
+}
 
 export { clearCatalogCache, fsCatalogLoader } from './catalog-loader';
 export type { CatalogLoader, GetTOptions, NextLocaleConfig, ProxyOptions } from './types';
@@ -25,6 +40,7 @@ export async function getRequestLocale(): Promise<Locale | undefined> {
  * `<cwd>/<outDir>/<locale>.json`.
  */
 export async function getT(locale: Locale, options: GetTOptions = {}): Promise<Translator> {
+  assertVersionHandshake();
   const cwd = options.cwd ?? process.cwd();
   const outDir = options.outDir ?? '.translations';
   const load = options.load ?? fsCatalogLoader(cwd, outDir);

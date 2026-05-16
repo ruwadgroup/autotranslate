@@ -57,4 +57,15 @@ describe('fsCatalogLoader', () => {
     clearCatalogCache();
     expect(await load('es')).toEqual({ [sourceKey('Hi')]: 'changed' });
   });
+
+  it('falls back to extraRoots when the primary cwd lookup misses', async () => {
+    const { cwd, outDir } = await fixture({ es: { Hi: 'Hola' } });
+    // Pretend cwd has been chdir'd somewhere catalog-less (the standalone
+    // server.js case) and pass the real catalog root as a fallback.
+    const wrongCwd = await mkdtemp(join(tmpdir(), 'autotranslate-next-wrong-'));
+    const load = fsCatalogLoader(wrongCwd, outDir, {
+      extraRoots: [join(cwd, outDir)],
+    });
+    expect(await load('es')).toEqual({ [sourceKey('Hi')]: 'Hola' });
+  });
 });

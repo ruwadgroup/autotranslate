@@ -7,6 +7,11 @@ export interface TranslationContextValue {
   readonly fallback?: Catalog;
   /** Called when a key misses both `catalog` and `fallback`. Dev-only hooks live here. */
   readonly onMissing?: (key: string, locale: Locale) => string;
+  /**
+   * When `true`, `<T>` wraps its output in a `<span data-autotranslate="<hex12>">`
+   * so the hash key can be inspected from devtools. Off by default.
+   */
+  readonly debugMarkers?: boolean;
 }
 
 const DEFAULT_VALUE: TranslationContextValue = { locale: 'en', catalog: {} };

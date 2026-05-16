@@ -28,7 +28,7 @@ export interface TProps {
  * Falls back to `children` on miss.
  */
 export function T({ children, context }: TProps): ReactElement {
-  const { locale, catalog, fallback } = useTranslationContext();
+  const { locale, catalog, fallback, debugMarkers } = useTranslationContext();
   const serialized = useMemo(() => serializeChildren(children), [children]);
   const key = useMemo(() => canonicalKey(serialized.tree, context), [serialized.tree, context]);
   const bareKey = useMemo(
@@ -41,11 +41,24 @@ export function T({ children, context }: TProps): ReactElement {
     (context ? catalog[bareKey] : undefined) ??
     fallback?.[key] ??
     (context ? fallback?.[bareKey] : undefined);
-  if (!Array.isArray(entry)) {
-    return <Fragment>{children}</Fragment>;
+  const rendered = Array.isArray(entry)
+    ? renderTree(entry as StructuredMessage, serialized, locale)
+    : children;
+
+  if (debugMarkers) {
+    // `display: contents` keeps the span out of the layout tree so existing
+    // CSS rules continue to match. Only meant for dev — production should
+    // leave `debugMarkers` off so the markup stays clean.
+    return (
+      <span data-autotranslate={key} style={DEBUG_SPAN_STYLE}>
+        {rendered}
+      </span>
+    );
   }
-  return <Fragment>{renderTree(entry as StructuredMessage, serialized, locale)}</Fragment>;
+  return <Fragment>{rendered}</Fragment>;
 }
+
+const DEBUG_SPAN_STYLE = { display: 'contents' } as const;
 
 interface RenderState {
   readonly tagOccurrence: Map<string, number>;
