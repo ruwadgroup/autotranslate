@@ -109,7 +109,7 @@
   },
   "dependencies": {
     "@autotranslate/core": "workspace:*",
-    "@formatjs/icu-messageformat-parser": "^3.5.5",
+    "@formatjs/icu-messageformat-parser": "^3.5.12",
     "zod": "^4.0.0"
   },
   "peerDependencies": {
