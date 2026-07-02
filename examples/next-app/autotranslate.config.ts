@@ -25,10 +25,11 @@ export default defineConfig({
   source: 'en',
   targets: ['es', 'fr', 'ja'],
   content: ['src/**/*.{ts,tsx}'],
+  mode: 'auto',
   instruction:
-    'You are translating UI copy for a Next.js example app. ' +
+    'You are translating UI copy for a Next.js example app that uses mode: auto. ' +
     'Keep the tone friendly, concise, and modern. ' +
     'Never translate these product names — keep them verbatim, exactly as written: ' +
-    '"autotranslate", "Next.js", "Vercel", "React", "GitHub", "i18n", "CLI", "AI", "JSON".',
+    '"autotranslate", "Next.js", "Vercel", "React", "GitHub", "i18n", "CLI", "AI", "JSON", "HMR", "SKU".',
   provider,
 });

@@ -1,4 +1,3 @@
-import { T } from '@autotranslate/react';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import Hero from '@/components/Hero';
@@ -52,10 +51,10 @@ export default async function Home({ params }: { readonly params: Promise<{ lang
 
         <div className="flex flex-col gap-3 sm:flex-row">
           <LinkButton href="https://github.com/tamimbinhakim/autotranslate" variant="primary">
-            <T>View on GitHub</T>
+            View on GitHub
           </LinkButton>
           <LinkButton href="https://github.com/tamimbinhakim/autotranslate/blob/main/ROADMAP.md">
-            <T>Read the roadmap</T>
+            Read the roadmap
           </LinkButton>
         </div>
       </main>

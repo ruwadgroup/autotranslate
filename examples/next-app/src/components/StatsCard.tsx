@@ -8,11 +8,7 @@ interface StatsCardProps {
   readonly nextRelease: Date;
 }
 
-/**
- * Demonstrates v0.2 additions: `<Branch>` discriminator, `<Num>` /
- * `<Currency>` / `<DateTime>` / `<RelativeTime>` formatters, and `<T>` with
- * a `context` hint. Every value is locale-aware via `Intl`.
- */
+// Explicit <T> + markers required: <Branch> selects among JSX-keyed variants, <Num>/<Currency>/<DateTime>/<RelativeTime> apply Intl formatting — none have an auto-mode equivalent.
 export default function StatsCard({
   status,
   visitors,

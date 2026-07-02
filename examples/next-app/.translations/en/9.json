@@ -1,4 +1,15 @@
 {
+  "t.93875cbc1048": [
+    {
+      "type": "tag",
+      "tag": "span",
+      "children": []
+    },
+    {
+      "type": "text",
+      "value": "Powered by autotranslate"
+    }
+  ],
   "t.9c674cc7f68e": [
     {
       "type": "text",

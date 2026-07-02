@@ -2,17 +2,21 @@
   "t.84977a8aeaf2": [
     {
       "type": "text",
-      "value": "⟦ Ţŕý ĤḾŔ ⟧"
+      "value": "HMRを試してみてください"
     }
   ],
   "t.8e24c92ab08d": [
+    {
+      "type": "text",
+      "value": "今日は"
+    },
     {
       "type": "var",
       "name": "num_0"
     },
     {
       "type": "text",
-      "value": "⟦  ṽíšíţóŕš ţóđàý —  ⟧"
+      "value": "人の訪問者 — "
     },
     {
       "type": "branch",
@@ -21,32 +25,32 @@
         "pending": [
           {
             "type": "text",
-            "value": "⟦ óŕđéŕ íš ƥéñđíñǵ ŕéṽíéŵ ⟧"
+            "value": "注文はレビュー中です"
           }
         ],
         "shipped": [
           {
             "type": "text",
-            "value": "⟦ óŕđéŕ íš óñ íţš ŵàý ⟧"
+            "value": "注文は配送中です"
           }
         ],
         "delivered": [
           {
             "type": "text",
-            "value": "⟦ óŕđéŕ ĥàš ƀééñ đéĺíṽéŕéđ ⟧"
+            "value": "注文は配達されました"
           }
         ],
         "default": [
           {
             "type": "text",
-            "value": "⟦ óŕđéŕ šţàţúš íš úñǩñóŵñ ⟧"
+            "value": "注文のステータスは不明です"
           }
         ]
       }
     },
     {
       "type": "text",
-      "value": "⟦ . ⟧"
+      "value": "."
     }
   ]
 }

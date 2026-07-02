@@ -8,6 +8,7 @@ interface StatsCardProps {
   readonly nextRelease: Date;
 }
 
+// Explicit <T> + markers required: <Branch> selects JSX variants, <Num>/<Currency>/<DateTime>/<RelativeTime> apply Intl formatting — none have an auto-mode equivalent.
 export default function StatsCard({
   status,
   visitors,

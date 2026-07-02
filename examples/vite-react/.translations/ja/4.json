@@ -1,0 +1,25 @@
+{
+  "t.42e1eb39224c": [
+    {
+      "type": "text",
+      "value": "·"
+    }
+  ],
+  "t.45c4fb905e9a": [
+    {
+      "type": "tag",
+      "tag": "svg",
+      "children": [
+        {
+          "type": "tag",
+          "tag": "path",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "value": "自動翻訳"
+    }
+  ]
+}

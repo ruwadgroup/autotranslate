@@ -2,7 +2,7 @@
   "t.84977a8aeaf2": [
     {
       "type": "text",
-      "value": "⟦ Ţŕý ĤḾŔ ⟧"
+      "value": "Intenta HMR"
     }
   ],
   "t.8e24c92ab08d": [
@@ -12,7 +12,7 @@
     },
     {
       "type": "text",
-      "value": "⟦  ṽíšíţóŕš ţóđàý —  ⟧"
+      "value": " visitantes hoy — "
     },
     {
       "type": "branch",
@@ -21,32 +21,32 @@
         "pending": [
           {
             "type": "text",
-            "value": "⟦ óŕđéŕ íš ƥéñđíñǵ ŕéṽíéŵ ⟧"
+            "value": "el pedido está pendiente de revisión"
           }
         ],
         "shipped": [
           {
             "type": "text",
-            "value": "⟦ óŕđéŕ íš óñ íţš ŵàý ⟧"
+            "value": "el pedido está en camino"
           }
         ],
         "delivered": [
           {
             "type": "text",
-            "value": "⟦ óŕđéŕ ĥàš ƀééñ đéĺíṽéŕéđ ⟧"
+            "value": "el pedido ha sido entregado"
           }
         ],
         "default": [
           {
             "type": "text",
-            "value": "⟦ óŕđéŕ šţàţúš íš úñǩñóŵñ ⟧"
+            "value": "el estado del pedido es desconocido"
           }
         ]
       }
     },
     {
       "type": "text",
-      "value": "⟦ . ⟧"
+      "value": "."
     }
   ]
 }

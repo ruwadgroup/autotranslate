@@ -9,12 +9,13 @@ declare module '@autotranslate/core' {
     "t.2152705354ae": true;
     "t.2e7b1e1321df": true;
     "t.3c34f07e1845": true;
-    "t.6259fdea983c": true;
+    "t.42e1eb39224c": true;
+    "t.434fd9984693": true;
     "t.7953d769b7bb": true;
     "t.8e24c92ab08d": true;
+    "t.93875cbc1048": true;
     "t.9c674cc7f68e": true;
     "t.bb631215c8d2": true;
-    "t.bf72e3d1b0a4": true;
     "t.c8f94126cad3": true;
     "t.d6c5ecf91d89": true;
   }

@@ -2,7 +2,7 @@
   "t.0abb79a3c869": [
     {
       "type": "text",
-      "value": "⟦ Ñéẋţ ŕéĺéàšé óñ  ⟧"
+      "value": "次のリリースは"
     },
     {
       "type": "var",
@@ -10,13 +10,13 @@
     },
     {
       "type": "text",
-      "value": "⟦ . ⟧"
+      "value": "です。"
     }
   ],
   "t.0d8d2b86f9f5": [
     {
       "type": "text",
-      "value": "⟦ Ĺíṽé đéɱó ⟧"
+      "value": "ライブデモ"
     }
   ]
 }

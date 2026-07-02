@@ -1,0 +1,22 @@
+{
+  "t.42e1eb39224c": [
+    {
+      "type": "text",
+      "value": "·"
+    }
+  ],
+  "t.434fd9984693": [
+    {
+      "type": "text",
+      "value": "Vous consultez cette page en "
+    },
+    {
+      "type": "var",
+      "name": "value"
+    },
+    {
+      "type": "text",
+      "value": ". Essayez le sélecteur ci-dessus - chaque chaîne est rendue côté serveur dans la langue correspondante."
+    }
+  ]
+}

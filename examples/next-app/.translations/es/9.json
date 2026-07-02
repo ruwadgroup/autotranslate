@@ -1,8 +1,19 @@
 {
+  "t.93875cbc1048": [
+    {
+      "type": "tag",
+      "tag": "span",
+      "children": []
+    },
+    {
+      "type": "text",
+      "value": "Impulsado por autotranslate"
+    }
+  ],
   "t.9c674cc7f68e": [
     {
       "type": "text",
-      "value": "⟦ Ĺíṽé šţàţš ⟧"
+      "value": "Estadísticas en vivo"
     }
   ]
 }

@@ -1,24 +1,4 @@
 {
-  "t.b810cea94026": [
-    {
-      "type": "text",
-      "value": "Write copy in your components naturally. The CLI extracts every string and translates it with the AI model of your choice — catalogs land in "
-    },
-    {
-      "type": "tag",
-      "tag": "code",
-      "children": [
-        {
-          "type": "text",
-          "value": ".translations/"
-        }
-      ]
-    },
-    {
-      "type": "text",
-      "value": " and HMR picks them up instantly."
-    }
-  ],
   "t.bb631215c8d2": [
     {
       "type": "text",

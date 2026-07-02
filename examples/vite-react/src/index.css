@@ -198,6 +198,12 @@ button {
   max-width: 38rem;
 }
 
+.hero__sku {
+  font-size: 0.75rem;
+  color: var(--color-muted, #888);
+  margin-top: 0.25rem;
+}
+
 .switcher {
   display: inline-flex;
   padding: 0.25rem;

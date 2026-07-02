@@ -2,7 +2,7 @@
   "t.84977a8aeaf2": [
     {
       "type": "text",
-      "value": "⟦ Ţŕý ĤḾŔ ⟧"
+      "value": "Essayez HMR"
     }
   ],
   "t.8e24c92ab08d": [
@@ -12,7 +12,7 @@
     },
     {
       "type": "text",
-      "value": "⟦  ṽíšíţóŕš ţóđàý —  ⟧"
+      "value": " visiteurs aujourd'hui — "
     },
     {
       "type": "branch",
@@ -21,32 +21,32 @@
         "pending": [
           {
             "type": "text",
-            "value": "⟦ óŕđéŕ íš ƥéñđíñǵ ŕéṽíéŵ ⟧"
+            "value": "la commande est en attente de révision"
           }
         ],
         "shipped": [
           {
             "type": "text",
-            "value": "⟦ óŕđéŕ íš óñ íţš ŵàý ⟧"
+            "value": "la commande est en route"
           }
         ],
         "delivered": [
           {
             "type": "text",
-            "value": "⟦ óŕđéŕ ĥàš ƀééñ đéĺíṽéŕéđ ⟧"
+            "value": "la commande a été livrée"
           }
         ],
         "default": [
           {
             "type": "text",
-            "value": "⟦ óŕđéŕ šţàţúš íš úñǩñóŵñ ⟧"
+            "value": "le statut de la commande est inconnu"
           }
         ]
       }
     },
     {
       "type": "text",
-      "value": "⟦ . ⟧"
+      "value": "."
     }
   ]
 }

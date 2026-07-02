@@ -1,8 +1,19 @@
 {
+  "t.93875cbc1048": [
+    {
+      "type": "tag",
+      "tag": "span",
+      "children": []
+    },
+    {
+      "type": "text",
+      "value": "オート翻訳による提供"
+    }
+  ],
   "t.9c674cc7f68e": [
     {
       "type": "text",
-      "value": "⟦ Ĺíṽé šţàţš ⟧"
+      "value": "ライブ統計"
     }
   ]
 }

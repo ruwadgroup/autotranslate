@@ -20,5 +20,11 @@
       "type": "text",
       "value": "."
     }
+  ],
+  "t.7fefb6793f27": [
+    {
+      "type": "text",
+      "value": "Write copy in your components naturally. The CLI extracts every string and translates it with the AI model of your choice — catalogs land in "
+    }
   ]
 }

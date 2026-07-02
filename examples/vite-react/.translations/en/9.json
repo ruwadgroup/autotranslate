@@ -1,28 +1,33 @@
 {
-  "t.9243329a8ed9": [
-    {
-      "type": "text",
-      "value": "Edit "
-    },
+  "t.93875cbc1048": [
     {
       "type": "tag",
-      "tag": "code",
-      "children": [
-        {
-          "type": "text",
-          "value": "src/App.tsx"
-        }
-      ]
+      "tag": "span",
+      "children": []
     },
     {
       "type": "text",
-      "value": " and save — Vite reloads the catalog without losing state."
+      "value": "Powered by autotranslate"
     }
   ],
   "t.9c674cc7f68e": [
     {
       "type": "text",
       "value": "Live stats"
+    }
+  ],
+  "t.9f6cef8f1058": [
+    {
+      "type": "text",
+      "value": "You're viewing this page in "
+    },
+    {
+      "type": "var",
+      "name": "value"
+    },
+    {
+      "type": "text",
+      "value": ". Switch the pill above — every string in the tree re-renders with the matched catalog."
     }
   ]
 }

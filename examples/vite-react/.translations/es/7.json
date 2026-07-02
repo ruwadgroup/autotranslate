@@ -2,7 +2,7 @@
   "t.7953d769b7bb": [
     {
       "type": "text",
-      "value": "⟦ Ŕéṽéñúé:  ⟧"
+      "value": "Ingresos: "
     },
     {
       "type": "var",
@@ -10,7 +10,7 @@
     },
     {
       "type": "text",
-      "value": "⟦ . Ĺàšţ úƥđàţéđ  ⟧"
+      "value": ". Última actualización "
     },
     {
       "type": "var",
@@ -18,7 +18,13 @@
     },
     {
       "type": "text",
-      "value": "⟦ . ⟧"
+      "value": "."
+    }
+  ],
+  "t.7fefb6793f27": [
+    {
+      "type": "text",
+      "value": "Escribe texto en tus componentes de forma natural. La CLI extrae cada cadena y la traduce con el modelo de IA de tu elección — los catálogos llegan a "
     }
   ]
 }

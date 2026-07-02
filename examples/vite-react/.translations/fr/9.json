@@ -1,28 +1,33 @@
 {
-  "t.9243329a8ed9": [
-    {
-      "type": "text",
-      "value": "⟦ Éđíţ  ⟧"
-    },
+  "t.93875cbc1048": [
     {
       "type": "tag",
-      "tag": "code",
-      "children": [
-        {
-          "type": "text",
-          "value": "⟦ šŕç/Àƥƥ.ţšẋ ⟧"
-        }
-      ]
+      "tag": "span",
+      "children": []
     },
     {
       "type": "text",
-      "value": "⟦  àñđ šàṽé — Ṽíţé ŕéĺóàđš ţĥé çàţàĺóǵ ŵíţĥóúţ ĺóšíñǵ šţàţé. ⟧"
+      "value": "Alimenté par autotranslate"
     }
   ],
   "t.9c674cc7f68e": [
     {
       "type": "text",
-      "value": "⟦ Ĺíṽé šţàţš ⟧"
+      "value": "Statistiques en direct"
+    }
+  ],
+  "t.9f6cef8f1058": [
+    {
+      "type": "text",
+      "value": "Vous consultez cette page en "
+    },
+    {
+      "type": "var",
+      "name": "value"
+    },
+    {
+      "type": "text",
+      "value": ". Changez le pilulier ci-dessus — chaque chaîne dans l'arbre se remet à jour avec le catalogue correspondant."
     }
   ]
 }

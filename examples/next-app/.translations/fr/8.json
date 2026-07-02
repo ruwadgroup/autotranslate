@@ -6,7 +6,7 @@
     },
     {
       "type": "text",
-      "value": "⟦  ṽíšíţóŕš ţóđàý —  ⟧"
+      "value": " visiteurs aujourd'hui — "
     },
     {
       "type": "branch",
@@ -15,32 +15,32 @@
         "pending": [
           {
             "type": "text",
-            "value": "⟦ óŕđéŕ íš ƥéñđíñǵ ŕéṽíéŵ ⟧"
+            "value": "la commande est en attente d'examen"
           }
         ],
         "shipped": [
           {
             "type": "text",
-            "value": "⟦ óŕđéŕ íš óñ íţš ŵàý ⟧"
+            "value": "la commande est en route"
           }
         ],
         "delivered": [
           {
             "type": "text",
-            "value": "⟦ óŕđéŕ ĥàš ƀééñ đéĺíṽéŕéđ ⟧"
+            "value": "la commande a été livrée"
           }
         ],
         "default": [
           {
             "type": "text",
-            "value": "⟦ óŕđéŕ šţàţúš íš úñǩñóŵñ ⟧"
+            "value": "le statut de la commande est inconnu"
           }
         ]
       }
     },
     {
       "type": "text",
-      "value": "⟦ . ⟧"
+      "value": "."
     }
   ]
 }

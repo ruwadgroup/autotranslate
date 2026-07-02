@@ -1,4 +1,12 @@
 {
+  "6da1ba0ff460": {
+    "occurrences": [
+      {
+        "file": "src/components/Counter.tsx",
+        "line": 24
+      }
+    ]
+  },
   "a4fe65264ef7": {
     "occurrences": [
       {
@@ -11,7 +19,7 @@
     "occurrences": [
       {
         "file": "src/components/StatsCard.tsx",
-        "line": 47
+        "line": 48
       }
     ]
   },
@@ -19,7 +27,7 @@
     "occurrences": [
       {
         "file": "src/components/LocaleCard.tsx",
-        "line": 11
+        "line": 12
       }
     ]
   },
@@ -27,23 +35,31 @@
     "occurrences": [
       {
         "file": "src/App.tsx",
-        "line": 53
+        "line": 52
       }
     ]
   },
-  "t.6118f56a847f": {
+  "t.308e1e158910": {
     "occurrences": [
       {
-        "file": "src/components/LocaleCard.tsx",
-        "line": 14
+        "file": "src/components/Counter.tsx",
+        "line": 17
       }
     ]
   },
-  "t.6259fdea983c": {
+  "t.42e1eb39224c": {
     "occurrences": [
       {
-        "file": "src/components/Hero.tsx",
-        "line": 8
+        "file": "src/components/StatsCard.tsx",
+        "line": 60
+      }
+    ]
+  },
+  "t.45c4fb905e9a": {
+    "occurrences": [
+      {
+        "file": "src/App.tsx",
+        "line": 23
       }
     ]
   },
@@ -51,7 +67,7 @@
     "occurrences": [
       {
         "file": "src/App.tsx",
-        "line": 58
+        "line": 57
       }
     ]
   },
@@ -59,7 +75,15 @@
     "occurrences": [
       {
         "file": "src/components/StatsCard.tsx",
-        "line": 40
+        "line": 41
+      }
+    ]
+  },
+  "t.7fefb6793f27": {
+    "occurrences": [
+      {
+        "file": "src/components/Hero.tsx",
+        "line": 12
       }
     ]
   },
@@ -67,7 +91,7 @@
     "occurrences": [
       {
         "file": "src/components/Counter.tsx",
-        "line": 10
+        "line": 14
       }
     ]
   },
@@ -75,15 +99,15 @@
     "occurrences": [
       {
         "file": "src/components/StatsCard.tsx",
-        "line": 25
+        "line": 26
       }
     ]
   },
-  "t.9243329a8ed9": {
+  "t.93875cbc1048": {
     "occurrences": [
       {
-        "file": "src/components/Counter.tsx",
-        "line": 14
+        "file": "src/components/Hero.tsx",
+        "line": 6
       }
     ]
   },
@@ -91,23 +115,15 @@
     "occurrences": [
       {
         "file": "src/components/StatsCard.tsx",
-        "line": 21
+        "line": 22
       }
     ]
   },
-  "t.abd85420b6a3": {
+  "t.9f6cef8f1058": {
     "occurrences": [
       {
-        "file": "src/components/Counter.tsx",
-        "line": 19
-      }
-    ]
-  },
-  "t.b810cea94026": {
-    "occurrences": [
-      {
-        "file": "src/components/Hero.tsx",
-        "line": 14
+        "file": "src/components/LocaleCard.tsx",
+        "line": 13
       }
     ]
   },
@@ -115,7 +131,7 @@
     "occurrences": [
       {
         "file": "src/App.tsx",
-        "line": 50
+        "line": 49
       }
     ]
   },
@@ -123,7 +139,7 @@
     "occurrences": [
       {
         "file": "src/components/Hero.tsx",
-        "line": 11
+        "line": 9
       }
     ]
   },
@@ -132,7 +148,7 @@
     "occurrences": [
       {
         "file": "src/components/StatsCard.tsx",
-        "line": 58
+        "line": 59
       }
     ]
   },
@@ -141,7 +157,23 @@
     "occurrences": [
       {
         "file": "src/components/StatsCard.tsx",
-        "line": 60
+        "line": 61
+      }
+    ]
+  },
+  "t.f8b919250b36": {
+    "occurrences": [
+      {
+        "file": "src/components/Hero.tsx",
+        "line": 14
+      }
+    ]
+  },
+  "t.fa54d87ce383": {
+    "occurrences": [
+      {
+        "file": "src/components/Counter.tsx",
+        "line": 16
       }
     ]
   }

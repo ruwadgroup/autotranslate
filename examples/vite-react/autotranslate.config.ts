@@ -28,9 +28,10 @@ export default defineConfig({
   source: 'en',
   targets: ['es', 'fr', 'ja'],
   content: ['src/**/*.{ts,tsx}'],
+  mode: 'auto',
   instruction:
-    'You are translating UI copy for a developer-tools example app. ' +
-    'Keep the tone friendly, concise, and modern. Preserve product nouns ' +
-    '("Vite", "React", "HMR") verbatim.',
+    'You are translating UI copy for a developer-tools example app that uses mode: auto. ' +
+    'Keep the tone friendly, concise, and modern. ' +
+    'Never translate these product names: autotranslate, Vite, React, HMR, GitHub.',
   provider,
 });

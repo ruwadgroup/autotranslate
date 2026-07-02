@@ -7,19 +7,23 @@ declare module '@autotranslate/core' {
     "t.0abb79a3c869": true;
     "t.0d8d2b86f9f5": true;
     "t.2e7b1e1321df": true;
-    "t.6118f56a847f": true;
-    "t.6259fdea983c": true;
+    "t.308e1e158910": true;
+    "t.42e1eb39224c": true;
+    "t.45c4fb905e9a": true;
     "t.637bae00ce98": true;
     "t.7953d769b7bb": true;
+    "t.7fefb6793f27": true;
     "t.84977a8aeaf2": true;
     "t.8e24c92ab08d": true;
-    "t.9243329a8ed9": true;
+    "t.93875cbc1048": true;
     "t.9c674cc7f68e": true;
-    "t.abd85420b6a3": true;
-    "t.b810cea94026": true;
+    "t.9f6cef8f1058": true;
     "t.bb631215c8d2": true;
     "t.c0fa0adcad91": true;
     "t.c8f94126cad3": true;
     "t.d6c5ecf91d89": true;
+    "t.f8b919250b36": true;
+    "t.fa54d87ce383": true;
+    "{count, plural, one {Clicked 1 time} other {Clicked # times}}": true;
   }
 }

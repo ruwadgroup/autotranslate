@@ -6,7 +6,7 @@
     },
     {
       "type": "text",
-      "value": "⟦  ṽíšíţóŕš ţóđàý —  ⟧"
+      "value": "訪問者が今日 — "
     },
     {
       "type": "branch",
@@ -15,32 +15,32 @@
         "pending": [
           {
             "type": "text",
-            "value": "⟦ óŕđéŕ íš ƥéñđíñǵ ŕéṽíéŵ ⟧"
+            "value": "注文はレビュー中"
           }
         ],
         "shipped": [
           {
             "type": "text",
-            "value": "⟦ óŕđéŕ íš óñ íţš ŵàý ⟧"
+            "value": "注文は配送中"
           }
         ],
         "delivered": [
           {
             "type": "text",
-            "value": "⟦ óŕđéŕ ĥàš ƀééñ đéĺíṽéŕéđ ⟧"
+            "value": "注文は配達されました"
           }
         ],
         "default": [
           {
             "type": "text",
-            "value": "⟦ óŕđéŕ šţàţúš íš úñǩñóŵñ ⟧"
+            "value": "注文の状態は不明"
           }
         ]
       }
     },
     {
       "type": "text",
-      "value": "⟦ . ⟧"
+      "value": "."
     }
   ]
 }

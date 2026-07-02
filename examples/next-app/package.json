@@ -26,6 +26,7 @@
   "devDependencies": {
     "@ai-sdk/openai": "^3.0.80",
     "@autotranslate/cli": "workspace:*",
+    "@autotranslate/typescript-plugin": "workspace:*",
     "@tailwindcss/postcss": "^4.3.2",
     "@types/node": "^26.1.0",
     "@types/react": "^19.2.17",

@@ -1,36 +1,3 @@
 {
-  "a4fe65264ef7": "Language",
-  "t.abd85420b6a3": [
-    {
-      "type": "text",
-      "value": "Clicked "
-    },
-    {
-      "type": "tag",
-      "tag": "span",
-      "children": []
-    },
-    {
-      "type": "text",
-      "value": " "
-    },
-    {
-      "type": "plural",
-      "name": "count",
-      "forms": {
-        "one": [
-          {
-            "type": "text",
-            "value": "time"
-          }
-        ],
-        "other": [
-          {
-            "type": "text",
-            "value": "times"
-          }
-        ]
-      }
-    }
-  ]
+  "a4fe65264ef7": "Language"
 }

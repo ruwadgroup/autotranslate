@@ -1,4 +1,3 @@
-import { T } from '@autotranslate/react';
 import Counter from './components/Counter';
 import Hero from './components/Hero';
 import LinkButton from './components/LinkButton';
@@ -47,16 +46,14 @@ export default function App({ locale, locales, onChangeLocale }: AppProps) {
 
       <div className="actions">
         <LinkButton href="https://github.com/tamimbinhakim/autotranslate" variant="primary">
-          <T>View on GitHub</T>
+          View on GitHub
         </LinkButton>
         <LinkButton href="https://github.com/tamimbinhakim/autotranslate/blob/main/ROADMAP.md">
-          <T>Read the roadmap</T>
+          Read the roadmap
         </LinkButton>
       </div>
 
-      <footer className="footer">
-        <T>Built with Vite, React, and autotranslate.</T>
-      </footer>
+      <footer className="footer">Built with Vite, React, and autotranslate.</footer>
     </main>
   );
 }

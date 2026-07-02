@@ -1,36 +1,3 @@
 {
-  "a4fe65264ef7": "⟦ Ĺàñǵúàǵé ⟧",
-  "t.abd85420b6a3": [
-    {
-      "type": "text",
-      "value": "⟦ Çĺíçǩéđ  ⟧"
-    },
-    {
-      "type": "tag",
-      "tag": "span",
-      "children": []
-    },
-    {
-      "type": "text",
-      "value": "⟦   ⟧"
-    },
-    {
-      "type": "plural",
-      "name": "count",
-      "forms": {
-        "one": [
-          {
-            "type": "text",
-            "value": "⟦ ţíɱé ⟧"
-          }
-        ],
-        "other": [
-          {
-            "type": "text",
-            "value": "⟦ ţíɱéš ⟧"
-          }
-        ]
-      }
-    }
-  ]
+  "a4fe65264ef7": "Langue"
 }

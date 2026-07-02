@@ -2,7 +2,7 @@
   "t.7953d769b7bb": [
     {
       "type": "text",
-      "value": "⟦ Ŕéṽéñúé:  ⟧"
+      "value": "Revenu : "
     },
     {
       "type": "var",
@@ -10,7 +10,7 @@
     },
     {
       "type": "text",
-      "value": "⟦ . Ĺàšţ úƥđàţéđ  ⟧"
+      "value": ". Dernière mise à jour "
     },
     {
       "type": "var",
@@ -18,7 +18,7 @@
     },
     {
       "type": "text",
-      "value": "⟦ . ⟧"
+      "value": "."
     }
   ]
 }

@@ -11,7 +11,7 @@
     "occurrences": [
       {
         "file": "src/components/StatsCard.tsx",
-        "line": 52
+        "line": 48
       }
     ]
   },
@@ -19,7 +19,7 @@
     "occurrences": [
       {
         "file": "src/components/LocaleCard.tsx",
-        "line": 16
+        "line": 13
       }
     ]
   },
@@ -27,7 +27,7 @@
     "occurrences": [
       {
         "file": "src/components/Hero.tsx",
-        "line": 11
+        "line": 9
       }
     ]
   },
@@ -35,7 +35,7 @@
     "occurrences": [
       {
         "file": "src/app/[lang]/page.tsx",
-        "line": 58
+        "line": 57
       }
     ]
   },
@@ -43,15 +43,23 @@
     "occurrences": [
       {
         "file": "src/components/Hero.tsx",
-        "line": 14
+        "line": 12
       }
     ]
   },
-  "t.6259fdea983c": {
+  "t.42e1eb39224c": {
     "occurrences": [
       {
-        "file": "src/components/Hero.tsx",
-        "line": 8
+        "file": "src/components/StatsCard.tsx",
+        "line": 64
+      }
+    ]
+  },
+  "t.434fd9984693": {
+    "occurrences": [
+      {
+        "file": "src/components/LocaleCard.tsx",
+        "line": 14
       }
     ]
   },
@@ -59,7 +67,7 @@
     "occurrences": [
       {
         "file": "src/components/StatsCard.tsx",
-        "line": 45
+        "line": 41
       }
     ]
   },
@@ -67,7 +75,15 @@
     "occurrences": [
       {
         "file": "src/components/StatsCard.tsx",
-        "line": 30
+        "line": 26
+      }
+    ]
+  },
+  "t.93875cbc1048": {
+    "occurrences": [
+      {
+        "file": "src/components/Hero.tsx",
+        "line": 6
       }
     ]
   },
@@ -75,7 +91,7 @@
     "occurrences": [
       {
         "file": "src/components/StatsCard.tsx",
-        "line": 26
+        "line": 22
       }
     ]
   },
@@ -83,15 +99,7 @@
     "occurrences": [
       {
         "file": "src/app/[lang]/page.tsx",
-        "line": 55
-      }
-    ]
-  },
-  "t.bf72e3d1b0a4": {
-    "occurrences": [
-      {
-        "file": "src/components/LocaleCard.tsx",
-        "line": 19
+        "line": 54
       }
     ]
   },
@@ -100,7 +108,7 @@
     "occurrences": [
       {
         "file": "src/components/StatsCard.tsx",
-        "line": 67
+        "line": 63
       }
     ]
   },
@@ -109,7 +117,7 @@
     "occurrences": [
       {
         "file": "src/components/StatsCard.tsx",
-        "line": 69
+        "line": 65
       }
     ]
   }

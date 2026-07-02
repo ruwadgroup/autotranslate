@@ -1,0 +1,22 @@
+{
+  "t.42e1eb39224c": [
+    {
+      "type": "text",
+      "value": "·"
+    }
+  ],
+  "t.434fd9984693": [
+    {
+      "type": "text",
+      "value": "You're viewing this page in "
+    },
+    {
+      "type": "var",
+      "name": "value"
+    },
+    {
+      "type": "text",
+      "value": ". Try the switcher above — every string is server-rendered in the matched locale."
+    }
+  ]
+}

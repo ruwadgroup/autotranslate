@@ -1,22 +1,20 @@
-import { T } from '@autotranslate/react';
-
 export default function Hero() {
   return (
     <section className="hero">
       <span className="hero__pill">
         <span className="hero__dot" />
-        <T>Powered by autotranslate</T>
+        Powered by autotranslate
       </span>
-      <h1 className="hero__title">
-        <T>AI-powered i18n for Vite + React.</T>
-      </h1>
+      <h1 className="hero__title">AI-powered i18n for Vite + React.</h1>
       <p className="hero__lede">
-        <T>
-          Write copy in your components naturally. The CLI extracts every string and translates it
-          with the AI model of your choice — catalogs land in <code>.translations/</code> and HMR
-          picks them up instantly.
-        </T>
+        Write copy in your components naturally. The CLI extracts every string and translates it
+        with the AI model of your choice — catalogs land in <code>.translations/</code> and HMR
+        picks them up instantly.
       </p>
+      {/* data-no-translate opts this SKU out — version strings and IDs should never be translated */}
+      <code className="hero__sku" data-no-translate>
+        SDK-v1.0-beta
+      </code>
     </section>
   );
 }
