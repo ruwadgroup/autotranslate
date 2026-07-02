@@ -1,56 +1,26 @@
 # Concepts
 
-Four things to understand: catalogs, keys, locales, ICU. Each takes one section.
+Six things to understand: code as source of truth, hash keys, chunked catalogs,
+the generated catalog module, the dev loop, and frozen builds. Everything else -
+locales, ICU, auto mode - builds on those.
 
-## Catalogs
+## Code is the source of truth
 
-A catalog is a JSON file mapping keys to strings (or structured trees) for one
-locale.
+You write the English string directly in your component:
 
-```jsonc
-// .translations/es/3.json
-{
-  "3a4f9b8c2d1e": "Cerrar sesión",
-  "3b7c1d4e2f8a": "¡Hola, {name}!",
-  "t.3abc123def45": [
-    /* structured tree */
-  ],
-}
+```tsx
+<button>{t('Sign out')}</button>
 ```
 
-Keys are 12-char SHA-256 prefixes of the source string (or the canonical
-structured tree for `<T>` blocks). The literal source is what you write in code;
-hashing happens at extract / lookup time, transparent to you.
-
-Catalogs live under `outDir` (default `.translations/`). The on-disk shape is
-**hash-bucketed**: one folder per locale, 16 files per folder by default, named
-by the first hex digit of the key:
-
-```
-.translations/
-  en/   0.json   1.json   ...   f.json    # source locale
-  es/   0.json   1.json   ...   f.json    # mirror — same keys, translated values
-  fr/   0.json   1.json   ...   f.json
-  .meta.json                                # per-key context, description, occurrences
-  .cache/<sig>.json                         # per-(source, target, provider) cache
-```
-
-Same hash → same bucket file across every locale. So `en/3.json`, `es/3.json`,
-and `fr/3.json` carry the same key set, just with different translated values —
-you can `diff en/3.json es/3.json` to audit cross-locale parity.
-
-Commit `.translations/` to your repo. Reviewers diff translations the same way
-they diff code.
-
-Bucket count is tunable via `catalog.chunkBits` (default `4` = 16 buckets; `0`
-for a single flat file per locale; up to `12` for 4096 buckets on
-enterprise-scale catalogs).
+There is no key directory to maintain. There is no `en.json` to hand-author. The
+string in your code IS the source; the catalog is a derived artifact that
+follows automatically.
 
 ## Keys
 
 Two kinds of key, both derived from your source.
 
-### String-literal keys (from `useT`)
+### String keys (from `useT`)
 
 ```ts
 const t = useT();
@@ -58,16 +28,15 @@ t('Sign out'); // storage key: hash12("Sign out") = "3a4f9b8c2d1e"
 t('Hello, {name}!', { name });
 ```
 
-The literal string in your code IS the key from your perspective; the runtime
-hashes it (12-char SHA-256 prefix) before looking it up in the catalog. The
-literal also serves as the fallback when the catalog misses — `Sign out` shows
-up as `Sign out` in any locale that doesn't have a translation yet.
+The literal string is the key from your perspective. The runtime hashes it - a
+12-char hex prefix of SHA-256 - before looking it up in the catalog. The literal
+also serves as the fallback when the catalog misses.
 
 Disambiguate identical strings with `$context`:
 
 ```ts
-t('Submit', { $context: 'navbar' }); // storage key: hash12("Submit@@navbar")
-t('Submit', { $context: 'form' }); // storage key: hash12("Submit@@form")
+t('Submit', { $context: 'navbar' }); // key: hash12("Submit@@navbar")
+t('Submit', { $context: 'form' }); // key: hash12("Submit@@form")
 ```
 
 ### Structural keys (from `<T>`)
@@ -80,25 +49,162 @@ t('Submit', { $context: 'form' }); // storage key: hash12("Submit@@form")
 
 The extractor walks the JSX, normalises whitespace the way React's runtime does,
 and hashes the resulting tree. The key is `t.<12-hex>`. You don't write it; you
-just edit the JSX and the key follows.
+edit the JSX and the key follows.
 
-Tag attributes (`href`, `onClick`, `className`) aren't part of the hash — they
-ride along with the rendered output but don't invalidate translations when they
+Tag attributes (`href`, `onClick`, `className`) are not part of the hash. They
+ride along in the rendered output but do not invalidate translations when they
 change.
+
+## Chunked catalogs
+
+A catalog is a set of JSON files mapping keys to strings for one locale. Keys
+are spread across 16 bucket files per locale based on the first hex character of
+the key hash:
+
+```
+.translations/
+  en/   0.json  1.json  ...  f.json    # source locale
+  es/   0.json  1.json  ...  f.json    # AI-translated - same keys, Spanish values
+  fr/   0.json  1.json  ...  f.json
+  index.ts                              # generated catalog module (static import()s)
+  types.d.ts                            # generated TS key augmentation
+  .meta.json                            # per-key context, description, occurrences
+  .cache/                               # gitignored - provider translation cache
+```
+
+The same key always lands in the same bucket file across every locale. So
+`en/3.json`, `es/3.json`, and `fr/3.json` carry the same keys, just with
+different values. You can `diff en/3.json es/3.json` to audit cross-locale
+parity.
+
+**Commit `.translations/` to your repo (except `.cache/`).** Reviewers diff
+translations the same way they diff code. `init` already gitignores
+`.translations/.cache/`.
+
+## The generated catalog module
+
+After each extract or translate run, the CLI writes `<outDir>/index.ts`:
+
+```ts
+// .translations/index.ts - GENERATED by autotranslate. Do not edit.
+import type { Catalog, Locale } from '@autotranslate/core';
+
+export const source = 'en' as const;
+export const locales = ['en', 'es', 'fr', 'ja'] as const;
+
+const chunks: Record<
+  string,
+  ReadonlyArray<() => Promise<{ default: Catalog }>>
+> = {
+  en: [() => import('./en/0.json'), () => import('./en/3.json') /* ... */],
+  es: [() => import('./es/0.json'), () => import('./es/3.json') /* ... */],
+};
+
+export async function loadCatalog(locale: Locale): Promise<Catalog> {
+  const parts = await Promise.all((chunks[locale] ?? []).map((load) => load()));
+  return Object.assign({}, ...parts.map((m) => m.default));
+}
+```
+
+This is how catalogs reach your app at runtime:
+
+- **Next.js** - `import * as catalogModule from '../../.translations'` and pass
+  it to `getT(lang, { module: catalogModule })` in layouts and server
+  components, or call `catalogModule.loadCatalog(lang)` directly.
+- **Vite** - the plugin wraps this data into `virtual:autotranslate`, which
+  exports `catalogs`, `source`, and `locales` with HMR built in.
+- **Anything else** - call `loadCatalog(locale)` directly and pass the result to
+  `<TranslationProvider>`.
+
+Because the module uses static `import()` specifiers, bundlers code-split per
+locale. No runtime filesystem access happens, and it works on edge runtimes with
+zero configuration.
+
+## The dev loop
+
+When you run `pnpm dev`, the framework plugin starts a file-watching pipeline.
+On each save it:
+
+1. Extracts strings from your source code (AST-based, not runtime)
+2. Computes the delta - only keys that are new or changed since the last run
+3. Sends the delta to your configured AI or MT provider
+4. Writes the updated bucket JSON files and regenerates `index.ts` and
+   `types.d.ts`
+5. Hot-updates the running app via HMR (Vite) or Next.js fast refresh
+
+The loop debounces 150ms, serializes runs (one trailing run queued if a save
+arrives while a run is in progress), and never crashes the dev server. Provider
+errors are logged and silently skipped; the runtime falls back to source text
+until the next successful run.
+
+You do not run any translation commands manually during development. The plugin
+owns the pipeline.
+
+## Frozen builds
+
+When you run `pnpm build`, the plugin runs a frozen-catalog check before any
+bundling. It re-extracts your source in memory and compares against the
+committed `.translations/` directory. If any string is missing, the build fails
+with a precise list:
+
+```
+Catalog is out of date.
+
+2 source strings not committed to .translations:
+  - 'Check out' (components/Cart.tsx:41)
+  - 'Empty cart' (components/Cart.tsx:58)
+
+Run your dev server or `autotranslate translate`, then commit .translations/
+```
+
+**The model is never called at build time. CI needs no API key.**
+
+Set `build.frozen: false` in your config to skip this check. Set
+`build.translateOnBuild: true` to have the build translate missing strings
+instead of failing (useful for automated deploy pipelines).
+
+## Where the AI runs
+
+The AI runs at **dev time and translate time only** - never at runtime.
+
+- In development, the dev loop calls your provider on save (delta only).
+- In CI or scripted flows, `autotranslate translate` calls the provider once.
+- At build time, the frozen check re-extracts in memory and reads the committed
+  catalog. No model call, no API key needed.
+- In production, the runtime is pure lookup + ICU formatting. The catalog is a
+  static artifact bundled with your app.
+
+## Explicit vs auto mode
+
+`mode` in `autotranslate.config.ts` controls whether you wrap text manually or
+let the compiler wrap it for you.
+
+**`mode: 'explicit'` (default)** - you add `<T>` and `useT()` calls yourself.
+The extractor only finds strings inside those markers.
+
+**`mode: 'auto'`** - the compiler (`withAutotranslate` for Next.js,
+`@autotranslate/vite` for Vite) wraps qualifying JSX text nodes in `<T>` at
+compile time. You write plain JSX and it gets translated automatically. Use
+`data-no-translate` on any element to opt it out. `code`, `pre`, `script`, and
+`style` elements are always skipped.
+
+The same classifier rules govern the ESLint plugin and the compiler, so what the
+linter flags is exactly what `mode: 'auto'` would wrap.
 
 ## Locales
 
 Locales are BCP-47 tags: `en`, `en-US`, `pt-BR`, `zh-Hans-CN`. autotranslate
-treats them as opaque strings — anything `Intl.Locale` accepts works.
+treats them as opaque strings - anything `Intl.Locale` accepts works.
 
 The active locale comes from one of:
 
 - `<TranslationProvider locale={locale}>` in React (client + server components)
-- `getT(locale)` on the server (Next.js RSC, Remix loaders, route handlers)
-- `bindTranslator(translator)` for non-React contexts (zod, async work)
+- `getT(lang, { module: catalogModule })` on the server (Next.js RSC, route
+  handlers)
+- `bindTranslator(translator)` for non-React contexts (Zod, async work)
 
 How the locale is _resolved_ (path prefix, cookie, `Accept-Language`) is
-framework-specific — see the framework guides.
+framework-specific - see the framework guides.
 
 ## ICU MessageFormat
 
@@ -106,55 +212,51 @@ Strings are ICU MessageFormat templates. Three things this gives you:
 
 ### Placeholders
 
-```
-'Hello, {name}!'
-```
-
 ```ts
-t('Hello, {name}!', { name: 'Ada' }); // → 'Hello, Ada!'
+t('Hello, {name}!', { name: 'Ada' }); // -> 'Hello, Ada!'
 ```
 
 ### Plurals (CLDR rules per locale)
 
-```
-'{count, plural, =0 {No items} one {1 item} other {# items}}'
-```
-
 ```ts
 t('{count, plural, one {# message} other {# messages}}', { count: 3 });
-// en → '3 messages'
-// ru → '3 сообщения' (correct CLDR few-form)
+// en -> '3 messages'
+// ru -> '3 сообщения' (correct CLDR few-form)
 ```
 
-The `<Plural>` JSX marker compiles to the same primitive — pick whichever reads
-better at the call site.
+The `<Plural>` JSX marker compiles to the same primitive.
 
 ### Select (discriminator branches)
 
-```
-'{status, select, pending {Pending} shipped {On its way} other {Status: {status}}}'
+```ts
+t(
+  '{status, select, pending {Pending} shipped {On its way} other {Status: {status}}}',
+  {
+    status,
+  },
+);
 ```
 
 `<Branch>` is the JSX equivalent.
 
-ICU also supports tag wrappers (`<a>...</a>`), nested numbers, dates. The parser
-is FormatJS — it handles the full ICU grammar.
+ICU also supports tag wrappers (`<a>...</a>`), nested numbers, and dates. The
+parser is FormatJS - it handles the full ICU grammar.
 
 ## How a render works
 
 ```
 useT() / <T>
-   │
-   ▼
-locale + catalog  (from TranslationProvider context, or getT, or currentTranslator)
-   │
-   ▼
-key lookup → string (ICU template) or structured tree
-   │
-   ▼
+   |
+   v
+locale + catalog (from TranslationProvider context, or getT, or currentTranslator)
+   |
+   v
+key lookup -> string (ICU template) or structured tree
+   |
+   v
 ICU formatter (placeholders, plurals, select) + tag-wrapper renderer
-   │
-   ▼
+   |
+   v
 ReactNode
 ```
 
@@ -163,8 +265,8 @@ the literal key). No throws, no warnings, no broken UI.
 
 ## Where to go next
 
-- **[Configuration](reference/configuration.md)** — every option,
+- **[Configuration](reference/configuration.md)** - every option,
   schema-validated
-- **[JSX translation](guides/jsx.md)** — `<T>`, markers, tag wrappers
-- **[String translation](guides/strings.md)** — `useT`, `useTranslations`
-- **[Standalone `t()`](guides/standalone-t.md)** — translate outside React
+- **[JSX translation](guides/jsx.md)** - `<T>`, markers, tag wrappers
+- **[String translation](guides/strings.md)** - `useT`, plain-string lookups
+- **[Standalone `t()`](guides/standalone-t.md)** - translate outside React

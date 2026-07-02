@@ -13,10 +13,10 @@ import { Plural, T } from '@autotranslate/react';
 </T>;
 ```
 
-- `value` — the count
-- `name` — the slot identifier (defaults to `'count'`)
-- `zero`, `one`, `two`, `few`, `many`, `other` — CLDR plural categories
-- `#` — replaced with the formatted count
+- `value` - the count
+- `name` - the slot identifier (defaults to `'count'`)
+- `zero`, `one`, `two`, `few`, `many`, `other` - CLDR plural categories
+- `#` - replaced with the formatted count
 - `other` is required at extraction time
 
 ## Plural in strings
@@ -29,19 +29,19 @@ t('{count, plural, one {# message} other {# messages}}', { count });
 
 Same primitive as `<Plural>`. Use whichever reads better at the call site.
 
-## CLDR categories — what each language uses
+## CLDR categories - what each language uses
 
 The runtime resolves the category via `Intl.PluralRules` for the active locale.
 
-| Locale | Categories used                              | Notes                                  |
-| ------ | -------------------------------------------- | -------------------------------------- |
-| `en`   | `one`, `other`                               | 1 vs everything else                   |
-| `fr`   | `one`, `many`, `other`                       | `0` and `1` are `one`                  |
-| `pl`   | `one`, `few`, `many`, `other`                | 1 / 2-4 / 5+ / fractions               |
-| `ru`   | `one`, `few`, `many`, `other`                | 1, 21, 31… / 2-4 / 0, 5-20 / fractions |
-| `ar`   | `zero`, `one`, `two`, `few`, `many`, `other` | Six-way                                |
-| `ja`   | `other`                                      | No plural distinction                  |
-| `zh`   | `other`                                      | No plural distinction                  |
+| Locale | Categories used                              | Notes                                    |
+| ------ | -------------------------------------------- | ---------------------------------------- |
+| `en`   | `one`, `other`                               | 1 vs everything else                     |
+| `fr`   | `one`, `many`, `other`                       | `0` and `1` are `one`                    |
+| `pl`   | `one`, `few`, `many`, `other`                | 1 / 2-4 / 5+ / fractions                 |
+| `ru`   | `one`, `few`, `many`, `other`                | 1, 21, 31... / 2-4 / 0, 5-20 / fractions |
+| `ar`   | `zero`, `one`, `two`, `few`, `many`, `other` | Six-way                                  |
+| `ja`   | `other`                                      | No plural distinction                    |
+| `zh`   | `other`                                      | No plural distinction                    |
 
 You only need to provide `other` in the source. The translator picks up the
 extra forms per locale where it matters.
@@ -58,7 +58,7 @@ template.
 
 ## Branches
 
-For non-count discriminators (status, size, role…):
+For non-count discriminators (status, size, role...):
 
 ```tsx
 import { Branch, T, Var } from '@autotranslate/react';
@@ -70,7 +70,7 @@ import { Branch, T, Var } from '@autotranslate/react';
 </T>;
 ```
 
-- `branch` — the discriminator value (coerced to string)
+- `branch` - the discriminator value (coerced to string)
 - Every prop other than `branch`, `name`, and `children` is a named case
 - `children` is the fallback when no case matches
 
@@ -126,6 +126,6 @@ In JSX:
 - **`#` not `{count}`.** `#` resolves to the formatted count using the active
   locale's number formatter. `{count}` works too but bypasses formatting.
 
-- **Don't switch on language.** `if (locale === 'fr') ...` is a code smell —
+- **Don't switch on language.** `if (locale === 'fr') ...` is a code smell -
   ICU's `select` should cover it, or you should add per-locale strings via
   `overrides`.

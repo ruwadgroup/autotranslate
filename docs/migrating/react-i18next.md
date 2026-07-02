@@ -1,35 +1,56 @@
 # Migrating from react-i18next
 
-The shape change: `react-i18next` is **JSON-first** (you author keys in JSON
-catalogs, reference them in code via `t('key.path')`). autotranslate is
-**code-first** (you write the literal string, the catalog is generated). The
-migration is mostly removing keys.
+`react-i18next` is JSON-first: you author keys in JSON catalogs and reference
+them in code via `t('key.path')`. autotranslate is code-first: you write the
+literal string, and the catalog is generated from your source. The migration is
+mostly removing keys and deleting the old JSON files.
 
 ## At a glance
 
 <!-- prettier-ignore -->
 ```tsx
 // Plain string lookup
-t('hello.world');                                 // react-i18next — needs JSON: { hello: { world: 'Hello' } }
-t('Hello');                                       // autotranslate — the literal IS the key
+t('hello.world');                                 // react-i18next - needs JSON: { hello: { world: 'Hello' } }
+t('Hello');                                       // autotranslate - the literal IS the key
 
 // Rich text
 <Trans>Hello <strong>{{name}}</strong></Trans>;   // react-i18next
 <T>Hello <strong><Var>{name}</Var></strong></T>;  // autotranslate
 
-// Plural — react-i18next: needs `items_one` / `items_other` keys
+// Plural - react-i18next: needs `items_one` / `items_other` keys
 t('items', { count });
 // autotranslate: one inline ICU source covers every CLDR form
 t('{count, plural, one {# item} other {# items}}', { count });
 
 // Language switch
-i18next.changeLanguage('fr');                                  // react-i18next — mutates global state
-<TranslationProvider locale="fr" catalog={catalogs.fr} />;     // autotranslate — re-render with new locale
+i18next.changeLanguage('fr');                               // react-i18next - mutates global state
+<TranslationProvider locale="fr" catalog={catalog} />;     // autotranslate - re-render with new locale
 
 // On-disk shape
 // react-i18next   public/locales/{lng}/translation.json   (handwritten)
-// autotranslate   .translations/{locale}/**.json          (generated)
+// autotranslate   .translations/{locale}/**.json          (generated, hash-bucketed)
 ```
+
+## The fast path: `mode: 'auto'`
+
+Before manually wrapping every string, consider enabling `mode: 'auto'` in your
+config. With auto mode, the compiler wraps JSX text nodes in `<T>` at build
+time - you do not touch existing JSX at all.
+
+```ts
+// autotranslate.config.ts
+export default defineConfig({
+  mode: 'auto',
+  source: 'en',
+  targets: ['es', 'fr', 'ja'],
+  content: ['src/**/*.{ts,tsx}'],
+});
+```
+
+Your existing components stay exactly as written. The auto-loader inserts `<T>`
+around plain JSX text during compilation. You can still add explicit `<T>` and
+markers where you need fine-grained control. See
+[Configuration](../reference/configuration.md#mode) for opt-out patterns.
 
 ## Step-by-step
 
@@ -44,8 +65,8 @@ npx autotranslate init
 
 ### 2. Move existing translations into `overrides`
 
-Your hand-curated translations are precious. Don't lose them. Convert your JSON
-catalogs into autotranslate `overrides` keyed by source string:
+Your hand-curated translations are valuable. Convert your JSON catalogs into
+autotranslate `overrides` keyed by source string:
 
 ```ts
 // before: public/locales/fr/translation.json
@@ -61,12 +82,12 @@ overrides: {
 ```
 
 Write a one-shot script if your old catalog is large. The keys become the
-source-locale string, the values stay the same.
+source-locale string; the values stay the same.
 
 ### 3. Replace the provider
 
 ```tsx
-// before — i18next bootstrap
+// before - i18next bootstrap
 import i18n from './i18n';
 <I18nextProvider i18n={i18n}>
   <App />
@@ -74,14 +95,23 @@ import i18n from './i18n';
 
 // after
 import { TranslationProvider } from '@autotranslate/react';
-<TranslationProvider locale={locale} catalog={catalog} fallback={enCatalog}>
+import * as catalogModule from '../.translations';
+
+// in your root component or layout:
+const [catalog, fallback] = await Promise.all([
+  catalogModule.loadCatalog(locale),
+  catalogModule.loadCatalog('en'),
+]);
+
+<TranslationProvider locale={locale} catalog={catalog} fallback={fallback}>
   <App />
 </TranslationProvider>;
 ```
 
-The `<TranslationProvider>` reads its catalog from props — load them with
-`@autotranslate/vite`'s virtual module, `@autotranslate/next`'s
-`fsCatalogLoader`, or direct JSON imports.
+`import * as catalogModule from '../.translations'` imports the generated
+`<outDir>/index.ts` module produced by `autotranslate extract`. Its
+`loadCatalog(locale)` uses static `import()` so the bundler code-splits per
+locale.
 
 ### 4. Replace `useTranslation`
 
@@ -120,16 +150,16 @@ import { T, Var } from '@autotranslate/react';
 </T>;
 ```
 
-The `<T>` block hashes its children — no need for an `i18nKey`. Use `<Var>` for
-runtime values, regular HTML/component tags for formatting.
+`<T>` hashes its children - no need for an `i18nKey`. Use `<Var>` for runtime
+values, regular HTML or component tags for formatting.
 
 ### 6. Replace plurals
 
 ```tsx
-// before — JSON: items_one, items_other
+// before - JSON: items_one, items_other
 t('items', { count })
 
-// after — inline ICU OR <Plural>
+// after - inline ICU OR <Plural>
 t('{count, plural, one {# item} other {# items}}', { count })
 // or
 <T>You have <Plural value={count} one="1 item" other="# items" />.</T>
@@ -145,7 +175,7 @@ the right form per locale.
 // before
 i18n.changeLanguage('fr');
 
-// after — re-render with new locale
+// after - re-render with new locale
 const [locale, setLocale] = useState('en');
 <TranslationProvider locale={locale} catalog={catalogs[locale]}>
 ```
@@ -155,15 +185,14 @@ See the [locale switcher cookbook](../cookbook/locale-switcher.md).
 ### 8. Run the pipeline
 
 ```bash
-npx autotranslate extract       # scan source → en.json (chunked)
+npx autotranslate extract       # scan source -> en/ (hash-bucketed chunks)
 npx autotranslate translate     # AI-translate to targets, applying overrides
 npx autotranslate generate-types
 ```
 
-Your old hand-curated translations from step 2 become the source of truth where
-they exist; everything else gets AI-translated and you can tweak results via
-further `overrides` or by editing the chunk files (re-runs only re-translate
-changed strings).
+Your hand-curated translations from step 2 take priority; everything else gets
+AI-translated and you can refine results via further `overrides` or by editing
+chunk files (re-runs only re-translate changed strings).
 
 ### 9. Delete the old setup
 
@@ -175,11 +204,14 @@ rm src/i18n.ts   # or wherever i18next was bootstrapped
 ## Server-side rendering
 
 `react-i18next` users typically pair with `i18next-http-backend` and a custom
-`serverSideTranslations` helper. autotranslate's server flow is simpler:
+`serverSideTranslations` helper. autotranslate's server flow is simpler.
+
+For Next.js:
 
 ```tsx
-// Next.js
+// app/[lang]/page.tsx
 import { getT } from '@autotranslate/next';
+import * as catalogModule from '../../.translations';
 
 export default async function Page({
   params,
@@ -187,7 +219,7 @@ export default async function Page({
   params: Promise<{ lang: string }>;
 }) {
   const { lang } = await params;
-  const t = await getT(lang);
+  const t = await getT(lang, { module: catalogModule, fallback: 'en' });
   return <h1>{t.t('Welcome')}</h1>;
 }
 ```
@@ -196,26 +228,24 @@ See the [Next.js framework guide](../frameworks/nextjs.md).
 
 ## Things that don't have a direct equivalent
 
-- **`i18next.exists(key)`** — autotranslate doesn't fail on missing keys; it
-  falls back to source. So checking existence isn't necessary.
-- **Multiple namespaces (`useTranslation('common')`)** — closest equivalent is
-  the dictionary mode (`useTranslations('common')`) plus the `dictionary` config
-  field.
-- **Lazy resource loading per namespace** — see the
+- **`i18next.exists(key)`** - autotranslate doesn't fail on missing keys; it
+  falls back to source. Checking existence isn't necessary.
+- **Multiple namespaces (`useTranslation('common')`)** - autotranslate does not
+  have namespace-prefixed hooks; write inline literal strings with `useT` and
+  use `$context` to disambiguate identical strings across screens.
+- **Lazy resource loading per namespace** - see the
   [lazy-loading cookbook](../cookbook/lazy-loading.md).
 
 ## Common gotchas
 
-- **`<Trans>` `t` defaults vs. `<T>` semantics**. `<Trans>` renders `i18nKey` as
-  default if no translation exists. `<T>` renders `children` verbatim. The
-  behaviour is similar but the failure modes differ — always provide meaningful
-  English in `<T>`.
-- **Variable names changed**. `i18next` allows `{{varName}}`; autotranslate uses
-  `{varName}` (single braces, ICU style). Don't try to translate the doubles.
-- **Plural pluralization rules differ**. `i18next` defaults to "ICU-like" but
-  with non-CLDR fallbacks. autotranslate is strictly CLDR via
-  `Intl.PluralRules`. If you had Russian-specific plurals coded by hand, the new
-  behavior is more correct but may produce different forms.
+- **`<Trans>` defaults vs. `<T>` semantics.** `<Trans>` renders `i18nKey` as
+  default if no translation exists. `<T>` renders its `children` verbatim.
+  Always provide meaningful English inside `<T>`.
+- **Variable syntax changed.** `i18next` allows `{{varName}}`; autotranslate
+  uses `{varName}` (single braces, ICU style).
+- **Plural rules.** autotranslate is strictly CLDR via `Intl.PluralRules`. If
+  you had Russian-specific plurals coded by hand, the new behavior is more
+  correct but may produce different forms.
 
 ## Next
 

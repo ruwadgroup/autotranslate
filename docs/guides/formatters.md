@@ -2,7 +2,7 @@
 
 `<Num>`, `<Currency>`, `<DateTime>`, and `<RelativeTime>` are locale-aware
 formatters built on `Intl.NumberFormat`, `Intl.DateTimeFormat`, and
-`Intl.RelativeTimeFormat`. Inside `<T>`, they behave as opaque variable slots —
+`Intl.RelativeTimeFormat`. Inside `<T>`, they behave as opaque variable slots -
 the formatter renders itself, the canonical message records the slot name.
 
 ## `<Num>`
@@ -11,9 +11,9 @@ the formatter renders itself, the canonical message records the slot name.
 import { Num } from '@autotranslate/react';
 
 <Num value={1234567.89} />;
-// en-US → '1,234,567.89'
-// fr-FR → '1 234 567,89'
-// ja-JP → '1,234,567.89'
+// en-US -> '1,234,567.89'
+// fr-FR -> '1 234 567,89'
+// ja-JP -> '1,234,567.89'
 ```
 
 | Prop       | Type                       | Notes                                   |
@@ -32,9 +32,9 @@ Non-finite values render `null` so they don't show as `NaN` to users.
 import { Currency } from '@autotranslate/react';
 
 <Currency value={49.99} currency="USD" />;
-// en-US → '$49.99'
-// fr-FR → '49,99 $US'
-// ja-JP → 'US$49.99'
+// en-US -> '$49.99'
+// fr-FR -> '49,99 $US'
+// ja-JP -> 'US$49.99'
 ```
 
 `currency` is a required ISO 4217 code. Otherwise the props match `<Num>`.
@@ -48,9 +48,9 @@ import { DateTime } from '@autotranslate/react';
   value={new Date()}
   options={{ weekday: 'long', month: 'short', day: 'numeric' }}
 />;
-// en-US → 'Friday, Apr 24'
-// fr-FR → 'vendredi 24 avr.'
-// ja-JP → '4月24日金曜日'
+// en-US -> 'Friday, Apr 24'
+// fr-FR -> 'vendredi 24 avr.'
+// ja-JP -> '4月24日金曜日'
 ```
 
 Accepts `Date`, epoch milliseconds (`number`), or ISO-8601 string. Invalid
@@ -70,9 +70,9 @@ inputs render `null`.
 import { RelativeTime } from '@autotranslate/react';
 
 <RelativeTime value={twoHoursAgo} />;
-// en-US → '2 hours ago'
-// fr-FR → 'il y a 2 heures'
-// ja-JP → '2 時間前'
+// en-US -> '2 hours ago'
+// fr-FR -> 'il y a 2 heures'
+// ja-JP -> '2 時間前'
 ```
 
 The formatter picks the largest unit whose magnitude is at least 1 (year, month,
@@ -90,13 +90,13 @@ week, day, hour, minute, second). `now` overrides the anchor (default:
 
 ## Inside `<T>`
 
-Formatters compose with `<T>` like any other marker — the canonical message
+Formatters compose with `<T>` like any other marker - the canonical message
 records a `var` slot, the runtime renders the formatter component as the slot
 value:
 
 ```tsx
 <T>
-  <Num value={visitors} /> visitors today — revenue{' '}
+  <Num value={visitors} /> visitors today - revenue{' '}
   <Currency value={revenue} currency="USD" />.
 </T>
 ```
@@ -126,11 +126,9 @@ function AccountAge({ created }: { created: Date }) {
 }
 ```
 
-Useful for `aria-label`s and tooltips that don't sit inside translatable copy.
-
 ## Tips
 
-- **Memoise `options`** outside the render path if it's rebuilt every render —
+- **Memoise `options`** outside the render path if it's rebuilt every render -
   the formatter's `useMemo` cache keys on object identity.
 
 - **Use `<DateTime>` over `toLocaleString()`** in JSX so the canonical message

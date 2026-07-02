@@ -1,9 +1,9 @@
 # Migrating from lingui
 
 `lingui` (`@lingui/react`, `@lingui/core`) is the closest existing library to
-autotranslate's philosophy — code-first authoring, message extraction via
-macros, ICU MessageFormat. The migration is mostly **swapping macros for `<T>` /
-`useT`** and replacing the catalog format.
+autotranslate's philosophy: code-first authoring, message extraction via macros,
+ICU MessageFormat. The migration is mostly swapping macros for `<T>` / `useT`
+and replacing the catalog format.
 
 ## At a glance
 
@@ -11,11 +11,11 @@ macros, ICU MessageFormat. The migration is mostly **swapping macros for `<T>` /
 ```tsx
 // Rich text
 <Trans>Hello <strong>{name}</strong>!</Trans>;                 // lingui (Trans macro)
-<T>Hello <strong><Var>{name}</Var></strong>!</T>;              // autotranslate — wrap dynamic in <Var>
+<T>Hello <strong><Var>{name}</Var></strong>!</T>;              // autotranslate - wrap dynamic in <Var>
 
 // Plain string
-t`Hello, ${name}!`;                                            // lingui — tagged template
-t('Hello, {name}!', { name });                                 // autotranslate — literal + ICU placeholder
+t`Hello, ${name}!`;                                            // lingui - tagged template
+t('Hello, {name}!', { name });                                 // autotranslate - literal + ICU placeholder
 
 // Plural
 plural(count, { one: '# item', other: '# items' });            // lingui
@@ -27,12 +27,32 @@ autotranslate extract && autotranslate translate               // autotranslate
 
 // Catalog
 // lingui          locale/{locale}/messages.po (or .json)
-// autotranslate   .translations/{locale}/**.json (chunked)
+// autotranslate   .translations/{locale}/**.json (hash-bucketed, generated)
 
 // Provider
 <I18nProvider i18n={i18n}>;                                    // lingui
 <TranslationProvider locale={locale} catalog={catalog}>;       // autotranslate
 ```
+
+## The fast path: `mode: 'auto'`
+
+Before manually wrapping every JSX text node, enable `mode: 'auto'` in your
+config. The compiler inserts `<T>` around plain JSX text at compile time - you
+do not touch existing components.
+
+```ts
+// autotranslate.config.ts
+export default defineConfig({
+  mode: 'auto',
+  source: 'en',
+  targets: ['es', 'fr', 'ja'],
+  content: ['src/**/*.{ts,tsx}'],
+});
+```
+
+You only need explicit `<T>` where you want `<Var>`, `<Plural>`, or `<Branch>`
+markers for runtime slots. Everything else is wrapped automatically. See
+[Configuration](../reference/configuration.md#mode).
 
 ## Step-by-step
 
@@ -46,14 +66,14 @@ pnpm add -D @autotranslate/cli
 npx autotranslate init
 ```
 
-Drop the `babel-plugin-macros` and `lingui` Babel-plugin entries from
+Drop `babel-plugin-macros` and the lingui Babel-plugin entries from
 `babel.config.js` / `.swcrc`. autotranslate's extractor runs at CLI time against
-your source AST — no runtime / compile-time plugins required.
+your source AST - no runtime or compile-time plugins required.
 
 ### 2. Replace macros
 
 ```tsx
-// before — Lingui macros
+// before - Lingui macros
 import { Trans, t } from '@lingui/macro';
 
 <Trans>Hello, <strong>{user.name}</strong>!</Trans>
@@ -70,9 +90,10 @@ function SignOutButton() {
 }
 ```
 
-The biggest mechanical change: every variable inside `<T>` needs to be wrapped
-in `<Var>` (or another marker like `<Plural>`, `<Branch>`). This is what makes
-the canonical-key derivation deterministic.
+The key mechanical change: every variable inside `<T>` needs `<Var>` (or another
+marker like `<Plural>`, `<Branch>`). This is what makes canonical-key derivation
+deterministic. With `mode: 'auto'`, the compiler handles this for simple cases
+automatically.
 
 ### 3. Replace `t` tagged-template usage
 
@@ -84,7 +105,7 @@ const message = t`Welcome, ${user.name}!`;
 const t = useT();
 const message = t('Welcome, {name}!', { name: user.name });
 
-// or — if outside React
+// or - if outside React
 import { t } from '@autotranslate/core/t';
 const message = t('Welcome, {name}!', { name: user.name });
 ```
@@ -92,11 +113,11 @@ const message = t('Welcome, {name}!', { name: user.name });
 ### 4. Replace `plural` / `select`
 
 ```tsx
-// before — lingui macro
+// before - lingui macro
 import { plural } from '@lingui/macro';
 plural(count, { one: '# message', other: '# messages' });
 
-// after — inline ICU
+// after - inline ICU
 const t = useT();
 t('{count, plural, one {# message} other {# messages}}', { count });
 
@@ -109,14 +130,13 @@ t('{count, plural, one {# message} other {# messages}}', { count });
 ### 5. Move existing translations into `overrides`
 
 Lingui's catalogs (`locales/{locale}/messages.po` or `messages.json`) are keyed
-by the source string by default (or by hash if you used `localeIds.id`). Convert
-into `overrides`:
+by the source string by default. Convert into `overrides`:
 
 ```ts
-// before — locales/fr/messages.json
+// before - locales/fr/messages.json
 { "Sign out": { "translation": "Se déconnecter" } }
 
-// after — autotranslate.config.ts
+// after - autotranslate.config.ts
 overrides: {
   fr: {
     'Sign out': 'Se déconnecter',
@@ -141,15 +161,21 @@ i18n.activate(locale);
 
 // after
 import { TranslationProvider } from '@autotranslate/react';
+import * as catalogModule from '../.translations';
 
-<TranslationProvider
-  locale={locale}
-  catalog={catalogs[locale]}
-  fallback={catalogs.en}
->
+const [catalog, fallback] = await Promise.all([
+  catalogModule.loadCatalog(locale),
+  catalogModule.loadCatalog('en'),
+]);
+
+<TranslationProvider locale={locale} catalog={catalog} fallback={fallback}>
   {children}
 </TranslationProvider>;
 ```
+
+`import * as catalogModule from '../.translations'` imports the generated
+`<outDir>/index.ts` module. Its `loadCatalog(locale)` uses static `import()` so
+the bundler code-splits per locale.
 
 ### 7. Replace `i18n.activate` (locale switching)
 
@@ -157,7 +183,7 @@ import { TranslationProvider } from '@autotranslate/react';
 // before
 i18n.activate('fr');
 
-// after — re-render with new locale prop
+// after - re-render with new locale prop
 const [locale, setLocale] = useState('en');
 <TranslationProvider locale={locale} catalog={catalogs[locale]}>
 ```
@@ -182,9 +208,9 @@ rm lingui.config.js
 
 ## Things that don't translate cleanly
 
-- **`<Trans id>` with explicit message id**. Lingui supports
+- **`<Trans id>` with explicit message id.** Lingui supports
   `<Trans id="form.submit">Submit</Trans>` to give the catalog an alphanumeric
-  id separate from the source. autotranslate doesn't have this — the source IS
+  id separate from the source. autotranslate doesn't have this - the source IS
   the key. Disambiguate identical strings with `context`:
 
   ```tsx
@@ -192,18 +218,18 @@ rm lingui.config.js
   <T context="settings">Submit</T>
   ```
 
-- **`.po` workflow with translators**. Lingui can export to GNU `.po` for
-  translators to edit. autotranslate doesn't ship a `.po` exporter today — you'd
-  write a small script to convert `.translations/{locale}/**.json` to `.po` for
-  human translators, then import the results back as `overrides`.
+- **`.po` workflow with translators.** Lingui can export to GNU `.po` for
+  translators to edit. autotranslate doesn't ship a `.po` exporter today. You
+  can write a small script to convert `.translations/{locale}/**.json` to `.po`
+  for human translators, then import the results back as `overrides`.
 
-- **Pseudo-locale at compile time**. Lingui's `cli compile --pseudoLocale` bakes
+- **Pseudo-locale at compile time.** Lingui's `cli compile --pseudoLocale` bakes
   pseudo-localized strings into a build. autotranslate's pseudo works at the
   provider level: `provider: { name: 'stub', pseudo: true }`. Run
   `autotranslate translate` once with this provider and you have a pseudo locale
   committed.
 
-- **The `id` extraction option** (`extract --idStrategy=...`). autotranslate
+- **The `id` extraction option (`extract --idStrategy=...`).** autotranslate
   always uses the source string as the literal key (or a structural hash for
   `<T>` blocks). No alternative id strategies.
 

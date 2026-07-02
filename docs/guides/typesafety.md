@@ -6,9 +6,18 @@
 
 ## Generate
 
+Types regenerate automatically as part of the dev loop - every time you save a
+file with new strings, the dev server extracts, translates, and runs typegen
+without any manual step.
+
+For CI, scripting, or any context outside the dev loop:
+
 ```bash
 npx autotranslate generate-types
 ```
+
+This command requires the source catalog to exist (`autotranslate extract` must
+have run first).
 
 Output: `<outDir>/types.d.ts`. Example:
 
@@ -44,20 +53,8 @@ Or include the entire `.translations` directory:
 }
 ```
 
-## Run it on every extract
-
-Add typegen to your `i18n` script:
-
-```jsonc
-{
-  "scripts": {
-    "i18n": "autotranslate extract && autotranslate translate && autotranslate generate-types",
-  },
-}
-```
-
-CI runs `pnpm i18n` (or `pnpm typecheck` after the catalogs land) and fails if
-any new code references a key the catalog doesn't have.
+`autotranslate init` adds `.translations/types.d.ts` to your `tsconfig.json`
+automatically.
 
 ## Catch errors
 
@@ -65,7 +62,7 @@ any new code references a key the catalog doesn't have.
 const t = useT();
 
 t('Sign out'); // ✓
-t('Sing out'); // ✗ Argument of type '"Sing out"' is not assignable …
+t('Sing out'); // ✗ Argument of type '"Sing out"' is not assignable ...
 t('Welcome, {name}!'); // ✓
 ```
 
@@ -74,7 +71,7 @@ autocomplete), but your editor's autocomplete surfaces only the catalog keys.
 
 ## All translator entries narrow together
 
-The same `AutotranslateCatalog` interface backs every translator — `useT`, the
+The same `AutotranslateCatalog` interface backs every translator - `useT`, the
 standalone `t()`, server-side `getT`. One typegen run covers them all.
 
 ```ts
@@ -84,7 +81,7 @@ import { getT } from '@autotranslate/next';
 
 useT()('Sign out'); // ✓ narrowed
 t('Sign out'); // ✓ narrowed
-(await getT('fr')).t('Sign out'); // ✓ narrowed
+(await getT('fr', { module: catalogModule })).t('Sign out'); // ✓ narrowed
 ```
 
 ## Limits
@@ -98,18 +95,15 @@ t('Sign out'); // ✓ narrowed
   per key is on the v1 roadmap.
 
 - **`<T>` keys are hashes.** `t.abc123` keys appear in the augmentation but you
-  don't reference them directly in code — they're how the runtime looks the tree
+  don't reference them directly in code - they're how the runtime looks the tree
   up. Their presence in the union doesn't matter for typed call sites.
 
 ## Tips
 
-- **Re-run typegen on every catalog change.** Wire it into your pre-commit hook
-  or `i18n` script so stale types don't slip through.
-
-- **Don't check `types.d.ts` into git.** Add `.translations/types.d.ts` (or the
-  entire `.translations/.cache/` and friends) to `.gitignore` if you regenerate
-  it in CI; commit it if you want zero-config local builds. Either choice is
-  valid; pick one and stick with it.
+- **Commit `types.d.ts` with the catalog.** It lives in `.translations/`
+  alongside the translation chunks. The quick-start gitignores only
+  `.translations/.cache/`; everything else (including `types.d.ts`) belongs in
+  the repo so reviewers can see the full diff.
 
 - **Combine with the ESLint plugin.** `valid-icu-format` parses each key as ICU
   and rejects malformed messages before runtime, complementing the type-level

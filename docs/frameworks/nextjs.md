@@ -1,26 +1,91 @@
 # Next.js
 
 `@autotranslate/next` covers everything Next-specific: locale routing in
-`proxy.ts`, server-component translation via `getT`, and a Next config wrapper
-for future build-time hooks.
+`proxy.ts`, server-component translation via `getT`, and a phase-aware Next
+config wrapper that drives the dev loop and frozen-build check automatically.
 
 > Targets **Next.js 16+**. The `proxy` file convention replaces `middleware`,
 > route `params` are async, and the `react-server` export condition is wired so
-> client / server entries swap automatically.
+> client/server entries swap automatically.
 
-## Install
+## Setup
+
+Run `init` once - it wires everything:
 
 ```bash
-pnpm add @autotranslate/next @autotranslate/react @autotranslate/core
+pnpm add @autotranslate/next
+pnpm add -D @autotranslate/cli
+npx autotranslate init
 ```
 
-## Subpath entries
+`init` detects Next.js, AST-edits `next.config.ts` to wrap the default export in
+`withAutotranslate`, creates `proxy.ts`, adds `.translations/types.d.ts` to
+`tsconfig.json`, and gitignores `.translations/.cache/`. Apply the printed
+layout diff (the one manual step), set your provider key, and start writing
+copy.
 
-| Entry                            | Purpose                                                                               |
-| -------------------------------- | ------------------------------------------------------------------------------------- |
-| `@autotranslate/next`            | `getT`, `getTranslations`, `getRequestLocale`, `fsCatalogLoader`, `clearCatalogCache` |
-| `@autotranslate/next/middleware` | `createNextMiddleware()` for `proxy.ts`                                               |
-| `@autotranslate/next/plugin`     | `withAutotranslate()` Next config wrapper                                             |
+## `withAutotranslate`
+
+`withAutotranslate` must be the outermost wrapper in `next.config.ts`:
+
+```ts
+// next.config.ts
+import { withAutotranslate } from '@autotranslate/next/plugin';
+
+export default withAutotranslate({
+  reactStrictMode: true,
+});
+```
+
+It returns an async function config so Next.js calls it with the current build
+phase. Use `withAutotranslate` as the outermost wrapper; inner wrappers like
+`withSentryConfig` go inside it.
+
+### Phase behavior
+
+**Development (`phase-development-server`):** starts a process-wide dev loop
+singleton (guarded by a `globalThis` symbol so re-evaluations don't double-start
+it). The loop watches your `config.content` globs with chokidar, debounces
+150ms, then runs extract → translate → generate-types on each save. New strings
+appear in the running app without any manual command. Provider errors are logged
+and silently skipped; the dev server never crashes.
+
+**Production build (`phase-production-build`):** runs `checkFrozen` in memory —
+re-extracts your source, compares against the committed catalog, and throws with
+a precise list if anything is missing. The model is never called at build time.
+CI needs no API key.
+
+If `@autotranslate/cli` is not installed, both phases warn once and continue
+(the plugin degrades gracefully).
+
+### Options
+
+```ts
+withAutotranslate(nextConfig, {
+  devLoop: true, // set false to disable the dev loop (rarely needed)
+  build: {
+    frozen: true, // default — fail build on missing strings
+    translateOnBuild: false, // set true to translate instead of failing
+  },
+});
+```
+
+| Option                   | Default | Description                                         |
+| ------------------------ | ------- | --------------------------------------------------- |
+| `devLoop`                | `true`  | Whether to start the dev loop in development.       |
+| `build.frozen`           | `true`  | Whether to check the catalog is complete at build.  |
+| `build.translateOnBuild` | `false` | Translate missing strings at build instead of fail. |
+
+Config-file `build` settings (`autotranslate.config.ts`) are the source of truth
+when these options are not supplied to `withAutotranslate`.
+
+### Auto mode (mode: 'auto')
+
+When `mode: 'auto'` is set in `autotranslate.config.ts`, `withAutotranslate`
+registers `@autotranslate/next/auto-loader` for all `*.{jsx,tsx}` files (webpack
+and turbopack) so JSX text is wrapped in `<T>` at compile time. This means you
+can write plain JSX and have it translated without manual markers. See
+[Configuration](../reference/configuration.md#mode).
 
 ## Locale routing
 
@@ -42,10 +107,9 @@ export const config = {
 
 The proxy resolves the active locale from path → cookie → `Accept-Language`,
 redirects bare paths under `/<locale>/...`, and pushes the resolved locale
-downstream via the `x-autotranslate-locale` request header.
-
-By default the default-locale prefix is stripped (e.g. `/dashboard` not
-`/en/dashboard`). Pass `prefixDefaultLocale: true` to keep it.
+downstream via the `x-autotranslate-locale` request header. By default the
+default-locale prefix is stripped (e.g. `/dashboard` not `/en/dashboard`). Pass
+`prefixDefaultLocale: true` to keep it.
 
 ### Cookie strategy
 
@@ -77,25 +141,28 @@ export default async function Layout({
 ```
 
 `getRequestLocale()` reads the `x-autotranslate-locale` header set by the proxy.
-Returns `undefined` when the proxy didn't run.
+Returns `undefined` when the proxy did not run.
 
 ## App Router
 
 ### Layout
 
+The generated `<outDir>/index.ts` module is how catalogs reach the layout.
+`init` prints a manual diff to create `app/[lang]/layout.tsx` - here is the
+canonical shape:
+
 ```tsx
 // app/[lang]/layout.tsx
-import { fsCatalogLoader } from '@autotranslate/next';
 import { TranslationProvider } from '@autotranslate/react';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
+import * as catalogModule from '../../.translations';
 
 const SUPPORTED_LOCALES = ['en', 'es', 'fr', 'ja'] as const;
 type Locale = (typeof SUPPORTED_LOCALES)[number];
-const hasLocale = (v: string): v is Locale =>
-  (SUPPORTED_LOCALES as ReadonlyArray<string>).includes(v);
 
-const load = fsCatalogLoader(process.cwd(), '.translations');
+const hasLocale = (value: string): value is Locale =>
+  (SUPPORTED_LOCALES as ReadonlyArray<string>).includes(value);
 
 export async function generateStaticParams() {
   return SUPPORTED_LOCALES.map((lang) => ({ lang }));
@@ -105,13 +172,16 @@ export default async function LangLayout({
   children,
   params,
 }: {
-  children: ReactNode;
-  params: Promise<{ lang: string }>;
+  readonly children: ReactNode;
+  readonly params: Promise<{ lang: string }>;
 }) {
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
 
-  const [catalog, fallback] = await Promise.all([load(lang), load('en')]);
+  const [catalog, fallback] = await Promise.all([
+    catalogModule.loadCatalog(lang),
+    catalogModule.loadCatalog('en'),
+  ]);
 
   return (
     <html lang={lang}>
@@ -129,14 +199,17 @@ export default async function LangLayout({
 }
 ```
 
-`fsCatalogLoader` reads `<cwd>/<outDir>/<locale>.json` and memoises per (cwd,
-outDir, locale).
+`import * as catalogModule from '../../.translations'` imports the generated
+`<outDir>/index.ts` file produced on extract. Its `loadCatalog(locale)` uses
+static `import()` specifiers so the bundler can code-split per locale - no
+runtime filesystem access and no `outputFileTracingIncludes` wiring needed.
 
 ### Server-component translation
 
 ```tsx
 // app/[lang]/page.tsx
 import { getT } from '@autotranslate/next';
+import * as catalogModule from '../../.translations';
 
 export default async function Page({
   params,
@@ -144,63 +217,25 @@ export default async function Page({
   params: Promise<{ lang: string }>;
 }) {
   const { lang } = await params;
-  const t = await getT(lang, { fallback: 'en' });
+  const t = await getT(lang, { module: catalogModule, fallback: 'en' });
   return <h1>{t.t('Welcome')}</h1>;
 }
 ```
 
-`getT(locale, options?)` returns a `Translator` bound to `locale`. The default
-loader reads `<cwd>/<outDir>/<locale>.json`; pass `options.load` for custom
-storage.
+`getT(locale, options)` returns a `Translator` bound to `locale`. Pass
+`{ module: catalogModule }` (the generated `<outDir>/index.ts`) for bundled
+catalog delivery, or `{ load }` for a custom source such as KV or Edge Config.
+`fsCatalogLoader` has been removed - the generated module is the only supported
+catalog source for standard use.
 
-### Dictionary mode on the server
+## Subpath entries
 
-```ts
-import { getTranslations } from '@autotranslate/next';
-
-const t = await getTranslations(lang, 'dashboard');
-t('title'); // → catalog['dashboard.title']
-```
-
-Mirrors the client `useTranslations(ns)` hook.
-
-## Streaming dev mode
-
-Translate new strings on first miss without re-running `pnpm i18n`. Mount the
-streaming handler at any API path you like:
-
-```ts
-// app/api/__autotranslate/translate/route.ts
-export { POST } from '@autotranslate/next/streaming';
-```
-
-Wire the runtime in your provider:
-
-```tsx
-'use client';
-
-import { TranslationProvider, createDevOnMissing } from '@autotranslate/react';
-
-const onMissing =
-  process.env.NODE_ENV !== 'production'
-    ? createDevOnMissing({ endpoint: '/api/__autotranslate/translate' })
-    : undefined;
-
-<TranslationProvider
-  locale={locale}
-  catalog={catalog}
-  fallback={fallback}
-  onMissing={onMissing}
->
-  {children}
-</TranslationProvider>;
-```
-
-In dev, `useT('A new string never seen before')` POSTs to the endpoint; the
-handler runs translate for that key, writes to the chunked catalog, clears the
-in-process loader cache, and the next render picks up the translation.
-Production: `onMissing` is `undefined`, the handler returns 404. No translation
-calls happen at runtime.
+| Entry                             | Purpose                                     |
+| --------------------------------- | ------------------------------------------- |
+| `@autotranslate/next`             | `getT`, `getRequestLocale`                  |
+| `@autotranslate/next/middleware`  | `createNextMiddleware()` for `proxy.ts`     |
+| `@autotranslate/next/plugin`      | `withAutotranslate()` Next config wrapper   |
+| `@autotranslate/next/auto-loader` | webpack/turbopack loader for `mode: 'auto'` |
 
 ## Server Actions
 
@@ -224,52 +259,36 @@ See [Server Actions cookbook](../cookbook/server-actions.md).
 
 ## Edge runtime
 
-The default `fs` loader uses `node:fs/promises` and won't run on the Edge.
-Supply a custom loader:
+Because catalogs are loaded via static `import()` specifiers in the generated
+module, they are bundled at build time and never read from the filesystem at
+request time. The module-based path works on edge runtimes with zero extra
+configuration.
+
+For custom catalog sources (KV, Edge Config), pass a `load` callback to `getT`:
 
 ```ts
 // app/api/welcome/route.ts
 import { getT } from '@autotranslate/next';
-import en from '@/catalogs/en.json' with { type: 'json' };
-import es from '@/catalogs/es.json' with { type: 'json' };
-
-const catalogs = { en, es } as const;
 
 export const runtime = 'edge';
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ lang: 'en' | 'es' }> },
+  { params }: { params: Promise<{ lang: string }> },
 ) {
   const { lang } = await params;
   const t = await getT(lang, {
-    load: (locale) => catalogs[locale as keyof typeof catalogs] ?? {},
+    load: (locale) => fetchFromEdgeKv(locale),
   });
   return new Response(t.t('Welcome'));
 }
 ```
 
-For dynamic locales on the edge, fetch from KV / Edge Config — see
-[Lazy-loading](../cookbook/lazy-loading.md).
-
-## Next config
-
-```ts
-// next.config.ts
-import { withAutotranslate } from '@autotranslate/next/plugin';
-
-export default withAutotranslate({
-  reactStrictMode: true,
-});
-```
-
-Today this is a typed pass-through — autotranslate works with stock Next.js. The
-wrapper exists as the canonical integration point for future build-time hooks
-(typegen on `next build`, catalog inlining, dev HMR).
+See [Lazy-loading](../cookbook/lazy-loading.md).
 
 ## Static export
 
-`generateStaticParams` returns one entry per locale and `getT(locale)` resolves
+`generateStaticParams` returns one entry per locale and `loadCatalog` resolves
 at build time, so `output: 'export'` produces a fully-static multilingual site:
 
 ```ts
@@ -283,13 +302,13 @@ locale lives at a stable URL.
 
 ## Tips
 
+- **`withAutotranslate` must be outermost.** Inner wrappers run before
+  autotranslate sees the phase, so loaders and the dev loop are registered last.
 - **Pass both `catalog` and `fallback` to the provider.** The runtime tries the
   active locale first, then falls back to source for any keys the catalog
   misses.
-
-- **Memoise loaders.** `fsCatalogLoader` already memoises; if you write your
-  own, share it across renders.
-
 - **Pin the matcher.** The default `/((?!api|_next|.*\\..*).*)` excludes `api`,
   `_next`, and any path with a file extension. Add other excluded prefixes
   (`/admin`, `/health`) as needed.
+- **Inlay hints.** Install `@autotranslate/typescript-plugin` to see translated
+  values inline in your editor for every `t('...')` call.

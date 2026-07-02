@@ -1,118 +1,74 @@
 # CI / CD pipelines
 
-Two policies. Pick one based on whether you commit `.translations/` to your
-repo.
+The core insight: **build IS the check**. `withAutotranslate` and
+`@autotranslate/vite` run `checkFrozen` on every production build. If any source
+string is not committed to `.translations/`, the build fails with a precise
+list. CI needs no API key — the model is never called at build time.
 
-## Policy A — Translate in CI, commit catalogs
+## How it works
 
-The default. CI runs `extract` + `translate` on every PR; the catalogs are
-committed with the source change.
+When the framework plugin runs a production build it:
+
+1. Re-extracts source strings in memory
+2. Compares against the committed catalog
+3. Fails with a clear message if anything is uncommitted:
+
+```
+Catalog is out of date.
+
+2 source strings not committed to .translations:
+  - 'Check out' (components/Cart.tsx:41)
+  - 'Empty cart' (components/Cart.tsx:58)
+
+Run your dev server or `autotranslate translate`, then commit .translations/
+```
+
+No secrets required. No i18n step in CI. The developer translates locally (via
+the dev loop or `autotranslate translate`) and commits `.translations/` with the
+source change.
+
+## Minimal CI workflow
 
 ```yaml
-# .github/workflows/i18n.yml
-name: i18n
+# .github/workflows/ci.yml
+name: CI
 
-on:
-  pull_request:
-    paths:
-      - 'src/**'
-      - 'autotranslate.config.ts'
-      - 'package.json'
+on: [push, pull_request]
 
 jobs:
-  i18n:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with: { node-version: '24', cache: pnpm }
       - run: pnpm install --frozen-lockfile
-
-      - name: Run autotranslate
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: pnpm i18n
-
-      - name: Verify catalog parity
-        run: npx autotranslate check
-
-      - name: Commit catalogs
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: 'chore(i18n): update translations'
-          file_pattern: '.translations/**'
+      - run: pnpm build # frozen check runs here - no ANTHROPIC_API_KEY needed
 ```
 
-```jsonc
-// package.json
-{
-  "scripts": {
-    "i18n": "autotranslate extract && autotranslate translate && autotranslate generate-types",
-  },
-}
+The `pnpm build` call hits `withAutotranslate` (or `@autotranslate/vite`'s
+`buildStart`), which calls `checkFrozen`. If the catalog is complete, the build
+proceeds and the model is never contacted. If anything is missing, the build
+fails with the exact strings and file locations.
+
+## PR parity report
+
+The frozen check tells you what's wrong at build time. For PR review,
+`autotranslate parity` gives reviewers a readable table of what changed in the
+catalog:
+
+```bash
+npx autotranslate parity --base origin/main --format github
 ```
 
-Pros:
-
-- Reviewers see translation diffs in PRs.
-- Production builds don't hit the model.
-- `.translations/` is the auditable source of truth.
-
-## Policy B — Translate at build time, don't commit
-
-Catalogs are regenerated on every build. Treat `.translations/` as a build
-artefact.
-
-```jsonc
-// .gitignore
-.translations/
-```
-
-```jsonc
-// package.json
-{
-  "scripts": {
-    "build": "pnpm i18n && next build",
-  },
-}
-```
-
-Pros:
-
-- No noisy catalog diffs.
-- Always matches the source the model saw.
-
-Cons:
-
-- Every build burns tokens.
-- Reviewers can't see translation changes.
-- AI provider has to be available at build time.
-
-## Drift check (Policy A only)
-
-Catch developers who forgot to run `pnpm i18n`:
-
-```yaml
-- name: Check catalogs are up to date
-  run: |
-    pnpm i18n
-    if [ -n "$(git status --porcelain .translations/)" ]; then
-      echo "::error::.translations/ is out of date. Run pnpm i18n locally."
-      git diff .translations/
-      exit 1
-    fi
-```
-
-Wire this into the PR workflow. Fails fast, surfaces the diff.
+See [PR parity](pr-parity.md) for the full GitHub Actions workflow.
 
 ## Caching the provider cost
 
-`autotranslate translate` already caches per-(source, target, provider) locally
-in `.translations/.cache/`. Cache that across CI runs:
+When a developer runs `autotranslate translate` locally, the per-chunk cache
+lives in `.translations/.cache/`. Cache the `.cache/` directory across CI runs
+when you do occasional bulk retranslations:
 
 ```yaml
 - name: Cache translation cache
@@ -124,50 +80,62 @@ in `.translations/.cache/`. Cache that across CI runs:
       i18n-
 ```
 
-A no-op PR (no source-string changes) hits zero model calls.
+A PR with no source-string changes hits zero model calls.
 
-## Required secrets
+## Escape hatch: translateOnBuild
 
-| Provider         | Secret name                    |
-| ---------------- | ------------------------------ |
-| `anthropic`      | `ANTHROPIC_API_KEY`            |
-| `openai`         | `OPENAI_API_KEY`               |
-| `google` (AI)    | `GOOGLE_GENERATIVE_AI_API_KEY` |
-| `openrouter`     | `OPENROUTER_API_KEY`           |
-| `deepl`          | `DEEPL_API_KEY`                |
-| `google` (Cloud) | `GOOGLE_API_KEY`               |
+If you want the build to translate instead of fail (e.g. a monorepo where
+catalog commits are impractical), set:
 
-Set them at the repo (or org) level in GitHub settings. The CLI reads them from
-`process.env` automatically when the provider's `apiKey` field references them
-via `process.env.X`.
-
-## Verifying in PR — `autotranslate check`
-
-Run unconditionally on every PR:
-
-```yaml
-- run: npx autotranslate check
+```ts
+// autotranslate.config.ts
+export default defineConfig({
+  // ...
+  build: {
+    frozen: true,
+    translateOnBuild: true, // translate missing strings, then re-check
+  },
+});
 ```
 
-Catches:
+With `translateOnBuild: true`, the build calls `translate` when `checkFrozen`
+fails, then re-checks. If the re-check passes, the build continues — but an API
+key must be available as an environment variable.
 
-- Missing keys (some target locale didn't translate this entry)
-- Orphan keys (entry no longer referenced in source)
-- Invalid ICU (malformed plural / select arms)
+```yaml
+# Only needed with translateOnBuild: true
+- run: pnpm build
+  env:
+    ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+```
 
-Exits non-zero. Block merges on it.
+Every build burns tokens this way. The default
+(`frozen: true, translateOnBuild: false`) is recommended for most teams.
+
+## Disabling the frozen check
+
+To opt out entirely (useful during initial migration or for a library that ships
+without catalogs):
+
+```ts
+export default defineConfig({
+  // …
+  build: { frozen: false },
+});
+```
+
+The build proceeds regardless of catalog completeness.
 
 ## Tips
 
-- **Cache invalidates per provider signature.** Switching models
-  (`anthropic:claude-haiku-4-5` → `anthropic:claude-sonnet-4-5`) re- translates
-  everything. Schedule that change for a quiet PR.
-
-- **Don't run `i18n` from a draft PR.** Add
-  `if: github.event.pull_request.draft == false` to skip while drafts churn.
-
-- **Bot the commit.** Use a deploy key or a fine-grained PAT, not your personal
-  token, to push catalog updates back to the PR.
-
-- **Combine with `lint-staged`.** `pnpm i18n` on pre-commit is fast (cache hit)
-  and prevents stale catalogs from landing in main.
+- **Fresh projects pass automatically.** When `.translations/<source>/` does not
+  exist on disk, `checkFrozen` returns `{ ok: true, catalogAbsent: true }` so
+  example projects and first-run CI never fail.
+- **Commit `.translations/` except `.cache/`.** `init` already gitignores
+  `.translations/.cache/`; commit everything else.
+- **Switch providers carefully.** Changing the provider signature (model name or
+  vendor) invalidates the per-chunk cache and re-translates everything on the
+  next `translate` run.
+- **Combine with `autotranslate check` for scripted verification.** The CLI
+  `check` command verifies parity (missing/orphan/invalid-ICU) without the
+  source-extraction comparison that `checkFrozen` adds.

@@ -1,7 +1,8 @@
 # Custom translation provider
 
-A provider is a small async function. Plug in anything: local LLMs, internal
-translation services, glossary-aware pipelines, hybrid setups.
+Plug in your own translation service - local LLMs, internal APIs, glossary-aware
+pipelines, or hybrid setups. A provider is a small async function that receives
+a batch of strings and returns their translations.
 
 ## Minimal shape
 
@@ -37,13 +38,13 @@ changes (model swap, prompt rewrite) so stale entries invalidate.
 ```ts
 // autotranslate.config.ts
 export default defineConfig({
-  // …
+  // ...
   provider: { name: 'custom' },
 });
 ```
 
 ```ts
-// scripts/i18n.ts
+// scripts/translate.ts
 import { loadConfig, translate } from '@autotranslate/cli';
 import { myProvider } from './my-provider';
 
@@ -51,13 +52,17 @@ const resolved = await loadConfig();
 await translate(resolved, { provider: myProvider });
 ```
 
-The CLI binary throws if it sees `name: 'custom'` without an override — custom
-providers are functions and don't survive JSON serialisation.
+The CLI binary throws if it sees `name: 'custom'` without a provider override -
+custom providers are functions and don't survive JSON serialisation. The same
+applies to the dev loop: with `name: 'custom'` the framework plugin can't
+auto-translate on save, so run your script (`npx tsx scripts/translate.ts`)
+after adding strings.
 
 ## Hybrid: AI for trees, DeepL for plain strings
 
-The `ai` provider is great for structured trees with placeholders, plurals, tag
-wrappers. DeepL is better (and cheaper) for plain UI labels. Combine:
+The `ai` provider handles structured trees with placeholders, plurals, and tag
+wrappers well. DeepL is better (and cheaper) for plain UI labels. Hand-roll the
+split with a custom provider:
 
 ```ts
 import { isStructured } from '@autotranslate/core';
@@ -68,9 +73,9 @@ import { createDeepLProvider } from '@autotranslate/providers/deepl';
 const ai = createAIProvider({ model: 'anthropic:claude-haiku-4-5' });
 const deepl = createDeepLProvider({ apiKey: process.env.DEEPL_API_KEY! });
 
-export const hybrid = defineProvider({
-  name: 'hybrid',
-  signature: `hybrid:${ai.signature}+${deepl.signature}`,
+export const hybridProvider = defineProvider({
+  name: 'ai-deepl',
+  signature: `ai-deepl:${ai.signature}+${deepl.signature}`,
   async translate(request) {
     const structured = request.items.filter((i) => isStructured(i.source));
     const plain = request.items.filter((i) => !isStructured(i.source));
@@ -138,7 +143,7 @@ export const glossaryAware = defineProvider({
 });
 ```
 
-Production-grade glossaries usually mix this with `instruction` (broad voice /
+Production-grade glossaries usually mix this with `instruction` (broad voice and
 brand cues) and `overrides` (per-locale exact matches).
 
 ## Local LLM (Ollama, LM Studio)
@@ -176,13 +181,13 @@ export const ollamaProvider = defineProvider({
 });
 ```
 
-Cheap, offline, slower. Don't use it for trees
-(`isStructured(item.source) === true`) — the prompt-engineering required to keep
+This approach is cheap and offline but slower. Don't use it for trees
+(`isStructured(item.source) === true`) - the prompt engineering required to keep
 ICU intact is too fragile for an 8B model.
 
 ## Per-key routing
 
-Different keys deserve different providers:
+Route different keys to different providers based on context:
 
 ```ts
 export const routed = defineProvider({
@@ -200,12 +205,12 @@ export const routed = defineProvider({
 });
 ```
 
-`context` comes from `<T context="…">` and `t('...', { $context })`.
+`context` comes from `<T context="...">` and `t('...', { $context })`.
 
 ## Tips
 
 - **Bump `signature` aggressively.** When you change anything that affects
-  output — the model, the prompt, the glossary — bump it. Cache misses are
+  output - the model, the prompt, the glossary - bump it. Cache misses are
   cheap; bad translations aren't.
 
 - **Honour `signal`.** Long-running translations should bail when the user hits

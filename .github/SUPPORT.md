@@ -4,17 +4,17 @@ Thanks for using autotranslate! Here's how to get help.
 
 ## Documentation
 
-Start with the [docs](docs/README.md):
+Start with the [docs](../docs/README.md):
 
-- [Getting Started](docs/getting-started.md)
-- [Configuration](docs/configuration.md)
-- [CLI Reference](docs/cli.md)
-- [API Reference](docs/api-reference.md)
-- [Guides](docs/guides/)
-- [Frameworks](docs/frameworks/)
+- [Quick start](../docs/quick-start.md)
+- [Configuration](../docs/reference/configuration.md)
+- [CLI Reference](../docs/reference/cli.md)
+- [API Reference](../docs/reference/api.md)
+- [Guides](../docs/guides/)
+- [Frameworks](../docs/frameworks/)
 
-The [README](README.md) covers install, quick-start, and a feature overview. The
-[ARCHITECTURE](ARCHITECTURE.md) doc explains the design.
+The [README](../README.md) covers install, quick-start, and a feature overview.
+The [ARCHITECTURE](../ARCHITECTURE.md) doc explains the design.
 
 ## Bugs
 
@@ -46,7 +46,7 @@ answer.
 File a
 [feature request issue](https://github.com/tamimbinhakim/autotranslate/issues/new/choose)
 explaining the use case and what you've already tried. Pre-1.0 the API moves
-quickly; the [roadmap](ROADMAP.md) shows what's planned.
+quickly; the [roadmap](../ROADMAP.md) shows what's planned.
 
 ## Contributing
 

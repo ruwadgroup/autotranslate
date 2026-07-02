@@ -1,8 +1,16 @@
 # JSX translation
 
-`<T>` is the translatable JSX block. Anything inside it — text, structural
+Two ways to translate JSX text: **explicit mode** (the default) where you wrap
+copy in `<T>` yourself, and **auto mode** where the compiler inserts `<T>` for
+you. Set `mode: 'auto'` in `autotranslate.config.ts` to opt into the
+compiler-driven path. Both modes produce identical runtime output and the same
+catalog keys.
+
+## Explicit mode
+
+`<T>` is the translatable JSX block. Anything inside it - text, structural
 markers (`<Var>`, `<Plural>`, `<Branch>`), formatters, HTML elements, component
-wrappers — gets serialised into a canonical message tree, hashed, and looked up
+wrappers - gets serialised into a canonical message tree, hashed, and looked up
 in the active catalog.
 
 ```tsx
@@ -14,7 +22,7 @@ import { T } from '@autotranslate/react';
 Renders the source string in the source locale and the matching translation
 elsewhere. On miss, falls back to `children` verbatim.
 
-## Variable slots — `<Var>`
+### Variable slots - `<Var>`
 
 ```tsx
 import { T, Var } from '@autotranslate/react';
@@ -30,7 +38,7 @@ import { T, Var } from '@autotranslate/react';
 
 When rendered outside `<T>`, `<Var>` passes its children through.
 
-## Plurals — `<Plural>`
+### Plurals - `<Plural>`
 
 ```tsx
 import { Plural, T } from '@autotranslate/react';
@@ -52,7 +60,7 @@ so a single source declaration covers languages with simple two-form plurals
 
 See [Plurals & branches](plurals.md) for plural-rule details and locale notes.
 
-## Discriminator branches — `<Branch>`
+### Discriminator branches - `<Branch>`
 
 For status / discriminator copy that doesn't fit the plural mould:
 
@@ -78,7 +86,7 @@ import { Branch, T, Var } from '@autotranslate/react';
 
 Round-trips through ICU `select` for translation.
 
-## Tag wrappers
+### Tag wrappers
 
 HTML elements and component wrappers inside `<T>` become **tag nodes** in the
 canonical tree. Props (`href`, `className`, event handlers) carry over to the
@@ -90,17 +98,18 @@ translated output:
 </T>
 ```
 
-The extractor strips props from the canonical hash — translators don't see
+The extractor strips props from the canonical hash - translators don't see
 `href`, and prop changes don't invalidate translations.
 
-For component wrappers, the extractor uses the JSX identifier (e.g. `<Strong>` →
-`tag: 'Strong'`). The runtime falls back to `type.displayName` (or `type.name`).
+For component wrappers, the extractor uses the JSX identifier (e.g. `<Strong>`
+becomes `tag: 'Strong'`). The runtime falls back to `type.displayName` (or
+`type.name`).
 
-## Whitespace
+### Whitespace
 
 `<T>` matches React's JSX-runtime whitespace handling. Whitespace-only lines are
 dropped, tabs become spaces, leading whitespace on continuation lines is
-trimmed, lines join with single spaces.
+trimmed, and lines join with single spaces.
 
 ```tsx
 <T>
@@ -109,9 +118,9 @@ trimmed, lines join with single spaces.
 </T>
 ```
 
-extracts to `Hello, {user}!` — identical to what React renders.
+Extracts to `Hello, {user}!` - identical to what React renders.
 
-## Context hints
+### Context hints
 
 Two identical strings can mean different things. Disambiguate with `context`:
 
@@ -130,14 +139,15 @@ comment without affecting the hash:
 For [`useT`](strings.md), the same hints come through reserved param keys:
 `$context`, `$description`, `$maxChars`.
 
-## Server components
+### Server components
 
 `<T>` works in both client and server components. For server-only translation
-without React context, use `getT` from `@autotranslate/react/server` (or
-`@autotranslate/next` in Next):
+without React context, use `getT` from `@autotranslate/next` (or
+`@autotranslate/react/server` for other frameworks):
 
 ```tsx
 import { getT } from '@autotranslate/next';
+import * as catalogModule from '../../.translations';
 
 export default async function Page({
   params,
@@ -145,13 +155,57 @@ export default async function Page({
   params: Promise<{ lang: string }>;
 }) {
   const { lang } = await params;
-  const t = await getT(lang);
+  const t = await getT(lang, { module: catalogModule });
   return <h1>{t.t('Welcome')}</h1>;
 }
 ```
 
-The `react-server` export condition is wired automatically — the client / server
+The `react-server` export condition is wired automatically - the client / server
 entries swap based on the consuming module's environment.
+
+## Auto mode
+
+Set `mode: 'auto'` in `autotranslate.config.ts` and the compiler wraps
+qualifying JSX text in `<T>` at build time. You write plain JSX; the translation
+layer is inserted for you.
+
+```ts
+// autotranslate.config.ts
+export default defineConfig({
+  mode: 'auto',
+  // ...
+});
+```
+
+The compiler rewrites JSX text automatically:
+
+```tsx
+// you write:
+<p>Hello {user.name}</p>
+
+// compiler produces:
+<p><T>Hello <Var>{user.name}</Var></T></p>
+```
+
+### What the compiler skips
+
+- `code`, `pre`, `script`, and `style` elements are always left alone.
+- Any element (or its subtree) with a `data-no-translate` attribute is skipped:
+
+```tsx
+<span data-no-translate>v1.2.3</span>
+```
+
+These rules are shared with the [`no-untranslated-jsx`](linting.md) ESLint
+rule - the same classifier drives both, so lint results and compiler output stay
+in sync.
+
+### Auto mode and the ESLint rule
+
+In auto mode the compiler inserts `<T>` before the lint rule runs, so
+`no-untranslated-jsx` will not fire on wrapped text nodes. The rule is still
+useful in auto mode for catching untranslated string literals in JSX attributes
+(`title`, `aria-label`, `placeholder`, etc.) that the compiler cannot wrap.
 
 ## Tips
 
@@ -164,7 +218,7 @@ entries swap based on the consuming module's environment.
 
   // ✅
   <T>
-    <Branch branch={label} ['sign-in']={<>Sign in</>}>
+    <Branch branch={label} sign-in={<>Sign in</>}>
       Sign up
     </Branch>
   </T>
@@ -173,8 +227,8 @@ entries swap based on the consuming module's environment.
   The [`no-untranslated-jsx`](linting.md) ESLint rule catches the bad case.
 
 - **Wrap whole sentences, not pieces.** `<T>Hello, <Var>{name}</Var>!</T>`
-  translates well; `<T>Hello,</T> <Var>{name}</Var><T>!</T>` doesn't — word
-  order varies by language.
+  translates well; splitting a sentence across multiple `<T>` blocks doesn't -
+  word order varies by language.
 
 - **One `<T>` per logical message.** If you nest `<T>` blocks, each is hashed
-  independently — the inner one is opaque to the outer.
+  independently - the inner one is opaque to the outer.

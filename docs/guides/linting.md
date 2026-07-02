@@ -61,24 +61,35 @@ Options:
 
 A built-in allowlist covers structural / locale-neutral attributes (`className`,
 `id`, `key`, `ref`, `name`, `type`, `role`, `slot`, `style`, `data-*`, `href`,
-`src`, `alt`, `lang`, `dir`, …).
+`src`, `alt`, `lang`, `dir`, and others).
+
+#### `no-untranslated-jsx` in auto mode
+
+When `mode: 'auto'` is set in `autotranslate.config.ts`, the compiler wraps
+qualifying JSX text in `<T>` at build time before the lint rule runs. This means
+the rule will not fire for JSX text nodes that the compiler handles. You still
+want the rule enabled for JSX **attribute** values (`title`, `aria-label`,
+`placeholder`, etc.) that the compiler cannot wrap.
+
+The rule and the compiler share the same classifier: `code`, `pre`, `script`,
+and `style` elements are skipped by both, and `data-no-translate` suppresses
+both the compiler and the lint warning on any element and its subtree.
 
 ### `no-dynamic-key`
 
-Translator calls (`t(...)` from `useT()` / `useTranslations()` / `getT()` /
-`getTranslations()` / standalone `t`) must use string-literal keys. Dynamic keys
-break extraction.
+Translator calls (`t(...)` from `useT()` / `getT()` / standalone `t`) must use
+string-literal keys. Dynamic keys break extraction.
 
 ```js
 const t = useT();
 t('Sign out'); // ✓
 t(`Sign out`); // ✓
-t(KEY); // ✓ — KEY is a local string-literal const
-t(`prefix.${id}`); // ❌ — dynamic key, can't be extracted
+t(KEY); // ✓ - KEY is a local string-literal const
+t(`prefix.${id}`); // ❌ - dynamic key, can't be extracted
 t(label); // ❌
 ```
 
-Identifier references to a same-file string literal are allowed — the rule walks
+Identifier references to a same-file string literal are allowed - the rule walks
 scope to confirm the binding is a static string.
 
 ### `valid-icu-format`
@@ -108,17 +119,21 @@ The bundled `recommended` preset wires every rule at appropriate severity:
 ```
 
 `no-untranslated-jsx` is `warn` because it's intentionally noisy during
-migrations; bump to `error` once your tree is fully wrapped in `<T>`.
+migrations; bump to `error` once your tree is fully wrapped.
 
 ## Tips
 
 - **Run on every commit.** Wire ESLint into `lint-staged` so dynamic keys and
   bare JSX literals never land in main.
 
-- **Combine with [type-safety](typesafety.md).** `no-dynamic-key` guarantees the
+- **Combine with [type safety](typesafety.md).** `no-dynamic-key` guarantees the
   extractor can see every key; typegen guarantees every key the code references
   is actually in the catalog.
 
 - **Custom marker components.** If you wrap `<T>` in a project-specific
   component (e.g. `<Translated>`), add it to `markers` so the rule doesn't flag
   its children.
+
+- **`data-no-translate`.** Add this attribute to any element (a version badge, a
+  code snippet, a logo text) to suppress the warning for that element and its
+  entire subtree.

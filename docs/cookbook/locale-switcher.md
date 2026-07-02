@@ -1,9 +1,13 @@
 # Locale switcher
 
-A dropdown that swaps the active locale, plus three patterns for persisting the
-choice across reloads.
+Build a dropdown that lets users switch the active locale and persist their
+choice across page loads. Three patterns below - pick the one that matches your
+routing strategy.
 
-## SPA — state-only switch
+## SPA - state-only switch
+
+For a client-rendered app with no URL-based routing, hold the locale in state
+and pass it to `TranslationProvider`:
 
 ```tsx
 import { TranslationProvider, useLocale } from '@autotranslate/react';
@@ -38,7 +42,7 @@ export function App({ catalogs }: { catalogs: Record<string, Catalog> }) {
       fallback={catalogs.en}
     >
       <LocaleSwitcher onChange={setLocale} />
-      {/* … */}
+      {/* ... */}
     </TranslationProvider>
   );
 }
@@ -46,8 +50,9 @@ export function App({ catalogs }: { catalogs: Record<string, Catalog> }) {
 
 ## Persist via cookie (Next App Router)
 
-The proxy from `@autotranslate/next/middleware` already prefers cookies over
-`Accept-Language` when `strategy: 'cookie'`.
+The middleware from `@autotranslate/next/middleware` already prefers cookies
+over `Accept-Language` when `strategy: 'cookie'` is set. Write the locale cookie
+from an API route, then refresh the page:
 
 ```ts
 // app/api/set-locale/route.ts
@@ -86,7 +91,7 @@ export function LocaleSwitcher() {
 
   return (
     <select value={active} onChange={(e) => onChange(e.target.value)}>
-      {/* … */}
+      {/* ... */}
     </select>
   );
 }
@@ -94,8 +99,8 @@ export function LocaleSwitcher() {
 
 ## Persist via path prefix (Next App Router)
 
-When using the default proxy strategy (`prefix`), changing locale is a
-navigation:
+When using the default middleware strategy (`prefix`), switching locale is a
+navigation to a new path. Strip the current locale prefix and push the new one:
 
 ```tsx
 'use client';
@@ -128,7 +133,8 @@ export function LocaleSwitcher() {
 }
 ```
 
-The proxy handles default-locale stripping; your switcher can stay agnostic.
+The middleware handles default-locale stripping, so your switcher can stay
+agnostic.
 
 ## Localised labels
 
@@ -166,14 +172,14 @@ function LocaleSwitcher({ codes }: { codes: ReadonlyArray<string> }) {
 }
 ```
 
-`nameOf(c, c)` renders each locale's name _in its own language_. Pass `active`
-to render every option in the active locale instead.
+`nameOf(c, c)` renders each locale's name in its own language. Pass `active`
+instead of `c` to render every option in the currently active locale.
 
 ## Tips
 
 - **Cookie names matter.** If you use `next-intl` or anything else with
-  `NEXT_LOCALE`, pick a different cookie or accept the conflict.
+  `NEXT_LOCALE`, pick a different cookie name or accept the conflict.
 - **RTL.** Set `<html dir>` based on the locale. `getDirection(locale)` from
-  `@autotranslate/core/locale` returns `'rtl'` for `ar`, `he`, `fa`, `ur`.
-- **Persisted choice beats `Accept-Language`.** Always — the user's explicit
-  click should win over header-based detection.
+  `@autotranslate/core/locale` returns `'rtl'` for `ar`, `he`, `fa`, and `ur`.
+- **Persisted choice beats `Accept-Language`.** The user's explicit click should
+  always win over header-based detection.

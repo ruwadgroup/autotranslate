@@ -27,21 +27,18 @@ milestone matters to you.
 
 - [x] `@autotranslate/vite` — virtual locale modules + HMR
 - [x] Build-time catalog inlining
-- [ ] Streaming dev-mode translation (translate on first miss)
 
 ## v0.4 — Type generation + ESLint plugin
 
 - [x] `autotranslate generate-types`
 - [x] `@autotranslate/eslint-plugin` — `no-untranslated-jsx`, `no-dynamic-key`,
       `valid-icu-format`
-- [ ] Editor diagnostics for missing keys
 
 ## v0.5 — More providers
 
 - [x] `@autotranslate/providers/deepl`
 - [x] `@autotranslate/providers/google`
-- [ ] Hybrid mode — MT for short / unambiguous strings, AI for the rest
-- [ ] Glossary support (per-tenant terminology)
+- [x] Hybrid mode — AI for structured tree entries, MT for plain strings
 
 ## v0.6 — Standalone `t()` + Zod integration
 
@@ -51,19 +48,56 @@ milestone matters to you.
 - [x] Cookbook (locale switcher, form validation, server actions, testing,
       lazy-loading, custom provider, debugging, …)
 
-## v0.7 — Streaming dev mode + editor diagnostics
+## v0.7 — Glossary + hybrid provider
 
-- [ ] Streaming dev-mode translation (translate on first miss)
-- [ ] TS LSP plugin / editor diagnostics for missing keys
-- [ ] Hybrid provider mode — MT for short / unambiguous, AI for the rest
-- [ ] Glossary support (per-tenant terminology)
+- [x] Glossary support (branded terms the AI must never translate)
+- [x] `@autotranslate/typescript-plugin` — editor diagnostics for unknown keys
 
-## v1.0 — Stability & ergonomics
+## v1.0-beta — The plugin is the product
 
-- [ ] Public API freeze
-- [ ] Migration guides from `react-i18next`, `next-intl`, `lingui`, `gt-next`
-- [ ] More cookbook recipes — multi-tenant, A/B copy, branded glossaries
-- [ ] Performance — translator < 50µs/call, catalog gzip < 5kb for 100 strings
+This release ships the zero-command DX the philosophy always promised.
+
+### Shipped
+
+- [x] **Save-driven dev loop** (`createDevLoop` in `@autotranslate/cli`) -
+      replaces streaming dev-mode translation. `withAutotranslate` and
+      `@autotranslate/vite` start it automatically in dev; save a file,
+      translations appear.
+- [x] **Frozen builds** (`checkFrozen`) — production builds re-extract in memory
+      and fail with a precise list when strings are uncommitted. CI needs no API
+      key. Opt out with `build: { frozen: false }` or translate in-place with
+      `build: { translateOnBuild: true }`.
+- [x] **Catalogs as module** (`<outDir>/index.ts`) — `extract` and `translate`
+      codegen a static-import module; bundlers code-split per locale, edge
+      runtimes work with zero config. `fsCatalogLoader` removed.
+- [x] **Auto mode** (`mode: 'auto'`) — compiler wraps JSX text in `<T>` at
+      compile time; opt out with `data-no-translate`; shared classifier ensures
+      ESLint, compiler, and extractor always agree.
+- [x] **PR parity** (`autotranslate parity`) — diff catalogs against a git ref,
+      emit a Markdown table for GitHub PR comments.
+- [x] **Editor inlay hints** (`@autotranslate/typescript-plugin`) — shows
+      translated values inline after every `t('...')` call.
+- [x] **`init` overhaul** — `npx autotranslate init` detects the framework,
+      AST-edits `next.config.ts`, creates `proxy.ts`, patches `tsconfig.json`
+      and `.gitignore`, and prints the layout diff; idempotent.
+- [x] `catalog.chunkBits` config field (0-12, default 4) — was wired in code but
+      not exposed via config.
+
+### Removals (breaking)
+
+- Streaming dev-mode handlers (`@autotranslate/next/streaming`,
+  `@autotranslate/vite` `streaming` option) — superseded by the dev loop.
+- `createDevOnMissing` from `@autotranslate/react` — same reason.
+- `migrate-format` CLI command — stale catalogs regenerate naturally on next
+  extract/translate run.
+- Flat `<locale>.json` catalog fallback — chunk-tree layout is the only
+  supported format.
+- `migrateKey` / `migrateCatalog` from `@autotranslate/core` — key migration is
+  handled by re-running extract.
+- `fsCatalogLoader`, `extraRoots`, `GetTOptions.cwd/outDir` from
+  `@autotranslate/next` — replaced by the generated module.
+- `outputFileTracingIncludes` merge and `traceIncludes` option in
+  `withAutotranslate` — not needed with module-based loading.
 
 ## Beyond v1
 
@@ -71,4 +105,5 @@ milestone matters to you.
 - React Native / Expo first-class
 - Edge KV catalog backend
 - AI-driven glossary inference
-- Snapshot diff in PR comments (locale parity check)
+- Attribute auto-wrapping (`placeholder`, `aria-label`, …)
+- Back-translation column in parity reports

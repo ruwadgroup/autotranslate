@@ -1,6 +1,6 @@
 # String translation
 
-`useT` is the hook for plain-string translation — button labels, `aria-*`
+`useT` is the hook for plain-string translation - button labels, `aria-*`
 attributes, programmatic copy.
 
 ```tsx
@@ -23,14 +23,14 @@ Keys are ICU MessageFormat templates:
 const t = useT();
 
 t('Hello, {name}!', { name: 'Ada' });
-// → 'Hello, Ada!' (en) / '¡Hola, Ada!' (es) / 'Adaさん、こんにちは！' (ja)
+// -> 'Hello, Ada!' (en) / '¡Hola, Ada!' (es) / 'Adaさん、こんにちは！' (ja)
 
 t('{count, plural, one {# message} other {# messages}}', { count: 3 });
-// → '3 messages' (en)
+// -> '3 messages' (en)
 ```
 
-The full ICU subset — `plural`, `select`, `number`, `date`, `time`, tag wrappers
-— is supported.
+The full ICU subset - `plural`, `select`, `number`, `date`, `time`, tag
+wrappers - is supported.
 
 ## Disambiguating with context
 
@@ -49,53 +49,6 @@ Reserved option keys (consumed by the translator, not the formatter):
 | `$context`     | Suffix appended to the key (`<key>@@<context>`).        |
 | `$description` | Translator-facing description. Stored in `.meta.json`.  |
 | `$maxChars`    | Soft length budget. Passed to AI providers as guidance. |
-
-## `useTranslations` (dictionary mode)
-
-When you'd rather organise copy in a dictionary file than inline literals:
-
-```ts
-// src/dictionary.ts
-export default {
-  dashboard: {
-    title: 'Dashboard',
-    greeting: 'Welcome, {name}!',
-  },
-  cta: {
-    signIn: 'Sign in',
-    signUp: 'Sign up',
-  },
-};
-```
-
-```ts
-// autotranslate.config.ts
-export default defineConfig({
-  // …
-  dictionary: 'src/dictionary.ts',
-});
-```
-
-```tsx
-import { useTranslations } from '@autotranslate/react';
-
-function Dashboard({ user }: { user: User }) {
-  const t = useTranslations('dashboard');
-  return (
-    <>
-      <h1>{t('title')}</h1>
-      <p>{t('greeting', { name: user.name })}</p>
-    </>
-  );
-}
-```
-
-`useTranslations(ns)` is sugar over `useT()` — it prefixes every lookup with
-`<ns>.`. The CLI flattens the dictionary tree into `dot.path` keys during
-extraction so it lines up with your runtime calls.
-
-Pass an empty string (or omit the argument) to address keys at the dictionary
-root.
 
 ## `useLocale`
 
@@ -116,6 +69,7 @@ For RSC and route handlers in Next.js:
 
 ```tsx
 import { getT } from '@autotranslate/next';
+import * as catalogModule from '../../.translations';
 
 export default async function Page({
   params,
@@ -123,7 +77,7 @@ export default async function Page({
   params: Promise<{ lang: string }>;
 }) {
   const { lang } = await params;
-  const t = await getT(lang, { fallback: 'en' });
+  const t = await getT(lang, { module: catalogModule });
   return <h1>{t.t('Welcome')}</h1>;
 }
 ```
@@ -137,17 +91,10 @@ const t = await getT('es', () => loadCatalog('es'));
 return <h1>{t.t('Welcome')}</h1>;
 ```
 
-`getTranslations` mirrors `useTranslations` for namespace-prefixed lookups:
-
-```ts
-const t = await getTranslations(lang, 'dashboard');
-t('title'); // → catalog['dashboard.title']
-```
-
 ## Outside React
 
 For zod errors, validators, async work, and tests, use the
-[standalone `t()`](standalone-t.md) — same catalog, no React dependency.
+[standalone `t()`](standalone-t.md) - same catalog, no React dependency.
 
 ## Tips
 
@@ -155,11 +102,11 @@ For zod errors, validators, async work, and tests, use the
   catalog misses.
 
 - **Avoid string concatenation.** `t('Hello') + ' ' + name` strips the
-  punctuation context — translators can't move it. Use a single key:
+  punctuation context - translators can't move it. Use a single key:
   `t('Hello, {name}!', { name })`.
 
 - **Catch dynamic keys at lint time.** The [`no-dynamic-key`](linting.md) ESLint
-  rule rejects `t(variable)` and `t(\`prefix.${id}\`)` because the extractor
+  rule rejects `t(variable)` and ``t(`prefix.${id}`)`` because the extractor
   can't follow them.
 
 - **Generate types.** After [`autotranslate generate-types`](typesafety.md),

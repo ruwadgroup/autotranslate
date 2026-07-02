@@ -1,14 +1,14 @@
 # Migrating from gt-next / gt-react
 
-`gt-next` is closest in spirit to autotranslate — code-first authoring + AI
-translation. The shape change is mostly **going self-hosted** (catalogs in your
-repo) and using the broader autotranslate toolchain.
+`gt-next` is closest in spirit to autotranslate: code-first authoring plus AI
+translation. The shape change is mostly going self-hosted (catalogs in your
+repo) and using the autotranslate toolchain.
 
 ## At a glance
 
 <!-- prettier-ignore -->
 ```tsx
-// JSX — autotranslate requires explicit <Var> for dynamic slots
+// JSX - autotranslate requires explicit <Var> for dynamic slots
 <T>Hello, {name}</T>;                          // gt-next
 <T>Hello, <Var>{name}</Var></T>;               // autotranslate
 
@@ -18,29 +18,50 @@ const t = useT();                              // autotranslate
 
 // Server
 const t = await getGT();                       // gt-next
-const t = await getT(locale);                  // autotranslate
+const t = await getT(locale, { module: catalogModule });  // autotranslate
 
 // Where catalogs live
 // gt-next         cloud-hosted, fetched at runtime
 // autotranslate   .translations/{locale}/**.json in your repo, build-time AI translate
 
-// Translation provider — you choose, no SaaS markup
+// Translation provider - you choose, no SaaS markup
 provider: { name: 'ai', model: 'anthropic:claude-haiku-4-5' }   // autotranslate
 ```
 
 ## Why migrate
 
-- **No vendor**. Your catalogs live in your repo, not behind an API key with a
+- **No vendor.** Your catalogs live in your repo, not behind an API key with a
   billing relationship.
-- **Cheaper at scale**. Pay your AI provider directly (Anthropic / OpenAI /
-  DeepL / Google) at cost — no SaaS markup.
-- **Edge / on-prem friendly**. Catalogs ship with your bundle; runtime has no
-  required network calls.
-- **Multi-framework**. autotranslate adapters cover Next.js, Vite, Remix, React
-  Native — not just Next.
+- **Cheaper at scale.** Pay your AI provider directly (Anthropic / OpenAI /
+  DeepL / Google) at cost - no SaaS markup.
+- **Edge / on-prem friendly.** Catalogs ship with your bundle; the runtime has
+  no required network calls.
+- **Multi-framework.** autotranslate adapters cover Next.js, Vite, Remix, and
+  React Native - not just Next.js.
 
 The trade-off: you run the translate command yourself (typically in CI) instead
-of letting a cloud do it. See the [CI/CD cookbook](../cookbook/ci-cd.md).
+of letting a cloud service do it. See the
+[CI/CD cookbook](../cookbook/ci-cd.md).
+
+## The fast path: `mode: 'auto'`
+
+Before manually adding `<Var>` around every dynamic expression, enable
+`mode: 'auto'` in your config. The compiler wraps JSX text at compile time,
+handling variables as `<Var>` slots automatically.
+
+```ts
+// autotranslate.config.ts
+export default defineConfig({
+  mode: 'auto',
+  source: 'en',
+  targets: ['es', 'fr', 'ja'],
+  content: ['src/**/*.{ts,tsx}'],
+});
+```
+
+Your existing `<T>Hello, {name}</T>` components stay mostly as-is at the source
+level. The auto-loader produces the correct canonical key from the wrapped tree.
+Opt out of auto-wrapping on specific elements with `data-no-translate`.
 
 ## Step-by-step
 
@@ -56,7 +77,7 @@ npx autotranslate init
 ### 2. Configure a provider
 
 The biggest difference: you choose the AI provider explicitly. Anthropic Claude
-Haiku is a strong default — fast, cheap, excellent on ICU preservation:
+Haiku is a strong default - fast, cheap, excellent on ICU preservation:
 
 ```ts
 // autotranslate.config.ts
@@ -72,38 +93,39 @@ export default defineConfig({
 });
 ```
 
-Set the env var your gt-next setup didn't need; install the SDK:
+Set the env var and install the AI SDK:
 
 ```bash
 pnpm add ai @ai-sdk/anthropic
-export ANTHROPIC_API_KEY=...
+export ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-### 3. Replace `<T>` (mostly) drop-in
+### 3. Replace `<T>` (mostly drop-in)
 
 ```tsx
-// before — gt-next
+// before - gt-next
 <T>Hello, {user.name}!</T>
 
-// after — autotranslate (variables MUST go through <Var>)
+// after - autotranslate (variables MUST go through <Var>)
 <T>Hello, <Var>{user.name}</Var>!</T>
 ```
 
 The mechanical difference: gt-next tolerates raw `{expr}` inside `<T>`;
 autotranslate requires `<Var>` (or another marker) so the canonical key
-derivation is deterministic. Wrap every dynamic expression.
+derivation is deterministic. Wrap every dynamic expression, or use
+`mode: 'auto'` and let the compiler do it.
 
 ### 4. Replace plurals + branches
 
 ```tsx
-// before — gt-next
+// before - gt-next
 <T>
   <Plural n={count}>
     <Branch one="1 item" other="{count} items" />
   </Plural>
 </T>;
 
-// after — same primitives, slightly different syntax
+// after - same primitives, slightly different syntax
 import { T, Plural } from '@autotranslate/react';
 
 <T>
@@ -143,17 +165,19 @@ import { getGT } from 'gt-next/server';
 
 // after
 import { getT } from '@autotranslate/next';
-const t = await getT(locale);
+import * as catalogModule from '../../.translations';
+
+const t = await getT(locale, { module: catalogModule, fallback: 'en' });
 t.t('Welcome');
 ```
 
 ### 6. Move proxy / locale routing
 
 ```ts
-// before — gt-next/middleware
+// before - gt-next/middleware
 import { withGTConfig } from 'gt-next/middleware';
 
-// after — proxy.ts (Next 16+)
+// after - proxy.ts (Next.js 16+)
 import { createNextMiddleware } from '@autotranslate/next/middleware';
 
 export default createNextMiddleware({
@@ -172,18 +196,19 @@ gt-next fetches translations from a cloud at runtime. autotranslate ships
 catalogs with the build:
 
 ```tsx
-// before — gt-next runtime fetch (implicit)
+// before - gt-next runtime fetch (implicit)
 <GTProvider config={...}>{children}</GTProvider>
 
-// after — load from disk (Next) or virtual module (Vite)
-import { fsCatalogLoader } from '@autotranslate/next';
+// after - load from the generated catalog module
 import { TranslationProvider } from '@autotranslate/react';
-
-const load = fsCatalogLoader(process.cwd(), '.translations');
+import * as catalogModule from '../../.translations';
 
 export default async function Layout({ children, params }) {
   const { locale } = await params;
-  const [catalog, fallback] = await Promise.all([load(locale), load('en')]);
+  const [catalog, fallback] = await Promise.all([
+    catalogModule.loadCatalog(locale),
+    catalogModule.loadCatalog('en'),
+  ]);
   return (
     <TranslationProvider locale={locale} catalog={catalog} fallback={fallback}>
       {children}
@@ -192,21 +217,27 @@ export default async function Layout({ children, params }) {
 }
 ```
 
+`import * as catalogModule from '../../.translations'` imports the generated
+`<outDir>/index.ts` module. Its `loadCatalog(locale)` uses static `import()` so
+the bundler code-splits per locale and no filesystem access happens at request
+time.
+
 ### 8. Run the pipeline
 
 The CLI replaces gt-next's cloud-side translate step:
 
 ```bash
-pnpm i18n
-# = autotranslate extract && translate && generate-types
+npx autotranslate extract
+npx autotranslate translate
+npx autotranslate generate-types
 ```
 
-Wire this into CI on every PR — see the [CI/CD cookbook](../cookbook/ci-cd.md).
+Wire this into CI on every PR - see the [CI/CD cookbook](../cookbook/ci-cd.md).
 
 ### 9. Migrate brand glossary
 
 If you used gt-next's "do not translate" markers, the equivalent is `<Var>`
-(opaque to translator) or `instruction` config (global guidance):
+(opaque to translator) or the `instruction` config field (global guidance):
 
 ```ts
 provider: {
@@ -221,12 +252,13 @@ See [Overrides & glossaries cookbook](../cookbook/overrides-and-glossary.md).
 ## Things to know
 
 - **gt-next's runtime translation** translates new strings on first hit in
-  production. autotranslate's [streaming dev-mode](../guides/strings.md) gives
-  the same experience in dev only — production reads from the pre-built catalog.
-- **Per-environment catalogs**. With autotranslate, you can have different
-  `instruction` per environment (e.g. dev pseudo-locale) by branching on
-  `process.env.NODE_ENV` in `autotranslate.config.ts`.
-- **Cost predictability**. autotranslate caches per-(source, target, provider) —
+  production. autotranslate translates during the dev loop (save-triggered, in
+  development) and at CI time (before deploy). Production reads from the
+  pre-built, committed catalog - no model calls at request time.
+- **Per-environment catalogs.** You can have different `instruction` per
+  environment (e.g. dev pseudo-locale) by branching on `process.env.NODE_ENV` in
+  `autotranslate.config.ts`.
+- **Cost predictability.** autotranslate caches per (source, target, provider) -
   repeat runs translate only what changed. Your bill is proportional to copy
   churn, not deploys.
 
@@ -234,6 +266,6 @@ See [Overrides & glossaries cookbook](../cookbook/overrides-and-glossary.md).
 
 - [Quick start](../quick-start.md)
 - [Next.js framework guide](../frameworks/nextjs.md)
-- [Providers guide](../guides/providers.md) — choose AI / DeepL / Google /
-  hybrid
+- [Providers guide](../guides/providers.md) - choose AI / DeepL / Google /
+  custom
 - [CI/CD cookbook](../cookbook/ci-cd.md)

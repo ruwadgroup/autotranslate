@@ -2,7 +2,7 @@
 
 autotranslate is built on one belief: **the code is the only source of truth for
 translatable copy**. The catalogs aren't a parallel system you hand-author or
-curate; they're a derived, regenerable artifact — like TypeScript declarations,
+curate; they're a derived, regenerable artifact - like TypeScript declarations,
 like a build folder.
 
 Most i18n libraries treat translations as content authored separately from code.
@@ -18,7 +18,7 @@ We do it the other way. The English string lives in your component:
 
 The catalog is a build artifact you commit because diffs are useful in PRs, not
 because it's where the canonical answer lives. Move the button, rename the
-component, change the wording — the catalog follows. There is no key directory
+component, change the wording - the catalog follows. There is no key directory
 to maintain, no namespace to invent, no handoff ceremony.
 
 ## Where the AI fits
@@ -33,8 +33,8 @@ Three options for that:
    most apps never escape.
 2. **A SaaS handles the translation cloud-side.** This is `gt-next`'s model.
    Convenient, but it gives a vendor your copy and your routing layer.
-3. **The AI is invoked at build time, output is committed locally.** This is
-   autotranslate's model.
+3. **The AI is invoked at dev / build time, output is committed locally.** This
+   is autotranslate's model.
 
 Option 3 is the only one that keeps "code as source of truth" working
 end-to-end. The AI sees your source strings, your context hints, your glossary;
@@ -55,11 +55,11 @@ untangling.
 When you need to influence what the AI produces, the lever is **upstream of
 translation**, not downstream:
 
-- **`instruction`** — global tone / voice / brand rules. Goes into the system
+- **`instruction`** - global tone / voice / brand rules. Goes into the system
   prompt for every batch.
-- **`glossary`** — terms the AI must never translate or transliterate. Prepended
+- **`glossary`** - terms the AI must never translate or transliterate. Prepended
   to the instruction.
-- **`<Var>`** — opaque slots inside `<T>` blocks. The AI sees a placeholder, the
+- **`<Var>`** - opaque slots inside `<T>` blocks. The AI sees a placeholder, the
   runtime substitutes the literal value.
 - **`context` / `description`** props on `<T>` (or `$context` on `useT`).
   Disambiguate identical strings; pass guidance to translators.
@@ -85,22 +85,23 @@ If the AI still gets it wrong, lock the answer in `overrides`. But it's the
 escape hatch, not the primary surface. A codebase whose `overrides` file is
 hundreds of lines is one whose AI prompt isn't doing enough work.
 
-## Evolution — how we got here
+## Evolution - how we got here
 
-| Version | What it was about                                                                                     |
-| ------- | ----------------------------------------------------------------------------------------------------- |
-| v0.1    | The runtime + extractor. `<T>`, `<Plural>`, `<Branch>`, `useT`. Vite SPA proven end-to-end.           |
-| v0.2    | Next.js + RSC. Locale routing in `proxy.ts`. `getT()` for server components.                          |
-| v0.3    | Vite plugin with virtual catalog module + HMR.                                                        |
-| v0.4    | Type generation. ESLint plugin (`no-untranslated-jsx`, `no-dynamic-key`, `valid-icu-format`).         |
-| v0.5    | DeepL + Google providers. Hybrid provider for cost-aware routing.                                     |
-| v0.6    | Standalone `t()` for non-React code. `@autotranslate/zod` integration. Cookbook with 11 real recipes. |
-| v0.7    | Streaming dev-mode translation (Vite + Next). Glossary support.                                       |
+| Version  | What it was about                                                                                                                                                                                               |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| v0.1     | The runtime + extractor. `<T>`, `<Plural>`, `<Branch>`, `useT`. Vite SPA proven end-to-end.                                                                                                                     |
+| v0.2     | Next.js + RSC. Locale routing in `proxy.ts`. `getT()` for server components.                                                                                                                                    |
+| v0.3     | Vite plugin with virtual catalog module + HMR.                                                                                                                                                                  |
+| v0.4     | Type generation. ESLint plugin (`no-untranslated-jsx`, `no-dynamic-key`, `valid-icu-format`).                                                                                                                   |
+| v0.5     | DeepL + Google providers. Hybrid provider for cost-aware routing.                                                                                                                                               |
+| v0.6     | Standalone `t()` for non-React code. `@autotranslate/zod` integration. Cookbook with 11 real recipes.                                                                                                           |
+| v0.7     | Hash-bucketed catalog layout. Glossary, instruction, overrides. `createDevLoop` moved into `@autotranslate/cli` as the extraction and translation engine.                                                       |
+| 1.0-beta | Plugin is the product. `withAutotranslate` (Next.js) and `@autotranslate/vite` own the full pipeline. Generated `<outDir>/index.ts` delivers catalogs. Frozen-build check at compile time. CI needs no API key. |
 
 Each release is one cumulative piece, not a rewrite. The runtime contract
 (`Translator`, `Catalog`, ICU MessageFormat) hasn't shifted since v0.1. The
-on-disk format went from flat-per-locale to chunked-tree in v0.7 because real
-apps need diffable, reviewable, parallelizable catalogs — but the migration was
+on-disk format moved from flat-per-locale to hash-bucketed in v0.7 because real
+apps need diffable, reviewable, parallelizable catalogs - but the migration was
 silent and the public API never broke.
 
 ## What we won't do
@@ -108,21 +109,18 @@ silent and the public API never broke.
 - **Parallel hand-authored target catalogs.** Two sources of truth, no.
 - **Cloud-hosted catalogs.** Self-hosted is the pitch. We won't contradict it.
 - **Runtime translation.** The runtime never calls a model. Translation happens
-  at build / dev time only. Production paths are pure lookup + ICU formatting.
-- **`t('namespace.key')` as the canonical authoring style.** Dictionary mode
-  exists for users who want it, but the literal-string path is the one the
-  design optimizes for.
+  at dev / build time only. Production paths are pure lookup + ICU formatting.
 - **A separate vendor account or sign-in.** You bring your own AI provider key.
   We never see your traffic.
 
 ## What we will do
 
-- Make the AI's output better when it matters: glossary, hybrid providers,
-  prompt-cache prefixes, better instruction hooks.
+- Make the AI's output better when it matters: glossary, prompt-cache prefixes,
+  better instruction hooks.
 - Make catalogs more reviewable: chunking, per-feature splits, PR-comment
   integrations.
 - Make framework integration boring: more adapters, less ceremony.
-- Make the dev loop tighter: streaming dev mode, LSP-level diagnostics,
+- Make the dev loop tighter: incremental extraction, LSP-level diagnostics,
   type-narrowed keys everywhere.
 
 If something here is wrong for you,

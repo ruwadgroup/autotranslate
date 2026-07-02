@@ -14,8 +14,9 @@ import { zodErrorMap } from '@autotranslate/zod';
 z.config({ customError: zodErrorMap });
 ```
 
-Then bind a translator (per-request on servers, once at boot in SPAs). See
-[Zod integration](../integrations/zod.md).
+Then bind a translator. On servers, binding is handled per-request by
+`withRequestTranslator` (see [Zod integration](../integrations/zod.md)). In
+SPAs, call `bindTranslator(translator)` once at boot alongside `z.config(...)`.
 
 Add the package's source module to your `content` glob so the standard issue
 keys land in your catalog:
@@ -24,7 +25,7 @@ keys land in your catalog:
 // autotranslate.config.ts
 defineConfig({
   content: ['src/**/*.{ts,tsx}', '@autotranslate/zod/source'],
-  // …
+  // ...
 });
 ```
 
@@ -82,7 +83,7 @@ export function SignUpForm() {
     defaultValues: { email: '', password: '' },
     validators: { onChange: schema },
     onSubmit: async ({ value }) => {
-      /* … */
+      /* ... */
     },
   });
 
@@ -107,7 +108,7 @@ export function SignUpForm() {
           </>
         )}
       />
-      {/* …password field… */}
+      {/* ...password field... */}
     </form>
   );
 }
@@ -125,6 +126,7 @@ issue's `.message` directly.
 import { withRequestTranslator } from '@autotranslate/zod/next';
 import { zfd } from 'zod-form-data';
 import { z } from 'zod';
+import * as catalogModule from '../../.translations';
 
 const schema = zfd.formData({
   email: zfd.text(z.email()),
@@ -132,21 +134,24 @@ const schema = zfd.formData({
 });
 
 export async function signUp(formData: FormData) {
-  return withRequestTranslator(async () => {
-    const result = schema.safeParse(formData);
-    if (!result.success) {
-      return {
-        ok: false,
-        errors: result.error.flatten().fieldErrors, // already translated
-      };
-    }
-    // … create user
-    return { ok: true };
-  });
+  return withRequestTranslator(
+    async () => {
+      const result = schema.safeParse(formData);
+      if (!result.success) {
+        return {
+          ok: false,
+          errors: result.error.flatten().fieldErrors, // already translated
+        };
+      }
+      // ... create user
+      return { ok: true };
+    },
+    { module: catalogModule },
+  );
 }
 ```
 
-The error map runs _inside_ `withRequestTranslator`, so every message in
+The error map runs inside `withRequestTranslator`, so every message in
 `fieldErrors` reflects the request's locale.
 
 ## Custom error messages
@@ -172,14 +177,14 @@ const schema = z
   });
 ```
 
-Every literal flows through extraction → translation → typegen like any other
+Every literal flows through extraction, translation, and typegen like any other
 `t()` call.
 
 ## Tips
 
 - **Don't translate field labels through Zod.** Field labels live in your JSX
-  (`<label>`). Translate them with `<T>` or `useT` — Zod errors only cover the
-  _validation message_.
+  (`<label>`). Translate them with `<T>` or `useT` - Zod errors only cover the
+  validation message.
 
 - **`safeParse`, not `parse`, in form components.** You want to render errors,
   not throw.

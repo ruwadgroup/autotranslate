@@ -1,17 +1,20 @@
 # Providers
 
-Providers turn source-locale entries into translations. The CLI handles
-batching, concurrency, caching, and override application on top.
+Providers turn source-locale entries into translations. In development, the
+framework plugin's dev loop calls the provider on every save automatically - no
+commands to run. In CI or scripting contexts, `autotranslate translate` drives
+the same logic explicitly. The CLI handles batching, concurrency, caching, and
+override application regardless of how it's invoked.
 
 ## Built-in providers
 
-| Provider                          | When to use                                                             |
-| --------------------------------- | ----------------------------------------------------------------------- |
-| `@autotranslate/providers/stub`   | CI, tests, dev mode without credentials.                                |
-| `@autotranslate/providers/ai`     | Production. Anthropic / OpenAI / Google / OpenRouter via Vercel AI SDK. |
-| `@autotranslate/providers/deepl`  | Plain-string copy. Excellent quality on supported pairs.                |
-| `@autotranslate/providers/google` | Plain-string copy. Cheap and fast.                                      |
-| `@autotranslate/providers/hybrid` | Routes structured trees to AI, plain strings to DeepL/Google.           |
+| Provider | When to use                                                                          |
+| -------- | ------------------------------------------------------------------------------------ |
+| `stub`   | CI, tests, dev mode without credentials.                                             |
+| `ai`     | Production. Anthropic / OpenAI / Google / OpenRouter via Vercel AI SDK.              |
+| `deepl`  | Plain-string copy. Excellent quality on supported pairs.                             |
+| `google` | Plain-string copy. Cheap and fast.                                                   |
+| `custom` | Any service not listed above. See [Custom provider](../cookbook/custom-provider.md). |
 
 You select one in `autotranslate.config.ts`:
 
@@ -32,11 +35,11 @@ provider: { name: 'stub' }
 provider: { name: 'stub', pseudo: true }
 ```
 
-`pseudo: true` accents letters and wraps text in `⟦ … ⟧`:
+`pseudo: true` accents letters and wraps text in `⟦ ... ⟧`:
 
 ```
-'Sign out' → '⟦ Šíǵñ óúţ ⟧'
-'Welcome, {name}!' → '⟦ Ŵéĺçóɱé, {name}! ⟧'
+'Sign out' -> '⟦ Šíǵñ óúţ ⟧'
+'Welcome, {name}!' -> '⟦ Ŵéĺçóɱé, {name}! ⟧'
 ```
 
 Useful for surfacing untranslated UI and layout overflow during dev. ICU
@@ -63,7 +66,7 @@ instruction: 'Match a casual, modern product voice.',
 | `model`  | `string` | `<vendor>:<model-id>` (required).      |
 | `apiKey` | `string` | Falls back to vendor-default env vars. |
 
-Top-level `instruction` is the system prompt — tone, audience, brand voice.
+Top-level `instruction` is the system prompt - tone, audience, brand voice.
 
 ### Vendors
 
@@ -74,7 +77,7 @@ Top-level `instruction` is the system prompt — tone, audience, brand voice.
 | `google`     | `google:gemini-2.5-flash`               | `@ai-sdk/google`    |
 | `openrouter` | `openrouter:anthropic/claude-haiku-4-5` | `@ai-sdk/openai`    |
 
-Peer deps load lazily — install only the vendor you actually use. Plus `ai` is
+Peer deps load lazily - install only the vendor you actually use. `ai` is
 required by all of them:
 
 ```bash
@@ -103,13 +106,15 @@ provider: {
 | Option      | Type                                                               |
 | ----------- | ------------------------------------------------------------------ |
 | `apiKey`    | `string` (required).                                               |
-| `endpoint`  | `string` — defaults to `https://api.deepl.com/v2/translate`.       |
+| `endpoint`  | `string` - defaults to `https://api.deepl.com/v2/translate`.       |
 | `formality` | `'default' \| 'more' \| 'less' \| 'prefer_more' \| 'prefer_less'`. |
-| `context`   | `string` — passed through to DeepL.                                |
-| `localeMap` | `Record<string, string>` — override BCP-47 → DeepL mapping.        |
+| `context`   | `string` - passed through to DeepL.                                |
+| `localeMap` | `Record<string, string>` - override BCP-47 to DeepL mapping.       |
 
-Plural / select / pound (`#`) / tag entries throw — route those through the `ai`
-provider, or pair the two with a [hybrid setup](#hybrid-strategies).
+Plural / select / pound (`#`) / tag entries throw - route those through the `ai`
+provider or a custom provider. See
+[Custom provider](../cookbook/custom-provider.md) for a hand-rolled hybrid
+approach.
 
 ## `google`
 
@@ -122,23 +127,17 @@ provider: {
 }
 ```
 
-| Option      | Type                                                         |
-| ----------- | ------------------------------------------------------------ |
-| `apiKey`    | `string` (required).                                         |
-| `endpoint`  | `string` — defaults to the v2 base URL.                      |
-| `localeMap` | `Record<string, string>` — override BCP-47 → Google mapping. |
+| Option      | Type                                                          |
+| ----------- | ------------------------------------------------------------- |
+| `apiKey`    | `string` (required).                                          |
+| `endpoint`  | `string` - defaults to the v2 base URL.                       |
+| `localeMap` | `Record<string, string>` - override BCP-47 to Google mapping. |
 
 ## Custom providers
 
-Anything else — local LLMs, internal services, glossary lookups — is a small
+Anything else - local LLMs, internal services, glossary lookups - is a small
 function. See [Custom provider](../cookbook/custom-provider.md) for a
 walk-through.
-
-## Hybrid strategies
-
-Mix-and-match per locale or per entry. The pattern: route plain strings to
-DeepL/Google for cost/quality, route structured trees to AI for ICU correctness.
-See [Custom provider](../cookbook/custom-provider.md) for the hybrid recipe.
 
 ## Tips
 
