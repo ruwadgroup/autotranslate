@@ -79,17 +79,6 @@
         "default": "./dist/stub.cjs"
       }
     },
-    "./hybrid": {
-      "types": "./dist/hybrid.d.ts",
-      "import": {
-        "types": "./dist/hybrid.d.ts",
-        "default": "./dist/hybrid.js"
-      },
-      "require": {
-        "types": "./dist/hybrid.d.cts",
-        "default": "./dist/hybrid.cjs"
-      }
-    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -113,10 +102,10 @@
     "zod": "^4.4.3"
   },
   "peerDependencies": {
-    "@ai-sdk/anthropic": "*",
-    "@ai-sdk/google": "*",
-    "@ai-sdk/openai": "*",
-    "ai": ">=5.0.0 <7.0.0"
+    "@ai-sdk/anthropic": ">=3.0.0 <4.0.0",
+    "@ai-sdk/google": ">=3.0.0 <4.0.0",
+    "@ai-sdk/openai": ">=3.0.0 <4.0.0",
+    "ai": ">=6.0.0 <7.0.0"
   },
   "peerDependenciesMeta": {
     "ai": {
@@ -159,9 +148,6 @@
       ],
       "stub": [
         "./dist/stub.d.ts"
-      ],
-      "hybrid": [
-        "./dist/hybrid.d.ts"
       ]
     }
   }

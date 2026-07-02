@@ -162,13 +162,15 @@ async function defaultResolveModel(model: string, apiKey?: string): Promise<unkn
       return createGoogleGenerativeAI({ ...(apiKey ? { apiKey } : {}) })(modelId);
     }
     case 'openrouter': {
-      // OpenRouter is OpenAI-compatible — reuse the OpenAI factory with an
-      // overridden baseURL so users don't need an extra peer dep.
+      // OpenRouter is OpenAI-compatible - reuse the OpenAI factory with an
+      // overridden baseURL so users don't need an extra peer dep. Must use
+      // `.chat()`: the bare factory returns a Responses-API model, which
+      // OpenRouter does not implement.
       const { createOpenAI } = await import('@ai-sdk/openai');
       return createOpenAI({
         baseURL: 'https://openrouter.ai/api/v1',
         ...(apiKey ? { apiKey } : {}),
-      })(modelId);
+      }).chat(modelId);
     }
     default:
       throw new Error(
