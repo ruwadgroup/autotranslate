@@ -42,4 +42,10 @@ Thumbs.db
 .tmp/
 
 # autotranslate output
+# Ignore all .translations directories everywhere by default ...
 .translations/
+# ... but commit example app catalogs (they demonstrate the zero-command flow).
+# Only the provider cache is excluded.
+!examples/*/.translations/
+!examples/*/.translations/**
+examples/*/.translations/.cache/

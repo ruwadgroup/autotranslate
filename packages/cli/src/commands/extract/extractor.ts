@@ -61,8 +61,7 @@ export function extractFile(filePath: string, source: string): FileExtraction {
       }
     },
 
-    // `const t = useT()` — `useTranslations(ns)` is intentionally excluded
-    // (dictionary mode reads from the user-authored dictionary, not literals).
+    // `const t = useT()` — track the local alias for call-site extraction.
     VariableDeclarator(path) {
       const init = path.node.init;
       if (
@@ -92,7 +91,7 @@ export function extractFile(filePath: string, source: string): FileExtraction {
       const callee = path.node.callee;
       if (callee.type !== 'Identifier' || !tBindingNames.has(callee.name)) return;
       const arg = path.node.arguments[0];
-      if (!arg || arg.type !== 'StringLiteral') return;
+      if (arg?.type !== 'StringLiteral') return;
       const literal = arg.value;
       if (literal === '') return;
       const meta = readCallHints(path.node.arguments[1]);
@@ -140,7 +139,7 @@ function readNumberAttr(value: t.JSXAttribute['value']): number | undefined {
 }
 
 function readCallHints(arg: t.CallExpression['arguments'][number] | undefined): MessageHints {
-  if (!arg || arg.type !== 'ObjectExpression') return {};
+  if (arg?.type !== 'ObjectExpression') return {};
   const meta: { context?: string; description?: string; maxChars?: number } = {};
   for (const prop of arg.properties) {
     if (prop.type !== 'ObjectProperty' || prop.computed) continue;

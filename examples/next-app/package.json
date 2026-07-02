@@ -19,20 +19,20 @@
     "@autotranslate/core": "workspace:*",
     "@autotranslate/next": "workspace:*",
     "@autotranslate/react": "workspace:*",
-    "next": "16.2.4",
-    "react": "19.2.5",
-    "react-dom": "19.2.5"
+    "next": "16.2.10",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
   },
   "devDependencies": {
-    "@ai-sdk/openai": "^3.0.0",
+    "@ai-sdk/openai": "^3.0.80",
     "@autotranslate/cli": "workspace:*",
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^25.6.0",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "ai": "^6.0.0",
+    "@tailwindcss/postcss": "^4.3.2",
+    "@types/node": "^26.1.0",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "ai": "^6.0.218",
     "dotenv": "^17.4.2",
-    "tailwindcss": "^4",
-    "typescript": "^5.7.2"
+    "tailwindcss": "^4.3.2",
+    "typescript": "^5.9.3"
   }
 }

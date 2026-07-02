@@ -3,7 +3,7 @@ import { defineConfig } from 'tsup';
 
 export default defineConfig([
   {
-    entry: { index: 'src/index.ts' },
+    entry: { index: 'src/index.ts', transform: 'src/auto-transform.ts' },
     format: ['esm', 'cjs'],
     dts: { compilerOptions: { composite: false, incremental: false } },
     sourcemap: true,

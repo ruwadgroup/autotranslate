@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { canonicalKey, type StructuredMessage } from './jsx-tree';
 import { applyContextToKey, CONTEXT_KEY_SEPARATOR, sourceKey } from './key';
-import { getMissCount, resetMissStats } from './miss';
 import { buildCatalog, createTranslator } from './translator';
 
 describe('createTranslator', () => {
@@ -28,25 +27,22 @@ describe('createTranslator', () => {
   });
 
   it('formats ICU on the source key when the catalog misses', () => {
-    resetMissStats();
     const t = createTranslator({ locale: 'en', catalog: {} });
     expect(t.t('Hello, {name}!', { name: 'Ada' })).toBe('Hello, Ada!');
     expect(t.t('{count, plural, one {# item} other {# items}}', { count: 2 })).toBe('2 items');
   });
 
-  it('records misses for default-fallback renders', () => {
-    resetMissStats();
+  it('returns the key on every miss (default-fallback path)', () => {
     const t = createTranslator({ locale: 'es', catalog: {} });
-    t.t('Untranslated');
-    t.t('Untranslated');
-    expect(getMissCount()).toBe(2);
+    expect(t.t('Untranslated')).toBe('Untranslated');
+    expect(t.t('Untranslated')).toBe('Untranslated');
   });
 
-  it('does not record misses when onMissing is supplied', () => {
-    resetMissStats();
-    const t = createTranslator({ locale: 'es', catalog: {}, onMissing: () => 'X' });
-    t.t('Whatever');
-    expect(getMissCount()).toBe(0);
+  it('invokes onMissing instead of the default path when supplied', () => {
+    const onMissing = vi.fn(() => 'X');
+    const t = createTranslator({ locale: 'es', catalog: {}, onMissing });
+    expect(t.t('Whatever')).toBe('X');
+    expect(onMissing).toHaveBeenCalled();
   });
 
   it('invokes onMissing when configured', () => {

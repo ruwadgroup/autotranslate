@@ -101,3 +101,41 @@ describe('safeParseConfig', () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe('mode field', () => {
+  it('defaults to explicit', () => {
+    const cfg = parseConfig({ targets: ['es'], content: ['src/**'] });
+    expect(cfg.mode).toBe('explicit');
+  });
+
+  it('accepts auto', () => {
+    const cfg = parseConfig({ targets: ['es'], content: ['src/**'], mode: 'auto' });
+    expect(cfg.mode).toBe('auto');
+  });
+
+  it('rejects unknown values', () => {
+    expect(() => parseConfig({ targets: ['es'], content: ['src/**'], mode: 'manual' })).toThrow();
+  });
+});
+
+describe('build field', () => {
+  it('defaults to { frozen: true, translateOnBuild: false }', () => {
+    const cfg = parseConfig({ targets: ['es'], content: ['src/**'] });
+    expect(cfg.build).toEqual({ frozen: true, translateOnBuild: false });
+  });
+
+  it('accepts overrides', () => {
+    const cfg = parseConfig({
+      targets: ['es'],
+      content: ['src/**'],
+      build: { frozen: false, translateOnBuild: true },
+    });
+    expect(cfg.build).toEqual({ frozen: false, translateOnBuild: true });
+  });
+
+  it('rejects unknown keys (strict)', () => {
+    expect(() =>
+      parseConfig({ targets: ['es'], content: ['src/**'], build: { frozen: true, extra: true } }),
+    ).toThrow();
+  });
+});

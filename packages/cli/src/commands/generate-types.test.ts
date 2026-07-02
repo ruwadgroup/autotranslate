@@ -1,15 +1,30 @@
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseConfig } from '@autotranslate/core/config';
 import { describe, expect, it } from 'vitest';
+import { writeChunkedCatalog, writeManifest } from '../catalog';
 import { generateTypes } from './generate-types';
 
+/**
+ * Write a locale catalog in the chunked directory format.
+ * Accepts either string values (plain strings) or CatalogEntry values.
+ * No key migration — the fixture keys must already be in canonical form.
+ */
 async function setup(catalog: Record<string, unknown>) {
   const cwd = await mkdtemp(join(tmpdir(), 'autotranslate-typegen-'));
   const outDir = join(cwd, '.translations');
   await mkdir(outDir, { recursive: true });
-  await writeFile(join(outDir, 'en.json'), JSON.stringify(catalog), 'utf8');
+
+  // Write catalog in chunked format (directory-based).
+  await writeChunkedCatalog(
+    outDir,
+    'en',
+    catalog as Record<string, import('@autotranslate/core').CatalogEntry>,
+    {},
+  );
+  await writeManifest(outDir, {});
+
   const config = parseConfig({
     source: 'en',
     targets: ['es'],

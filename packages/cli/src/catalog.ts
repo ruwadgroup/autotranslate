@@ -1,6 +1,6 @@
 import { mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { buildChunkLayout, type ChunkPathOptions, migrateKey } from '@autotranslate/core/internal';
+import { buildChunkLayout, type ChunkPathOptions } from '@autotranslate/core/internal';
 import type { CatalogEntry, Manifest, MessageMeta } from './types';
 
 export type CatalogFile = Record<string, CatalogEntry>;
@@ -18,30 +18,18 @@ async function readJsonFile(path: string): Promise<CatalogFile> {
 }
 
 /**
- * Read all chunks for a locale and merge into one catalog. Walks
- * `<outDir>/<locale>/**\/*.json` recursively. Falls back to the legacy flat
- * `<outDir>/<locale>.json` when the directory is missing — this lets 0.1.0
- * users upgrade without losing data on first read.
+ * Read all chunks for a locale and merge into one catalog.
+ * Walks `<outDir>/<locale>/**\/*.json` recursively. Returns `{}` when the
+ * directory does not exist (fresh project or locale not yet translated).
  */
 export async function readChunkedCatalog(outDir: string, locale: string): Promise<CatalogFile> {
   const localeDir = join(outDir, locale);
-  if (await isDirectory(localeDir)) {
-    const merged: CatalogFile = {};
-    for (const file of await listJsonFilesRecursive(localeDir)) {
-      Object.assign(merged, await readJsonFile(file));
-    }
-    return rekeyCatalog(merged);
+  if (!(await isDirectory(localeDir))) return {};
+  const merged: CatalogFile = {};
+  for (const file of await listJsonFilesRecursive(localeDir)) {
+    Object.assign(merged, await readJsonFile(file));
   }
-  return rekeyCatalog(await readJsonFile(join(outDir, `${locale}.json`)));
-}
-
-function rekeyCatalog(input: CatalogFile): CatalogFile {
-  const out: CatalogFile = {};
-  for (const k of Object.keys(input)) {
-    const v = input[k];
-    if (v !== undefined) out[migrateKey(k)] = v;
-  }
-  return out;
+  return merged;
 }
 
 export interface WriteChunkedResult {
@@ -97,12 +85,7 @@ export async function writeChunkedCatalog(
 
 export async function readManifest(outDir: string): Promise<Manifest> {
   const data = await readJsonFile(join(outDir, META_FILENAME));
-  const out: Manifest = {};
-  for (const k of Object.keys(data)) {
-    const meta = (data as unknown as Manifest)[k];
-    if (meta !== undefined) out[migrateKey(k)] = meta;
-  }
-  return out;
+  return data as unknown as Manifest;
 }
 
 export async function writeManifest(outDir: string, manifest: Manifest): Promise<void> {
@@ -162,7 +145,7 @@ async function pruneEmptyDirsBelow(root: string): Promise<void> {
     try {
       await rm(root, { recursive: false });
     } catch {
-      // best-effort
+      // Pruning empty locale dirs is cosmetic - never fail the write over it.
     }
   }
 }

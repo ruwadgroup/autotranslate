@@ -3,6 +3,7 @@ import { defineConfig } from 'tsup';
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
+    classifier: 'src/classifier.ts',
     config: 'src/config.ts',
     locale: 'src/locale.ts',
     icu: 'src/icu.ts',

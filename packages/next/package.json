@@ -57,15 +57,15 @@
         "default": "./dist/middleware.cjs"
       }
     },
-    "./streaming": {
-      "types": "./dist/streaming.d.ts",
+    "./auto-loader": {
+      "types": "./dist/auto-loader.d.ts",
       "import": {
-        "types": "./dist/streaming.d.ts",
-        "default": "./dist/streaming.js"
+        "types": "./dist/auto-loader.d.ts",
+        "default": "./dist/auto-loader.js"
       },
       "require": {
-        "types": "./dist/streaming.d.cts",
-        "default": "./dist/streaming.cjs"
+        "types": "./dist/auto-loader.d.cts",
+        "default": "./dist/auto-loader.cjs"
       }
     },
     "./package.json": "./package.json"
@@ -103,12 +103,12 @@
   },
   "devDependencies": {
     "@autotranslate/cli": "workspace:*",
-    "@types/node": "^25.6.0",
-    "next": "^16.2.4",
-    "react": "^19.2.5",
-    "tsup": "^8.3.5",
-    "typescript": "^5.7.2",
-    "vitest": "^4.1.5"
+    "@types/node": "^26.1.0",
+    "next": "^16.2.10",
+    "react": "^19.2.7",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.9"
   },
   "engines": {
     "node": ">=20.0.0"
@@ -125,8 +125,8 @@
       "middleware": [
         "./dist/middleware.d.ts"
       ],
-      "streaming": [
-        "./dist/streaming.d.ts"
+      "auto-loader": [
+        "./dist/auto-loader.d.ts"
       ]
     }
   }

@@ -1,0 +1,24 @@
+{
+  "t.7953d769b7bb": [
+    {
+      "type": "text",
+      "value": "Revenue: "
+    },
+    {
+      "type": "var",
+      "name": "currency_0"
+    },
+    {
+      "type": "text",
+      "value": ". Last updated "
+    },
+    {
+      "type": "var",
+      "name": "rel_0"
+    },
+    {
+      "type": "text",
+      "value": "."
+    }
+  ]
+}

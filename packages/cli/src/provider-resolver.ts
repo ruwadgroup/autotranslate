@@ -22,15 +22,6 @@ async function instantiate(provider: ResolvedConfig['config']['provider']): Prom
       return makeDeepl(provider);
     case 'google':
       return makeGoogle(provider);
-    case 'hybrid': {
-      const { createHybridProvider } = await import('@autotranslate/providers/hybrid');
-      const ai = await makeAi(provider.ai);
-      const plain =
-        provider.plain.name === 'deepl'
-          ? await makeDeepl(provider.plain)
-          : await makeGoogle(provider.plain);
-      return createHybridProvider({ ai, plain });
-    }
     case 'custom':
       throw new Error(
         "provider.name === 'custom' isn't supported via the CLI. Pass `provider` to " +

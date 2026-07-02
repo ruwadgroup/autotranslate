@@ -5,7 +5,7 @@ export default defineConfig({
     index: 'src/index.ts',
     plugin: 'src/plugin.ts',
     middleware: 'src/middleware.ts',
-    streaming: 'src/streaming.ts',
+    'auto-loader': 'src/auto-loader.ts',
   },
   format: ['esm', 'cjs'],
   dts: { compilerOptions: { composite: false, incremental: false } },
@@ -13,5 +13,5 @@ export default defineConfig({
   splitting: true,
   clean: true,
   treeshake: true,
-  external: ['next', 'react', 'react-dom'],
+  external: ['next', 'react', 'react-dom', '@autotranslate/cli'],
 });

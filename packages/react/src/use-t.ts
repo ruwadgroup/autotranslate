@@ -30,23 +30,6 @@ export function useT(): (key: CatalogKey, params?: Readonly<Record<string, unkno
   return useCallback((key: CatalogKey, params) => translator.t(key, params), [translator]);
 }
 
-/**
- * Dictionary-mode hook. Prefixes every lookup with `namespace.` so nested keys
- * read naturally.
- *
- * ```ts
- * const t = useTranslations('dashboard');
- * t('title'); // → "Dashboard"
- * ```
- */
-export function useTranslations(
-  namespace?: string,
-): (key: CatalogKey, params?: Readonly<Record<string, unknown>>) => string {
-  const t = useT();
-  const prefix = namespace ? `${namespace}.` : '';
-  return useCallback((key: CatalogKey, params) => t(`${prefix}${key}`, params), [t, prefix]);
-}
-
 export function useLocale(): string {
   return useTranslationContext().locale;
 }

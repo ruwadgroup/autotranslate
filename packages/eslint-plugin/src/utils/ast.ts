@@ -1,27 +1,17 @@
+import {
+  isAllowlistedAttribute,
+  jsxTextHasContent,
+  TRANSLATION_MARKERS,
+} from '@autotranslate/core/classifier';
 import type { Rule } from 'eslint';
+
+export { isAllowlistedAttribute, jsxTextHasContent, TRANSLATION_MARKERS };
+
+export const TRANSLATOR_FACTORIES: ReadonlySet<string> = new Set(['useT', 'getT']);
 
 // `@types/eslint`'s `Rule.Node` only covers the ESTree spec; JSX nodes live
 // outside it. We narrow via the discriminator at runtime.
 type AnyNode = Rule.Node | { readonly type: string; readonly parent?: AnyNode };
-
-export const TRANSLATION_MARKERS: ReadonlySet<string> = new Set([
-  'T',
-  'Tx',
-  'Var',
-  'Plural',
-  'Branch',
-  'Num',
-  'Currency',
-  'DateTime',
-  'RelativeTime',
-]);
-
-export const TRANSLATOR_FACTORIES: ReadonlySet<string> = new Set([
-  'useT',
-  'useTranslations',
-  'getT',
-  'getTranslations',
-]);
 
 interface JSXOpeningElementLike {
   readonly type: 'JSXOpeningElement';
@@ -56,10 +46,6 @@ export function findMarkerAncestor(
   return null;
 }
 
-export function jsxTextHasContent(value: string): boolean {
-  return value.replace(/\s+/g, ' ').trim() !== '';
-}
-
 interface LiteralLike {
   readonly type: 'Literal';
   readonly value: unknown;
@@ -88,50 +74,6 @@ export function readStaticString(
   }
   return null;
 }
-
-/** Attributes that may carry untranslated string literals. */
-export const ALLOWLIST_ATTRIBUTES: ReadonlySet<string> = new Set([
-  // structural
-  'className',
-  'class',
-  'id',
-  'key',
-  'ref',
-  'name',
-  'type',
-  'role',
-  'slot',
-  'style',
-  'data-testid',
-  // navigation / forms
-  'href',
-  'src',
-  'srcSet',
-  'alt',
-  'as',
-  'rel',
-  'target',
-  'method',
-  'action',
-  'encType',
-  'autoComplete',
-  'autoCorrect',
-  'spellCheck',
-  'pattern',
-  'inputMode',
-  // layout
-  'width',
-  'height',
-  'size',
-  'tabIndex',
-  // semantic but locale-neutral
-  'lang',
-  'dir',
-  'translate',
-  // testing
-  'data-test',
-  'data-cy',
-]);
 
 interface JSXAttributeLike {
   readonly type: 'JSXAttribute';

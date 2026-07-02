@@ -23,20 +23,3 @@ export function recordMiss(key: string, locale: Locale): void {
     );
   }
 }
-
-/** Total misses since the last `resetMissStats()`. */
-export function getMissCount(): number {
-  let total = 0;
-  for (const n of counts.values()) total += n;
-  return total;
-}
-
-/** Per-key snapshot. Composite key is `${locale} ${catalogKey}`. */
-export function getMissBreakdown(): ReadonlyMap<string, number> {
-  return new Map(counts);
-}
-
-export function resetMissStats(): void {
-  counts.clear();
-  warned.clear();
-}

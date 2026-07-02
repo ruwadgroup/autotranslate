@@ -1,0 +1,52 @@
+{
+  "t.84977a8aeaf2": [
+    {
+      "type": "text",
+      "value": "⟦ Ţŕý ĤḾŔ ⟧"
+    }
+  ],
+  "t.8e24c92ab08d": [
+    {
+      "type": "var",
+      "name": "num_0"
+    },
+    {
+      "type": "text",
+      "value": "⟦  ṽíšíţóŕš ţóđàý —  ⟧"
+    },
+    {
+      "type": "branch",
+      "name": "branch",
+      "cases": {
+        "pending": [
+          {
+            "type": "text",
+            "value": "⟦ óŕđéŕ íš ƥéñđíñǵ ŕéṽíéŵ ⟧"
+          }
+        ],
+        "shipped": [
+          {
+            "type": "text",
+            "value": "⟦ óŕđéŕ íš óñ íţš ŵàý ⟧"
+          }
+        ],
+        "delivered": [
+          {
+            "type": "text",
+            "value": "⟦ óŕđéŕ ĥàš ƀééñ đéĺíṽéŕéđ ⟧"
+          }
+        ],
+        "default": [
+          {
+            "type": "text",
+            "value": "⟦ óŕđéŕ šţàţúš íš úñǩñóŵñ ⟧"
+          }
+        ]
+      }
+    },
+    {
+      "type": "text",
+      "value": "⟦ . ⟧"
+    }
+  ]
+}

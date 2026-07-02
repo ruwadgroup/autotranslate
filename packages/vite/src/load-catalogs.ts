@@ -1,7 +1,6 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import type { Catalog, Locale } from '@autotranslate/core';
-import { migrateCatalog } from '@autotranslate/core/internal';
 
 export interface LoadedCatalogs {
   readonly source: Locale;
@@ -30,14 +29,12 @@ export async function loadCatalogs(
 
 async function readLocale(outDir: string, locale: Locale): Promise<Catalog> {
   const localeDir = join(outDir, locale);
-  if (await isDirectory(localeDir)) {
-    const merged: Catalog = {};
-    for (const file of await listJsonFiles(localeDir)) {
-      Object.assign(merged, await readJson(file));
-    }
-    return migrateCatalog(merged);
+  if (!(await isDirectory(localeDir))) return {};
+  const merged: Catalog = {};
+  for (const file of await listJsonFiles(localeDir)) {
+    Object.assign(merged, await readJson(file));
   }
-  return migrateCatalog(await readJson(join(outDir, `${locale}.json`)));
+  return merged;
 }
 
 async function listJsonFiles(dir: string): Promise<string[]> {

@@ -8,9 +8,7 @@ Migration guides + new cookbook recipes
   migration paths from each major i18n library.
 - `docs/cookbook/multi-tenant.md` — three patterns for multi-tenant translations
   (build-time per tenant, runtime overrides, AI instruction injection per
-  tenant).
-- `docs/cookbook/ab-copy.md` — A/B copy testing patterns layered on external
-  experiment frameworks.
+  tenant). experiment frameworks.
 - `docs/cookbook/branded-glossary.md` — four layers of brand-term locking
   (instruction, `<Var>`, overrides, separate config).
 

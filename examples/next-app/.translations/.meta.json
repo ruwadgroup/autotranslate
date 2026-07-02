@@ -1,0 +1,116 @@
+{
+  "a4fe65264ef7": {
+    "occurrences": [
+      {
+        "file": "src/components/LocaleSwitcher.tsx",
+        "line": 44
+      }
+    ]
+  },
+  "t.0abb79a3c869": {
+    "occurrences": [
+      {
+        "file": "src/components/StatsCard.tsx",
+        "line": 52
+      }
+    ]
+  },
+  "t.0d8d2b86f9f5": {
+    "occurrences": [
+      {
+        "file": "src/components/LocaleCard.tsx",
+        "line": 16
+      }
+    ]
+  },
+  "t.2152705354ae": {
+    "occurrences": [
+      {
+        "file": "src/components/Hero.tsx",
+        "line": 11
+      }
+    ]
+  },
+  "t.2e7b1e1321df": {
+    "occurrences": [
+      {
+        "file": "src/app/[lang]/page.tsx",
+        "line": 58
+      }
+    ]
+  },
+  "t.3c34f07e1845": {
+    "occurrences": [
+      {
+        "file": "src/components/Hero.tsx",
+        "line": 14
+      }
+    ]
+  },
+  "t.6259fdea983c": {
+    "occurrences": [
+      {
+        "file": "src/components/Hero.tsx",
+        "line": 8
+      }
+    ]
+  },
+  "t.7953d769b7bb": {
+    "occurrences": [
+      {
+        "file": "src/components/StatsCard.tsx",
+        "line": 45
+      }
+    ]
+  },
+  "t.8e24c92ab08d": {
+    "occurrences": [
+      {
+        "file": "src/components/StatsCard.tsx",
+        "line": 30
+      }
+    ]
+  },
+  "t.9c674cc7f68e": {
+    "occurrences": [
+      {
+        "file": "src/components/StatsCard.tsx",
+        "line": 26
+      }
+    ]
+  },
+  "t.bb631215c8d2": {
+    "occurrences": [
+      {
+        "file": "src/app/[lang]/page.tsx",
+        "line": 55
+      }
+    ]
+  },
+  "t.bf72e3d1b0a4": {
+    "occurrences": [
+      {
+        "file": "src/components/LocaleCard.tsx",
+        "line": 19
+      }
+    ]
+  },
+  "t.c8f94126cad3": {
+    "context": "navbar action",
+    "occurrences": [
+      {
+        "file": "src/components/StatsCard.tsx",
+        "line": 67
+      }
+    ]
+  },
+  "t.d6c5ecf91d89": {
+    "context": "form button",
+    "occurrences": [
+      {
+        "file": "src/components/StatsCard.tsx",
+        "line": 69
+      }
+    ]
+  }
+}

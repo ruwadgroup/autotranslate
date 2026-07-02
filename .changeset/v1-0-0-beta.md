@@ -7,7 +7,6 @@
 '@autotranslate/providers': major
 '@autotranslate/eslint-plugin': major
 '@autotranslate/typescript-plugin': major
-'@autotranslate/experiments': major
 '@autotranslate/zod': major
 ---
 
@@ -26,7 +25,6 @@ What landed since 0.2:
 - Performance benchmarks published in `docs/performance.md`
 - Public-API contract enumerated in `STABILITY.md`
 - TypeScript Language Service plugin (`@autotranslate/typescript-plugin`)
-- Copy-experiments package (`@autotranslate/experiments`)
 - Migration guides for `react-i18next`, `next-intl`, `lingui`, `gt-next`
 
 What's expected to change before 1.0 GA:

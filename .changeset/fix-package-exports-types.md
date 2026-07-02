@@ -6,7 +6,6 @@
 '@autotranslate/vite': patch
 '@autotranslate/providers': patch
 '@autotranslate/eslint-plugin': patch
-'@autotranslate/experiments': patch
 '@autotranslate/zod': patch
 ---
 

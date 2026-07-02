@@ -1,5 +1,3 @@
-import { stat } from 'node:fs/promises';
-import { join } from 'node:path';
 import type { CatalogEntry, Locale, Manifest, MessageMeta } from '@autotranslate/core';
 import { buildChunkLayout } from '@autotranslate/core/internal';
 import type { Provider, TranslationContextItem, TranslationItem } from '@autotranslate/providers';
@@ -8,17 +6,16 @@ import {
   cacheChunkPath,
   computeChunkHash,
   contentHash,
-  pruneLegacyCache,
   readCacheChunk,
   writeCacheChunk,
 } from '../cache';
 import {
   type CatalogFile,
-  isMissing,
   readChunkedCatalog,
   readManifest,
   writeChunkedCatalog,
 } from '../catalog';
+import { writeCatalogModule } from '../catalog-module';
 import { resolveProvider } from '../provider-resolver';
 import type { LocaleStats, ResolvedConfig, TranslateResult, TranslateStats } from '../types';
 
@@ -51,12 +48,6 @@ export async function translate(
   const provider = options.provider ?? (await resolveProvider(resolved));
   const sourceCatalog = await readChunkedCatalog(outDir, config.source);
   const manifest = await readManifest(outDir);
-
-  // Migrate 0.1.0 layout: reshape flat source, prune legacy cache.
-  if (await fileExists(join(outDir, `${config.source}.json`))) {
-    await writeChunkedCatalog(outDir, config.source, sourceCatalog, manifest);
-  }
-  await pruneLegacyCache(outDir);
 
   const mergedInstruction = mergeInstruction(config.instruction, config.glossary);
 
@@ -122,6 +113,8 @@ export async function translate(
       writeChunkedCatalog(outDir, target, catalog, manifest),
     ),
   );
+
+  await writeCatalogModule(outDir, config.source, [config.source, ...config.targets]);
 
   return { stats };
 }
@@ -257,15 +250,6 @@ async function runWithConcurrency<T>(
     }
   }
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => pump()));
-}
-
-async function fileExists(path: string): Promise<boolean> {
-  try {
-    return (await stat(path)).isFile();
-  } catch (error) {
-    if (isMissing(error)) return false;
-    throw error;
-  }
 }
 
 function mergeInstruction(

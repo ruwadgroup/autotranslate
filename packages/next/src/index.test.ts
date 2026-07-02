@@ -1,37 +1,62 @@
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { buildCatalog } from '@autotranslate/core';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { clearCatalogCache, getT } from './index';
+import type { CatalogModule } from './types';
 
-describe('getT', () => {
-  it('reads catalogs from the default fs loader', async () => {
-    clearCatalogCache();
-    const cwd = await mkdtemp(join(tmpdir(), 'autotranslate-next-getT-'));
-    const outDir = '.translations';
-    await mkdir(join(cwd, outDir), { recursive: true });
-    await writeFile(
-      join(cwd, outDir, 'es.json'),
-      JSON.stringify({ Hi: 'Hola', greeting: 'Hola, {name}!' }),
-    );
-    const t = await getT('es', { cwd, outDir });
+afterEach(() => {
+  clearCatalogCache();
+});
+
+function makeFakeModule(catalogs: Record<string, Record<string, string>>): CatalogModule & {
+  spy: ReturnType<typeof vi.fn>;
+} {
+  const spy = vi.fn(async (locale: string) => buildCatalog(catalogs[locale] ?? {}));
+  return {
+    source: 'en',
+    locales: Object.keys(catalogs) as ReadonlyArray<string>,
+    loadCatalog: spy,
+    spy,
+  };
+}
+
+describe('getT - module path', () => {
+  it('resolves translations via loadCatalog', async () => {
+    const mod = makeFakeModule({ es: { Hi: 'Hola' } });
+    const t = await getT('es', { module: mod });
     expect(t.t('Hi')).toBe('Hola');
-    expect(t.t('greeting', { name: 'Ada' })).toBe('Hola, Ada!');
   });
 
-  it('falls back to the source-locale catalog when configured', async () => {
+  it('memoizes: loadCatalog called once across two getT calls for the same locale', async () => {
+    const mod = makeFakeModule({ es: { Hi: 'Hola' } });
+    await getT('es', { module: mod });
+    await getT('es', { module: mod });
+    expect(mod.spy).toHaveBeenCalledTimes(1);
+  });
+
+  it('clearCatalogCache forces a fresh loadCatalog call', async () => {
+    const mod = makeFakeModule({ es: { Hi: 'Hola' } });
+    await getT('es', { module: mod });
     clearCatalogCache();
-    const cwd = await mkdtemp(join(tmpdir(), 'autotranslate-next-getT-'));
-    const outDir = '.translations';
-    await mkdir(join(cwd, outDir), { recursive: true });
-    await writeFile(join(cwd, outDir, 'en.json'), JSON.stringify({ Hi: 'Hi' }));
-    await writeFile(join(cwd, outDir, 'es.json'), JSON.stringify({}));
-    const t = await getT('es', { cwd, outDir, fallback: 'en' });
-    expect(t.t('Hi')).toBe('Hi');
+    await getT('es', { module: mod });
+    expect(mod.spy).toHaveBeenCalledTimes(2);
   });
 
+  it('loads the fallback locale through the same module', async () => {
+    const mod = makeFakeModule({ es: {}, en: { Hello: 'Hello' } });
+    const t = await getT('es', { module: mod, fallback: 'en' });
+    expect(t.t('Hello')).toBe('Hello');
+  });
+
+  it('memoizes the fallback locale independently', async () => {
+    const mod = makeFakeModule({ es: {}, en: { Hello: 'Hello' } });
+    await getT('es', { module: mod, fallback: 'en' });
+    await getT('es', { module: mod, fallback: 'en' });
+    expect(mod.spy).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('getT - load callback path', () => {
   it('accepts a custom loader (no fs)', async () => {
-    const { buildCatalog } = await import('@autotranslate/core');
     const t = await getT('es', {
       load: (locale) => (locale === 'es' ? buildCatalog({ Hi: 'Hola' }) : {}),
     });
@@ -41,5 +66,19 @@ describe('getT', () => {
   it('returns the key on miss when no fallback is configured', async () => {
     const t = await getT('es', { load: () => ({}) });
     expect(t.t('Untranslated')).toBe('Untranslated');
+  });
+});
+
+describe('getT - error cases', () => {
+  it('throws a guidance error when neither module nor load is provided', async () => {
+    await expect(getT('es', {})).rejects.toThrow(/import \* as catalogModule/);
+  });
+
+  it('guidance error names the generated module path', async () => {
+    await expect(getT('es')).rejects.toThrow(/outDir.*index\.ts|index\.ts.*outDir/);
+  });
+
+  it('guidance error tells the user to pass { module }', async () => {
+    await expect(getT('es')).rejects.toThrow(/\{ module: catalogModule \}/);
   });
 });

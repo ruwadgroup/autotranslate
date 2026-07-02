@@ -72,9 +72,7 @@ export const myProvider = defineProvider({
   async translate({ items }) {
     // Call your service here.
     return {
-      translations: {
-        /* key → string | tree */
-      },
+      translations: {/* key → string | tree */},
     };
   },
 });

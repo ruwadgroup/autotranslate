@@ -1,7 +1,8 @@
-import type { NextConfig } from "next";
+import { withAutotranslate } from '@autotranslate/next/plugin';
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
 };
 
-export default nextConfig;
+export default withAutotranslate(nextConfig);

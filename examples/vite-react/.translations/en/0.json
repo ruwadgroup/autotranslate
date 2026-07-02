@@ -1,0 +1,22 @@
+{
+  "t.0abb79a3c869": [
+    {
+      "type": "text",
+      "value": "Next release on "
+    },
+    {
+      "type": "var",
+      "name": "dt_0"
+    },
+    {
+      "type": "text",
+      "value": "."
+    }
+  ],
+  "t.0d8d2b86f9f5": [
+    {
+      "type": "text",
+      "value": "Live demo"
+    }
+  ]
+}

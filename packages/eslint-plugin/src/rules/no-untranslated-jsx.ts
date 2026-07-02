@@ -1,7 +1,7 @@
 import type { Rule } from 'eslint';
 import {
-  ALLOWLIST_ATTRIBUTES,
   findMarkerAncestor,
+  isAllowlistedAttribute,
   jsxAttributeName,
   jsxTextHasContent,
   readStaticString,
@@ -41,7 +41,7 @@ const rule: Rule.RuleModule = {
     const extraAttrs = new Set(options.allowAttributes ?? []);
     const extraMarkers = new Set(options.markers ?? []);
     const markerNames = new Set([
-      ...['T', 'Tx', 'Var', 'Plural', 'Branch', 'Num', 'Currency', 'DateTime', 'RelativeTime'],
+      ...['T', 'Var', 'Plural', 'Branch', 'Num', 'Currency', 'DateTime', 'RelativeTime'],
       ...extraMarkers,
     ]);
 
@@ -80,8 +80,7 @@ const rule: Rule.RuleModule = {
         };
         const name = jsxAttributeName(node);
         if (!name) return;
-        if (ALLOWLIST_ATTRIBUTES.has(name) || extraAttrs.has(name)) return;
-        if (name.startsWith('data-')) return;
+        if (isAllowlistedAttribute(name) || extraAttrs.has(name)) return;
         const opening = node.parent;
         if (
           opening?.type === 'JSXOpeningElement' &&

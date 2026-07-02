@@ -16,6 +16,10 @@ interface ResolvedOptions {
   readonly outDir: string;
   readonly source: Locale;
   readonly locales: ReadonlyArray<Locale>;
+  /** The autotranslate config's `mode` field (defaults to 'explicit'). */
+  readonly mode: 'explicit' | 'auto';
+  /** The autotranslate config's `build.frozen` default (true when no config). */
+  readonly configBuildFrozen: boolean;
 }
 
 /**
@@ -33,11 +37,28 @@ interface ResolvedOptions {
  * import { catalogs, source, locales } from 'virtual:autotranslate';
  * ```
  *
- * Editing `.translations/<locale>.json` invalidates the virtual module in dev.
+ * Editing `.translations/<locale>/*.json` invalidates the virtual module in dev.
+ * In dev mode the plugin also starts `createDevLoop` from `@autotranslate/cli`
+ * (optional peer) to keep catalogs up-to-date on save.
+ * In build mode the plugin runs `checkFrozen` to ensure the committed catalog
+ * matches the source code (disabled by `build: { frozen: false }`).
+ * When `mode: 'auto'` is set in the autotranslate config, JSX/TSX files are
+ * auto-wrapped with `<T>` at compile time via `transformAutoWrap`.
  */
 export default function autotranslate(options: AutotranslatePluginOptions = {}): Plugin {
   let cwd = options.cwd ?? process.cwd();
   let cached: Promise<ResolvedOptions> | null = null;
+  /** 'serve' during dev, 'build' during production build - captured in configResolved. */
+  let command: 'serve' | 'build' = 'serve';
+  /** Guard so we only log the cli-not-found warning once per plugin instance. */
+  let warnedAboutCli = false;
+  /** Cached dynamic import of @autotranslate/cli/transform, per plugin instance. */
+  let transformModulePromise: Promise<{
+    transformAutoWrap: (
+      source: string,
+      opts: { filename: string },
+    ) => { code: string; changed: boolean };
+  } | null> | null = null;
 
   const resolved = (): Promise<ResolvedOptions> => {
     if (!cached) {
@@ -49,10 +70,19 @@ export default function autotranslate(options: AutotranslatePluginOptions = {}):
           locales:
             options.locales ??
             (config ? Array.from(new Set([config.source, ...config.targets])) : ['en']),
+          mode: config?.mode ?? 'explicit',
+          configBuildFrozen: config?.build?.frozen ?? true,
         };
       })();
     }
     return cached;
+  };
+
+  const getTransformModule = () => {
+    if (!transformModulePromise) {
+      transformModulePromise = import('@autotranslate/cli/transform').catch(() => null);
+    }
+    return transformModulePromise;
   };
 
   return {
@@ -60,6 +90,7 @@ export default function autotranslate(options: AutotranslatePluginOptions = {}):
 
     configResolved(viteConfig) {
       if (!options.cwd) cwd = viteConfig.root;
+      command = viteConfig.command;
     },
 
     resolveId(id) {
@@ -80,6 +111,7 @@ export default function autotranslate(options: AutotranslatePluginOptions = {}):
     async configureServer(server) {
       const { outDir } = await resolved();
       const watchRoot = resolve(cwd, outDir);
+
       server.watcher.add(watchRoot);
       server.watcher.on('change', (file) => {
         if (!file.startsWith(watchRoot) || !file.endsWith('.json')) return;
@@ -88,10 +120,79 @@ export default function autotranslate(options: AutotranslatePluginOptions = {}):
         server.ws.send({ type: 'full-reload' });
       });
 
-      if (options.streaming) {
-        const { attachStreamingMiddleware } = await import('./streaming');
-        attachStreamingMiddleware(server, cwd);
+      try {
+        const cli = await import('@autotranslate/cli');
+        const handle = cli.createDevLoop({
+          cwd,
+          onEvent: (e) => {
+            if (e.type === 'error') {
+              console.warn('[autotranslate]', (e as { error?: unknown }).error);
+            }
+          },
+        });
+        server.httpServer?.on('close', () => {
+          handle.close().catch(console.error);
+        });
+      } catch {
+        if (!warnedAboutCli) {
+          console.warn(
+            '[autotranslate] @autotranslate/cli not resolvable; dev loop disabled. ' +
+              'Install @autotranslate/cli to enable automatic translation on save.',
+          );
+          warnedAboutCli = true;
+        }
       }
+    },
+
+    async buildStart() {
+      if (command !== 'build') return;
+
+      const { configBuildFrozen } = await resolved();
+      const effectiveFrozen = options.build?.frozen ?? configBuildFrozen;
+      if (!effectiveFrozen) return;
+
+      let cli: typeof import('@autotranslate/cli');
+      try {
+        cli = await import('@autotranslate/cli');
+      } catch {
+        if (!warnedAboutCli) {
+          console.warn(
+            '[autotranslate] @autotranslate/cli not resolvable; frozen-build check skipped. ' +
+              'Install @autotranslate/cli to enable catalog verification on build.',
+          );
+          warnedAboutCli = true;
+        }
+        return;
+      }
+
+      // Use the CLI's loadConfig (returns ResolvedConfig with cwd+outDir context)
+      // rather than the plugin's own loadConfig (returns AutotranslateConfig|null).
+      let resolvedConfig: Awaited<ReturnType<typeof cli.loadConfig>>;
+      try {
+        resolvedConfig = await cli.loadConfig(cwd);
+      } catch {
+        // No autotranslate config found - treat as fresh project, skip check.
+        return;
+      }
+
+      const report = await cli.checkFrozen(resolvedConfig);
+      if (!report.ok) {
+        this.error(cli.formatFrozenReport(report));
+      }
+    },
+
+    async transform(code, id) {
+      const { mode } = await resolved();
+      if (mode !== 'auto') return undefined;
+      if (!/\.[jt]sx$/.test(id)) return undefined;
+      if (id.includes('node_modules')) return undefined;
+
+      const mod = await getTransformModule();
+      if (!mod) return undefined;
+
+      const result = mod.transformAutoWrap(code, { filename: id });
+      if (!result.changed) return undefined;
+      return { code: result.code, map: null };
     },
   };
 }

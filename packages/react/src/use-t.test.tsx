@@ -3,7 +3,7 @@ import { renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import { TranslationProvider } from './provider';
-import { useLocale, useT, useTranslations } from './use-t';
+import { useLocale, useT } from './use-t';
 
 function wrapper(props: { locale: string; catalog?: Record<string, string> }) {
   const catalog = props.catalog ? buildCatalog(props.catalog) : undefined;
@@ -43,36 +43,5 @@ describe('useLocale', () => {
       wrapper: wrapper({ locale: 'fr-CA' }),
     });
     expect(result.current).toBe('fr-CA');
-  });
-});
-
-describe('useTranslations', () => {
-  it('prefixes the key with the namespace', () => {
-    const { result } = renderHook(() => useTranslations('dashboard'), {
-      wrapper: wrapper({
-        locale: 'en',
-        catalog: { 'dashboard.title': 'Dashboard' },
-      }),
-    });
-    expect(result.current('title')).toBe('Dashboard');
-  });
-
-  it('supports nested key paths', () => {
-    const { result } = renderHook(() => useTranslations('dashboard'), {
-      wrapper: wrapper({
-        locale: 'en',
-        catalog: {
-          'dashboard.stats.visitors': '{count, plural, one {# visitor} other {# visitors}}',
-        },
-      }),
-    });
-    expect(result.current('stats.visitors', { count: 5 })).toBe('5 visitors');
-  });
-
-  it('reads root keys when namespace is omitted', () => {
-    const { result } = renderHook(() => useTranslations(), {
-      wrapper: wrapper({ locale: 'en', catalog: { hello: 'Hi' } }),
-    });
-    expect(result.current('hello')).toBe('Hi');
   });
 });

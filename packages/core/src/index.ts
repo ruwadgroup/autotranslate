@@ -3,7 +3,6 @@ export { hash, shortHash } from './hash';
 
 export { canonicalKey, isStructured, renderTreeToString } from './jsx-tree';
 export { sourceKey } from './key';
-export { getMissBreakdown, getMissCount, resetMissStats } from './miss';
 export type { Translator, TranslatorOptions } from './translator';
 export { buildCatalog, createTranslator, WIRE_FORMAT_VERSION } from './translator';
 

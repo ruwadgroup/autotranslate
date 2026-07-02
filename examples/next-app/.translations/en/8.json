@@ -1,0 +1,46 @@
+{
+  "t.8e24c92ab08d": [
+    {
+      "type": "var",
+      "name": "num_0"
+    },
+    {
+      "type": "text",
+      "value": " visitors today — "
+    },
+    {
+      "type": "branch",
+      "name": "branch",
+      "cases": {
+        "pending": [
+          {
+            "type": "text",
+            "value": "order is pending review"
+          }
+        ],
+        "shipped": [
+          {
+            "type": "text",
+            "value": "order is on its way"
+          }
+        ],
+        "delivered": [
+          {
+            "type": "text",
+            "value": "order has been delivered"
+          }
+        ],
+        "default": [
+          {
+            "type": "text",
+            "value": "order status is unknown"
+          }
+        ]
+      }
+    },
+    {
+      "type": "text",
+      "value": "."
+    }
+  ]
+}

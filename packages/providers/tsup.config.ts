@@ -7,7 +7,6 @@ export default defineConfig({
     deepl: 'src/deepl.ts',
     google: 'src/google.ts',
     stub: 'src/stub.ts',
-    hybrid: 'src/hybrid.ts',
   },
   format: ['esm', 'cjs'],
   dts: { compilerOptions: { composite: false, incremental: false } },

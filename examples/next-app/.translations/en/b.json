@@ -1,0 +1,22 @@
+{
+  "t.bb631215c8d2": [
+    {
+      "type": "text",
+      "value": "View on GitHub"
+    }
+  ],
+  "t.bf72e3d1b0a4": [
+    {
+      "type": "text",
+      "value": "You're viewing this page in "
+    },
+    {
+      "type": "var",
+      "name": "lang"
+    },
+    {
+      "type": "text",
+      "value": ". Try the switcher above — every string is server-rendered in the matched locale."
+    }
+  ]
+}

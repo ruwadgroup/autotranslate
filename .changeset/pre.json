@@ -7,7 +7,6 @@
     "@autotranslate/cli": "0.2.0",
     "@autotranslate/core": "0.2.0",
     "@autotranslate/eslint-plugin": "0.1.1",
-    "@autotranslate/experiments": "0.0.1",
     "@autotranslate/next": "0.2.0",
     "@autotranslate/providers": "0.2.0",
     "@autotranslate/react": "0.1.1",
@@ -16,7 +15,6 @@
     "@autotranslate/zod": "0.2.0"
   },
   "changesets": [
-    "experiments-package",
     "fix-package-exports-types",
     "glossary-hybrid",
     "hash-bucketed-catalogs",

@@ -15,42 +15,51 @@ Key rules:
   literal string as the key. The standalone `t()` from `@autotranslate/core/t`
   works outside React but requires `withTranslator(...)` /
   `bindTranslator(...)` upstream to set the active locale.
-- Catalogs live as a chunked tree under `.translations/<locale>/**/*.json`
-  (one chunk per source file, alphabetically-first occurrence). Use the
-  framework adapter's loader (`@autotranslate/next`'s `fsCatalogLoader`,
-  `@autotranslate/vite`'s virtual module) — never `import` raw chunk files
-  directly. Missing keys fall back to source; runtime never throws.
-- Run `pnpm i18n` (extract + translate + generate-types) after changing any
-  translatable string.
+- Catalogs live as a hash-bucketed tree under `.translations/<locale>/*.json`.
+  Each locale writes `0.json` through `f.json` (16 buckets by default). Use
+  the generated `.translations/index.ts` module (`import * as catalogModule
+  from ...`) or the Vite virtual module (`virtual:autotranslate`) to load
+  catalogs. Never import raw chunk files directly.
+- The framework plugin (withAutotranslate / @autotranslate/vite) owns the
+  pipeline in normal use. The dev loop runs extract→translate→generateTypes on
+  each save. The frozen check runs at build time. Developers and CI do not need
+  to run i18n commands manually.
+- Missing keys fall back to source; runtime never throws.
 -->
 
 # autotranslate
 
-Code-first, AI-powered i18n toolkit for React. You write strings inline. A CLI
-extracts them, runs them through a translation provider, and writes JSON
-catalogs to your repo. The runtime swaps in the right copy at render time.
+Code-first, AI-powered i18n toolkit for React. The framework plugin drives the
+pipeline: save a file, translations appear. Builds verify the committed catalog
+like a lockfile; CI needs no API key.
 
 Web docs: <https://github.com/tamimbinhakim/autotranslate/tree/main/docs>.
 
 ## Packages
 
-| Package                        | Use it for                                               |
-| ------------------------------ | -------------------------------------------------------- |
-| `@autotranslate/core`          | Translator, locale utilities, ICU formatter, types       |
-| `@autotranslate/react`         | `<T>`, `<Var>`, `<Plural>`, `<Branch>`, `useT`, provider |
-| `@autotranslate/next`          | Next.js: `getT`, proxy, RSC                              |
-| `@autotranslate/vite`          | Vite plugin + virtual catalog module                     |
-| `@autotranslate/providers`     | AI / DeepL / Google / custom providers                   |
-| `@autotranslate/zod`           | Translated Zod v4 validation errors                      |
-| `@autotranslate/cli`           | `extract`, `translate`, `check`, `generate-types`        |
-| `@autotranslate/eslint-plugin` | Catches untranslated JSX and dynamic keys                |
+| Package                        | Use it for                                                                                         |
+| ------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `@autotranslate/core`          | Translator, locale utilities, ICU formatter, types                                                 |
+| `@autotranslate/react`         | `<T>`, `<Var>`, `<Plural>`, `<Branch>`, `useT`, provider                                           |
+| `@autotranslate/next`          | Next.js: `getT`, proxy, RSC, `withAutotranslate`                                                   |
+| `@autotranslate/vite`          | Vite plugin + virtual catalog module + dev loop                                                    |
+| `@autotranslate/providers`     | AI / DeepL / Google / custom providers                                                             |
+| `@autotranslate/zod`           | Translated Zod v4 validation errors                                                                |
+| `@autotranslate/cli`           | Engine: `extract`, `translate`, `check`, `generateTypes`, `createDevLoop`, `checkFrozen`, `parity` |
+| `@autotranslate/eslint-plugin` | Catches untranslated JSX and dynamic keys                                                          |
 
 Standard install:
 
 ```bash
-pnpm add @autotranslate/react @autotranslate/core
+# Next.js
+pnpm add @autotranslate/next
 pnpm add -D @autotranslate/cli
 npx autotranslate init
+
+# Vite
+pnpm add @autotranslate/react
+pnpm add -D @autotranslate/vite @autotranslate/cli
+npx autotranslate init --framework vite
 ```
 
 ## Configuration
@@ -72,17 +81,28 @@ export default defineConfig({
 });
 ```
 
-| Option        | Type                                     | Default            |
-| ------------- | ---------------------------------------- | ------------------ |
-| `source`      | `Locale`                                 | `'en'`             |
-| `targets`     | `Locale[]`                               | required           |
-| `content`     | `string[]` (globs)                       | required           |
-| `outDir`      | `string`                                 | `'.translations'`  |
-| `provider`    | `ProviderConfig`                         | `{ name: 'stub' }` |
-| `concurrency` | `number` (1–64)                          | `8`                |
-| `overrides`   | `Record<Locale, Record<string, string>>` | —                  |
-| `instruction` | `string`                                 | —                  |
-| `dictionary`  | `string` (file path)                     | —                  |
+| Option        | Type                                     | Default                                     |
+| ------------- | ---------------------------------------- | ------------------------------------------- |
+| `source`      | `Locale`                                 | `'en'`                                      |
+| `targets`     | `Locale[]`                               | required                                    |
+| `content`     | `string[]` (globs)                       | required                                    |
+| `outDir`      | `string`                                 | `'.translations'`                           |
+| `provider`    | `ProviderConfig`                         | `{ name: 'stub' }`                          |
+| `concurrency` | `number` (1-64)                          | `8`                                         |
+| `overrides`   | `Record<Locale, Record<string, string>>` | -                                           |
+| `instruction` | `string`                                 | -                                           |
+| `glossary`    | `string[]`                               | -                                           |
+| `mode`        | `'explicit' \| 'auto'`                   | `'explicit'`                                |
+| `build`       | `{ frozen, translateOnBuild }`           | `{ frozen: true, translateOnBuild: false }` |
+
+New fields added in v1.0-beta:
+
+- `mode: 'auto'` — compiler wraps JSX text in `<T>` at compile time; opt out
+  with `data-no-translate`; `code`/`pre`/`script`/`style` are always skipped.
+- `build.frozen` — boolean, default `true`; `withAutotranslate` and
+  `@autotranslate/vite` call `checkFrozen` at build time.
+- `build.translateOnBuild` — boolean, default `false`; translate instead of
+  fail.
 
 Providers: `stub` (identity / pseudo), `ai` (Vercel AI SDK), `deepl`, `google`,
 `custom`. The `ai` provider's `model` is `<vendor>:<model-id>`, vendors
@@ -92,26 +112,191 @@ only what you use.
 ## CLI commands
 
 ```bash
-npx autotranslate init                      # scaffold config
-npx autotranslate extract                   # scan source → en.json
+npx autotranslate init                      # scaffold config, wrap next.config, create proxy.ts
+npx autotranslate init --framework vite     # force Vite
+npx autotranslate init --targets es,fr,ja   # override default targets
+npx autotranslate init --provider anthropic # override default provider
+npx autotranslate init --force              # overwrite existing config
+npx autotranslate extract                   # scan source -> en/*.json + index.ts
 npx autotranslate translate                 # AI-translate to targets
 npx autotranslate translate --locale es fr  # subset
 npx autotranslate generate-types            # narrow useT keys
-npx autotranslate check                     # verify catalog parity (CI)
+npx autotranslate check                     # verify catalog parity
+npx autotranslate parity                    # diff vs origin/main
+npx autotranslate parity --format github    # Markdown table for PR comment
+npx autotranslate find <12-hex>             # look up a key by hash
 ```
 
-Standard `i18n` script:
+Removed commands (do not use or suggest):
 
-```jsonc
-{
-  "scripts": {
-    "i18n": "autotranslate extract && autotranslate translate && autotranslate generate-types",
+- `autotranslate migrate-format` — removed; stale catalogs regenerate on next
+  extract/translate run.
+
+`check` exits non-zero when keys are missing, orphaned, or have invalid ICU.
+`parity` exits non-zero on missing/orphan/invalid-ICU; 0 when all added strings
+are fully translated.
+
+The plugins drive the pipeline in normal use; these commands are the scripting
+and CI surface.
+
+## Programmatic API (`@autotranslate/cli`)
+
+```ts
+import {
+  loadConfig,
+  extract,
+  translate,
+  generateTypes,
+  check,
+  checkFrozen,
+  formatFrozenReport,
+  createDevLoop,
+  parity,
+  init,
+} from '@autotranslate/cli';
+
+const resolved = await loadConfig();
+await extract(resolved); // writes chunks + index.ts
+await translate(resolved); // writes target chunks + index.ts
+await generateTypes(resolved); // writes types.d.ts
+
+// Frozen check (what the build plugin runs)
+const report = await checkFrozen(resolved);
+if (!report.ok && !report.catalogAbsent) {
+  throw new Error(formatFrozenReport(report));
+}
+
+// Dev loop (what withAutotranslate and @autotranslate/vite run in dev)
+const loop = createDevLoop({
+  cwd: process.cwd(),
+  onEvent: (e) => {
+    if (e.type === 'error') console.warn(e.error);
+    if (e.type === 'run-complete')
+      console.log('done', e.extract.fileCount, 'files');
   },
+});
+// later:
+await loop.close();
+```
+
+`DevLoopEvent` union: `{ type: 'run-start' }`,
+`{ type: 'run-complete'; extract: ExtractResult; translated: boolean }`,
+`{ type: 'error'; error: unknown }`.
+
+`FrozenReport` shape:
+`{ ok: boolean; catalogAbsent: boolean; missingSource: Array<{ key, text, occurrence }>; problems: CheckProblem[] }`.
+When `catalogAbsent` is true, the source catalog directory does not exist —
+treat as a fresh project (pass, no error).
+
+## Generated catalog module (`<outDir>/index.ts`)
+
+`extract` and `translate` codegen `<outDir>/index.ts` after each run. The file
+is regenerated whenever the bucket set or locale set changes; unchanged content
+is not rewritten (avoids HMR loops).
+
+Shape:
+
+```ts
+// .translations/index.ts — GENERATED by autotranslate. Do not edit.
+import type { Catalog, Locale } from '@autotranslate/core';
+
+export const source = 'en' as const;
+export const locales = ['en', 'es', 'fr', 'ja'] as const;
+
+const chunks: Record<
+  string,
+  ReadonlyArray<() => Promise<{ default: Catalog }>>
+> = {
+  en: [
+    () => import('./en/0.json'),
+    () => import('./en/3.json'),
+    () => import('./en/f.json'),
+  ],
+  es: [
+    () => import('./es/0.json'),
+    () => import('./es/3.json'),
+    () => import('./es/f.json'),
+  ],
+  // ...one entry per existing bucket file, mirrors the on-disk tree exactly
+};
+
+export async function loadCatalog(locale: Locale): Promise<Catalog> {
+  const parts = await Promise.all((chunks[locale] ?? []).map((load) => load()));
+  return Object.assign({}, ...parts.map((m) => m.default));
 }
 ```
 
-`check` exits non-zero when keys are missing, orphaned, or have invalid ICU.
-Wire into PR CI.
+Consumption (Next App Router):
+
+```ts
+import * as catalogModule from '../../.translations';
+const t = await getT(lang, { module: catalogModule });
+```
+
+Because it uses static `import()` specifiers:
+
+- Webpack and Turbopack bundle + code-split per locale
+- No runtime filesystem access, no `outputFileTracingIncludes`
+- Works on edge runtimes with zero configuration
+
+## Dev loop
+
+`createDevLoop` watches source files (chokidar v4), debounces 150ms, serializes
+runs (one trailing run queued while in-progress), and emits structured events.
+Each run: extract → translate delta → generateTypes. Index.ts and types.d.ts are
+regenerated as part of these steps. Provider / config errors are emitted as
+`{ type: 'error' }` events; watching continues (the dev server never crashes).
+
+`withAutotranslate` starts the loop on `phase-development-server` via a
+`globalThis` symbol guard (safe across re-evaluations of next.config).
+`@autotranslate/vite` starts it in `configureServer`.
+
+## Frozen build check (`checkFrozen`)
+
+`checkFrozen(resolved)` re-extracts source in memory and compares against the
+committed catalog:
+
+- `catalogAbsent: true` → source dir missing; return `ok: true` (fresh project
+  or example app — never fail)
+- `missingSource` → keys in live code not in committed catalog (with first
+  `file:line` occurrence and source text)
+- `problems` → target-locale issues from `check()` (missing / orphan /
+  invalid-ICU)
+
+`formatFrozenReport(report)` produces a human-readable failure string.
+`withAutotranslate` and `@autotranslate/vite`'s `buildStart` call this; on
+`!ok && !catalogAbsent` they throw `new Error(formatFrozenReport(report))`.
+
+## Auto mode
+
+`mode: 'auto'` in `autotranslate.config.ts` activates compile-time JSX
+auto-wrapping via `transformAutoWrap` from `@autotranslate/cli/transform`.
+
+Rules (JSX text nodes and static-string JSX expression children only):
+
+- Wrap qualifying contiguous child runs in `<T>`, turning embedded `{expr}` into
+  `<Var>{expr}</Var>`
+- Qualifying = `jsxTextHasContent` is true AND no ancestor in
+  `TRANSLATION_MARKERS` AND no ancestor element in `SKIP_ELEMENTS` (`code`,
+  `pre`, `script`, `style`) AND no `data-no-translate` on self or any JSX
+  ancestor
+- Adds `import { T, Var } from '@autotranslate/react'` if not already present
+
+Extractor: in `mode: 'auto'`, each source file is piped through
+`transformAutoWrap` before `extractFile` — extraction and compiled output agree
+key-for-key by construction.
+
+Bundler wiring (done by the plugins, not the CLI):
+
+- Next: `withAutotranslate` registers `@autotranslate/next/auto-loader` for
+  `*.{jsx,tsx}` via webpack `module.rules` and turbopack `rules`
+- Vite: `transform` hook in `@autotranslate/vite` applies `transformAutoWrap`
+
+Shared classifier (`@autotranslate/core/classifier`): `CLASSIFIER_VERSION`,
+`TRANSLATION_MARKERS`, `jsxTextHasContent`, `isAllowlistedAttribute`,
+`NO_TRANSLATE_ATTRIBUTE`, `SKIP_ELEMENTS`. The ESLint `no-untranslated-jsx` rule
+imports from this module, so lint and compiler always agree on what counts as
+translatable text.
 
 ## JSX translation — `<T>`
 
@@ -142,105 +327,55 @@ Rules:
 
 - `<T>` children become a structural tree, hashed to key `t.<12-hex>`.
 - `<Var>` slots are runtime values. `name` defaults to `'value'`.
-- `<Plural>` requires `other`. Other CLDR categories (`zero`, `one`, `two`,
-  `few`, `many`) added per locale during translation.
+- `<Plural>` requires `other`. Other CLDR categories added per locale during
+  translation.
 - `<Branch>` is ICU `select` for non-count discriminators.
-- Tag wrappers (`<a>`, `<strong>`, custom components) carry attributes through
-  translated output. The hash ignores attributes.
-- Whitespace handling matches React's JSX runtime.
-- `context` prop disambiguates identical strings (key suffixed
-  `<key>@@<context>`).
-- `description` prop adds translator-facing notes (stored in `.meta.json`, not
-  in the hash).
+- Tag wrappers carry attributes through translated output. The hash ignores
+  attributes.
+- `context` prop disambiguates identical strings.
+- `description` prop adds translator-facing notes (stored in `.meta.json`).
 
 ## String translation — `useT`
 
 ```tsx
-import { useT, useTranslations, useLocale } from '@autotranslate/react';
+import { useT, useLocale } from '@autotranslate/react';
 
 const t = useT();
 t('Sign out');
 t('Hello, {name}!', { name: 'Ada' });
 t('{count, plural, one {# message} other {# messages}}', { count });
-
-// Disambiguate
 t('Submit', { $context: 'navbar' });
-
-// Dictionary mode
-const td = useTranslations('dashboard');
-td('title'); // catalog['dashboard.title']
-
-const locale = useLocale();
 ```
 
-Reserved param keys: `$context`, `$description`, `$maxChars`. Keys are ICU
-MessageFormat templates. The literal string IS the key.
+Reserved param keys: `$context`, `$description`, `$maxChars`.
 
 ## Standalone `t()` (non-React)
 
-For zod errors, validators, server actions, async work, tests, queue workers —
-anywhere `useT()` can't reach.
-
 ```ts
 import { t } from '@autotranslate/core/t';
-import {
-  bindTranslator,
-  withTranslator,
-  currentTranslator,
-  createTranslator,
-} from '@autotranslate/core/standalone';
+import { bindTranslator, withTranslator } from '@autotranslate/core/standalone';
 
-// Scoped (server, tests) — async-safe via AsyncLocalStorage
 withTranslator(translator, async () => {
   await validate(); // t() inside sees `translator`
 });
-
-// Ambient (SPA bootstrap)
-bindTranslator(createTranslator({ locale, catalog }));
-t('Sign out');
 ```
-
-The Node entry uses `AsyncLocalStorage` for per-request isolation; browsers fall
-back to a module slot via the `browser` export condition.
-
-`currentTranslator()` throws if nothing is bound. Pass an optional `caller` arg
-for a more helpful error message.
-
-## React provider
-
-```tsx
-import { TranslationProvider } from '@autotranslate/react';
-import { catalogs } from 'virtual:autotranslate'; // Vite plugin
-// or use `await getT(locale)` from `@autotranslate/next` on the server
-
-<TranslationProvider locale="fr" catalog={catalogs.fr} fallback={catalogs.en}>
-  {/* … */}
-</TranslationProvider>;
-```
-
-Without a provider, the runtime falls back to source — no errors, no warnings,
-every `<T>` renders `children` verbatim.
 
 ## Server-side translation (RSC, route handlers)
 
 ### Next.js
 
 ```tsx
-import {
-  getT,
-  getTranslations,
-  getRequestLocale,
-  fsCatalogLoader,
-} from '@autotranslate/next';
+import { getT } from '@autotranslate/next';
+import * as catalogModule from '../../.translations';
 
-const t = await getT(lang, { fallback: 'en' });
+const t = await getT(lang, { module: catalogModule, fallback: 'en' });
 t.t('Welcome');
-
-const td = await getTranslations(lang, 'dashboard');
-td('title');
-
-const locale = await getRequestLocale(); // x-autotranslate-locale header
 ```
+
+`GetTOptions`:
+`{ module?: CatalogModule; load?: CatalogLoader; fallback?: Locale }`. Exactly
+one of `module` or `load` is required. `fsCatalogLoader` has been removed — use
+the generated module or a custom `load` callback (KV, Edge Config).
 
 ### Generic (Remix, Hono, Bun)
 
@@ -260,17 +395,12 @@ import { createNextMiddleware } from '@autotranslate/next/middleware';
 export default createNextMiddleware({
   defaultLocale: 'en',
   locales: ['en', 'es', 'fr', 'ja'],
-  // strategy: 'cookie',   // alternative; default is 'prefix'
 });
 
 export const config = {
   matcher: ['/((?!api|_next|.*\\..*).*)'],
 };
 ```
-
-The proxy resolves locale (path → cookie → `Accept-Language`), redirects bare
-paths under `/<locale>/...`, and pushes the resolved locale via the
-`x-autotranslate-locale` request header.
 
 ## Vite plugin
 
@@ -283,13 +413,13 @@ export default defineConfig({
 });
 ```
 
-Then:
-
 ```ts
 import { catalogs, locales, source } from 'virtual:autotranslate';
 ```
 
-HMR triggers when `.translations/<locale>.json` changes.
+In dev: starts `createDevLoop`, watches `.translations/<locale>/**/*.json` for
+HMR. In build: runs `checkFrozen` (disabled by `build: { frozen: false }`). In
+`mode: 'auto'`: `transform` hook applies `transformAutoWrap` to `*.{jsx,tsx}`.
 
 ## Type safety
 
@@ -298,80 +428,20 @@ npx autotranslate generate-types
 ```
 
 Emits `<outDir>/types.d.ts` augmenting `@autotranslate/core`'s
-`AutotranslateCatalog` with the literal key set. After:
-
-```ts
-t('Sign out'); // ✓
-t('Sing out'); // ✗ TS error
-```
-
-Reference from `tsconfig.json`:
+`AutotranslateCatalog` with the literal key set.
 
 ```jsonc
 { "include": ["src", ".translations/types.d.ts"] }
 ```
 
-The same generated types narrow `useT`, the standalone `t()`, and server-side
-`getT` — one typegen run covers them all.
-
 ## Zod integration
 
-```bash
-pnpm add @autotranslate/zod
-```
-
 ```ts
-import { z } from 'zod';
 import { zodErrorMap } from '@autotranslate/zod';
 z.config({ customError: zodErrorMap });
 ```
 
-Pipe Zod's standard issue keys through your catalog by adding the source module
-to `content`:
-
-```ts
-defineConfig({
-  content: ['src/**/*.{ts,tsx}', '@autotranslate/zod/source'],
-});
-```
-
-For Server Actions / route handlers, scope a translator per request:
-
-```ts
-import { withRequestTranslator } from '@autotranslate/zod/next';
-// or '@autotranslate/zod/remix'
-
-export async function action(formData: FormData) {
-  return withRequestTranslator(async () => {
-    return userSchema.parse(Object.fromEntries(formData));
-  });
-}
-```
-
-Custom error messages per schema:
-
-```ts
-import { t } from '@autotranslate/core/t';
-
-z.string().min(8, { error: () => t('Use at least 8 characters') });
-z.string().refine(isStrong, { error: () => t('That username is taken') });
-```
-
-For codes we don't translate (`invalid_union`, `invalid_key`, `invalid_element`,
-`custom`), Zod chains to `z.locales.*()`:
-
-```ts
-z.config({
-  customError: zodErrorMap,
-  localeError: z.locales.fr().localeError,
-});
-```
-
 ## ESLint rules
-
-```bash
-pnpm add -D @autotranslate/eslint-plugin
-```
 
 ```js
 // eslint.config.js
@@ -401,37 +471,6 @@ return (
 );
 ```
 
-For Next path-prefix strategy, locale switch is a navigation:
-`router.push('/' + newLocale + pathname.replace(/^\/[a-z]{2}/, ''))`.
-
-### Form validation (react-hook-form)
-
-```tsx
-const {
-  register,
-  formState: { errors },
-} = useForm({
-  resolver: zodResolver(schema),
-});
-// errors.email.message is already translated via zodErrorMap
-```
-
-### Brand glossary
-
-Use provider `instruction` for tone + glossary, plus `<Var>` to wrap terms that
-must never translate:
-
-```tsx
-<T>
-  Powered by <Var name="brand">autotranslate</Var>.
-</T>
-```
-
-```ts
-provider: { name: 'ai', model: '...' },
-instruction: 'Brand: autotranslate. Never translate. Voice: friendly, modern.',
-```
-
 ### Per-locale overrides
 
 ```ts
@@ -441,55 +480,68 @@ overrides: {
 }
 ```
 
-Applied after machine translation. Useful for terms the AI gets wrong or that
-need exact regulatory wording.
-
 ## Gotchas
 
-- **No dynamic keys.** `t(variable)` and ``t(`prefix.${id}`)`` can't be
-  extracted. Use `<Branch>` or fixed literals plus `$context`. The
-  `no-dynamic-key` ESLint rule rejects them.
-- **No string concatenation across `<T>`.** `<T>Hello,</T> {name}<T>!</T>`
-  doesn't translate well — word order varies by language. Use a single
-  `<T>Hello, <Var>{name}</Var>!</T>`.
-- **Standalone `t()` outside a translator scope throws.** In server code, always
-  wrap with `withTranslator`. In SPAs, call `bindTranslator` once at boot.
-- **`fsCatalogLoader` doesn't run on edge.** Use a custom `load` callback with
-  bundled JSON, KV, or Edge Config for edge route handlers.
+- **No dynamic keys.** `t(variable)` can't be extracted. Use `<Branch>` or fixed
+  literals plus `$context`.
+- **No string concatenation across `<T>`.** Word order varies by language. Use a
+  single `<T>Hello, <Var>{name}</Var>!</T>`.
+- **Standalone `t()` outside a translator scope throws.** Wrap with
+  `withTranslator` in server code; call `bindTranslator` once at SPA boot.
+- **`useT` re-renders on locale change.** The standalone `t()` does not trigger
+  re-renders.
 - **Switching providers re-translates everything.** The cache key includes the
   provider's `signature`. By design — guarantees consistency.
-- **`useT` re-renders on locale change.** The standalone `t()` doesn't trigger
-  re-renders; bind a translator and read its result.
 
-## File layout after `init` + `translate`
+## Removed APIs (do not suggest or reference)
+
+The following were present in earlier versions and have been removed:
+
+- `fsCatalogLoader` / `clearCatalogCache` from `@autotranslate/next`
+- `GetTOptions.cwd` / `GetTOptions.outDir` from `@autotranslate/next`
+- `createDevOnMissing` / `DevOnMissingOptions` from `@autotranslate/react`
+- `createStreamingHandler` from `@autotranslate/next/streaming`
+- Streaming option / middleware from `@autotranslate/vite`
+- `migrate-format` CLI command
+- `migrateKey` / `migrateCatalog` from `@autotranslate/core`
+- Flat `<locale>.json` catalog read fallback
+- `outputFileTracingIncludes` / `traceIncludes` from `withAutotranslate`
+- `dictionary` config field, `useTranslations` hook (`@autotranslate/react`),
+  `getTranslations` helper (`@autotranslate/next`) - dictionary mode removed;
+  use `useT` with inline literal strings
+- `hybrid` provider config (`name: 'hybrid'`) - hand-roll the split in a custom
+  provider instead; see the
+  [custom provider cookbook](../../../docs/cookbook/custom-provider.md)
+- `getMissCount`, `getMissBreakdown`, `resetMissStats` - miss-stats API removed
+- `Tx` marker - removed; use `<T>` only
+
+## File layout after `init` + first `pnpm dev` save
 
 ```
 .translations/
-├── en/                       # source-locale, chunked
-│   ├── components/Header.json
-│   ├── pages/Checkout.json
-│   ├── _external/zod.json    # keys from @autotranslate/zod/source
-│   └── _external/_unknown.json
-├── es/  …                    # mirrors en/
-├── fr/  …
-├── .meta.json                # per-key context, description, occurrences
+├── en/                                # source-locale, hash-bucketed
+│   ├── 0.json
+│   ├── ...
+│   └── f.json
+├── es/                                # mirrors en/ by key bucket
+│   ├── 0.json
+│   ├── ...
+│   └── f.json
+├── fr/
+├── ja/
+├── index.ts                           # generated catalog module (static import()s)
+├── .meta.json                         # per-key context, description, occurrences
 ├── .cache/<provider-sig>/<source-target>/<chunk>.json
-│                             # { chunkHash, items: { key: { sourceHash, translation } } }
-└── types.d.ts                # generated TS augmentation
+│                                      # { chunkHash, items: { key: { sourceHash, translation } } }
+└── types.d.ts                         # generated TS augmentation
 ```
 
-Chunks are picked by alphabetically-first occurrence's source file. Files
-exceeding 300 keys auto-split (`Foo.0.json`, `Foo.1.json`). Cache mirrors the
-chunk tree — `chunkHash` short-circuits no-op runs (zero API calls when source
-unchanged); within a chunk, unchanged neighbours ride along as cached context
-for AI consistency.
+Chunks are picked by key hash. The bucket is the first hex digit of the key
+after stripping any `t.` structural-key prefix. The same key lands in the same
+chunk path for every locale.
 
-Commit `.translations/` to your repo. Treat it as version-controlled content.
-Re-runs only translate keys whose source hash changed.
-
-**0.1.0 → 0.2.0 migration**: silent. The first `translate` after upgrade
-reshapes flat `<locale>.json` files into the chunked tree. Cache resets — first
-run is a cold pass.
+Commit `.translations/` to your repo (except `.cache/`). Treat it as
+version-controlled content - the build verifies it like a lockfile.
 
 ## Public API surface
 
@@ -520,11 +572,11 @@ getPluralCategory(locale, n, type?);
 // @autotranslate/react
 <T>, <Var>, <Plural>, <Branch>, <Num>, <Currency>, <DateTime>, <RelativeTime>;
 <TranslationProvider locale catalog fallback?>;
-useT(); useTranslations(ns?); useLocale();
+useT(); useLocale();
 
 // @autotranslate/next
-getT(locale, options?); getTranslations(locale, ns?, options?);
-getRequestLocale(); fsCatalogLoader(cwd, outDir);
+getT(locale, options?);
+getRequestLocale();
 
 // @autotranslate/next/middleware
 createNextMiddleware({ defaultLocale, locales, strategy?, cookieName?, prefixDefaultLocale? });
@@ -534,7 +586,8 @@ zodErrorMap; createZodErrorMap(translatorOrOptions); issueToLookup(issue);
 
 // @autotranslate/cli (programmatic)
 loadConfig(); init(opts?); extract(resolved); translate(resolved, opts?);
-generateTypes(resolved); check(resolved);
+generateTypes(resolved); check(resolved); checkFrozen(resolved);
+formatFrozenReport(report); createDevLoop(opts); parity(resolved, opts?);
 ```
 
 ## More

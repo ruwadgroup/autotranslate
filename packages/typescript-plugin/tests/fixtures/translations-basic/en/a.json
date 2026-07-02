@@ -1,0 +1,5 @@
+{
+  "2cf24dba5fb0": "hello",
+  "486ea46224d1": "world",
+  "76fa3939eede": "A very long translation text that should be truncated because it exceeds forty characters"
+}

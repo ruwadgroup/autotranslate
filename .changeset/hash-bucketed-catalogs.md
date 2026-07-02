@@ -7,7 +7,6 @@
 '@autotranslate/providers': patch
 '@autotranslate/eslint-plugin': patch
 '@autotranslate/typescript-plugin': patch
-'@autotranslate/experiments': patch
 '@autotranslate/zod': patch
 ---
 

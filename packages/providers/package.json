@@ -109,14 +109,14 @@
   },
   "dependencies": {
     "@autotranslate/core": "workspace:*",
-    "@formatjs/icu-messageformat-parser": "^3.5.5",
-    "zod": "^4.0.0"
+    "@formatjs/icu-messageformat-parser": "^3.5.12",
+    "zod": "^4.4.3"
   },
   "peerDependencies": {
-    "ai": ">=5.0.0 <7.0.0",
     "@ai-sdk/anthropic": "*",
     "@ai-sdk/google": "*",
-    "@ai-sdk/openai": "*"
+    "@ai-sdk/openai": "*",
+    "ai": ">=5.0.0 <7.0.0"
   },
   "peerDependenciesMeta": {
     "ai": {
@@ -133,11 +133,11 @@
     }
   },
   "devDependencies": {
-    "@types/node": "^25.6.0",
-    "ai": "^6.0.0",
-    "tsup": "^8.3.5",
-    "typescript": "^5.7.2",
-    "vitest": "^4.1.5"
+    "@types/node": "^26.1.0",
+    "ai": "^6.0.218",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.9"
   },
   "engines": {
     "node": ">=20.0.0"

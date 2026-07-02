@@ -39,21 +39,12 @@ const customProviderSchema = z.object({
   options: z.record(z.string(), z.unknown()).optional(),
 });
 
-const hybridProviderSchema = z.object({
-  name: z.literal('hybrid'),
-  /** Provider for structured-tree entries (`<T>` blocks, plurals, branches). */
-  ai: aiProviderSchema,
-  /** Provider for plain-string entries — DeepL or Google Cloud Translation. */
-  plain: z.discriminatedUnion('name', [deeplProviderSchema, googleProviderSchema]),
-});
-
 export const providerConfigSchema = z.discriminatedUnion('name', [
   stubProviderSchema,
   aiProviderSchema,
   deeplProviderSchema,
   googleProviderSchema,
   customProviderSchema,
-  hybridProviderSchema,
 ]);
 
 export const autotranslateConfigSchema = z
@@ -68,7 +59,16 @@ export const autotranslateConfigSchema = z
     instruction: z.string().optional(),
     /** Branded terms or proper nouns the AI must never translate or transliterate. */
     glossary: z.array(z.string().min(1)).optional(),
-    dictionary: z.string().min(1).optional(),
+    /** Translation extraction and runtime mode. */
+    mode: z.enum(['explicit', 'auto']).default('explicit'),
+    /** Build-phase behaviour (frozen-check and on-demand translation). */
+    build: z
+      .object({
+        frozen: z.boolean().default(true),
+        translateOnBuild: z.boolean().default(false),
+      })
+      .strict()
+      .prefault({}),
   })
   .strict();
 
@@ -78,7 +78,6 @@ export type AIProviderConfig = z.infer<typeof aiProviderSchema>;
 export type DeepLProviderConfig = z.infer<typeof deeplProviderSchema>;
 export type GoogleProviderConfig = z.infer<typeof googleProviderSchema>;
 export type CustomProviderConfig = z.infer<typeof customProviderSchema>;
-export type HybridProviderConfig = z.infer<typeof hybridProviderSchema>;
 
 export type AutotranslateConfig = z.infer<typeof autotranslateConfigSchema>;
 export type AutotranslateConfigInput = z.input<typeof autotranslateConfigSchema>;

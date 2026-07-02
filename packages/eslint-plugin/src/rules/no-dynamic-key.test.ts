@@ -17,7 +17,6 @@ describe('no-dynamic-key', () => {
       valid: [
         { code: 'const t = useT(); t("Sign out");' },
         { code: 'const t = useT(); t(`Sign out`);' },
-        { code: 'const tx = useTranslations("dashboard"); tx("title");' },
         // Local const literal — acceptable, the key is static.
         { code: 'const KEY = "Sign out"; const t = useT(); t(KEY);' },
         // Calls on bindings that aren't translators are ignored.
@@ -32,10 +31,6 @@ describe('no-dynamic-key', () => {
         },
         {
           code: 'const t = useT(); t(label);',
-          errors: [{ messageId: 'dynamic' }],
-        },
-        {
-          code: 'const t = useTranslations(); t(some.path);',
           errors: [{ messageId: 'dynamic' }],
         },
       ],

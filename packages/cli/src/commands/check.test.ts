@@ -1,17 +1,30 @@
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { sourceKey } from '@autotranslate/core';
 import { parseConfig } from '@autotranslate/core/config';
 import { describe, expect, it } from 'vitest';
+import { writeChunkedCatalog } from '../catalog';
 import { check } from './check';
 
-async function fixture(catalogs: Record<string, Record<string, unknown>>) {
+/**
+ * Write a locale's catalog in the chunked directory format.
+ * Keys are hashed via sourceKey so the on-disk layout matches the canonical format.
+ */
+async function writeLocale(outDir: string, locale: string, data: Record<string, string>) {
+  const hashedCatalog: Record<string, string> = {};
+  for (const [k, v] of Object.entries(data)) {
+    hashedCatalog[sourceKey(k)] = v;
+  }
+  await writeChunkedCatalog(outDir, locale, hashedCatalog, {});
+}
+
+async function fixture(catalogs: Record<string, Record<string, string>>) {
   const cwd = await mkdtemp(join(tmpdir(), 'autotranslate-check-'));
   const outDir = join(cwd, '.translations');
   await mkdir(outDir, { recursive: true });
   for (const [locale, data] of Object.entries(catalogs)) {
-    await writeFile(join(outDir, `${locale}.json`), JSON.stringify(data, null, 2));
+    await writeLocale(outDir, locale, data);
   }
   return { cwd, outDir };
 }

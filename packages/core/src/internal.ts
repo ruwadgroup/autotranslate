@@ -18,10 +18,4 @@ export {
   mergeAdjacentText,
   TREE_KEY_PREFIX,
 } from './jsx-tree';
-export {
-  applyContextToKey,
-  CONTEXT_KEY_SEPARATOR,
-  migrateCatalog,
-  migrateKey,
-  sourceKey,
-} from './key';
+export { applyContextToKey, CONTEXT_KEY_SEPARATOR, sourceKey } from './key';

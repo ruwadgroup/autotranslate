@@ -1,0 +1,148 @@
+{
+  "a4fe65264ef7": {
+    "occurrences": [
+      {
+        "file": "src/components/LocaleSwitcher.tsx",
+        "line": 23
+      }
+    ]
+  },
+  "t.0abb79a3c869": {
+    "occurrences": [
+      {
+        "file": "src/components/StatsCard.tsx",
+        "line": 47
+      }
+    ]
+  },
+  "t.0d8d2b86f9f5": {
+    "occurrences": [
+      {
+        "file": "src/components/LocaleCard.tsx",
+        "line": 11
+      }
+    ]
+  },
+  "t.2e7b1e1321df": {
+    "occurrences": [
+      {
+        "file": "src/App.tsx",
+        "line": 53
+      }
+    ]
+  },
+  "t.6118f56a847f": {
+    "occurrences": [
+      {
+        "file": "src/components/LocaleCard.tsx",
+        "line": 14
+      }
+    ]
+  },
+  "t.6259fdea983c": {
+    "occurrences": [
+      {
+        "file": "src/components/Hero.tsx",
+        "line": 8
+      }
+    ]
+  },
+  "t.637bae00ce98": {
+    "occurrences": [
+      {
+        "file": "src/App.tsx",
+        "line": 58
+      }
+    ]
+  },
+  "t.7953d769b7bb": {
+    "occurrences": [
+      {
+        "file": "src/components/StatsCard.tsx",
+        "line": 40
+      }
+    ]
+  },
+  "t.84977a8aeaf2": {
+    "occurrences": [
+      {
+        "file": "src/components/Counter.tsx",
+        "line": 10
+      }
+    ]
+  },
+  "t.8e24c92ab08d": {
+    "occurrences": [
+      {
+        "file": "src/components/StatsCard.tsx",
+        "line": 25
+      }
+    ]
+  },
+  "t.9243329a8ed9": {
+    "occurrences": [
+      {
+        "file": "src/components/Counter.tsx",
+        "line": 14
+      }
+    ]
+  },
+  "t.9c674cc7f68e": {
+    "occurrences": [
+      {
+        "file": "src/components/StatsCard.tsx",
+        "line": 21
+      }
+    ]
+  },
+  "t.abd85420b6a3": {
+    "occurrences": [
+      {
+        "file": "src/components/Counter.tsx",
+        "line": 19
+      }
+    ]
+  },
+  "t.b810cea94026": {
+    "occurrences": [
+      {
+        "file": "src/components/Hero.tsx",
+        "line": 14
+      }
+    ]
+  },
+  "t.bb631215c8d2": {
+    "occurrences": [
+      {
+        "file": "src/App.tsx",
+        "line": 50
+      }
+    ]
+  },
+  "t.c0fa0adcad91": {
+    "occurrences": [
+      {
+        "file": "src/components/Hero.tsx",
+        "line": 11
+      }
+    ]
+  },
+  "t.c8f94126cad3": {
+    "context": "navbar action",
+    "occurrences": [
+      {
+        "file": "src/components/StatsCard.tsx",
+        "line": 58
+      }
+    ]
+  },
+  "t.d6c5ecf91d89": {
+    "context": "form button",
+    "occurrences": [
+      {
+        "file": "src/components/StatsCard.tsx",
+        "line": 60
+      }
+    ]
+  }
+}

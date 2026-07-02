@@ -1,6 +1,6 @@
 import { mkdir, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, relative } from 'node:path';
-import { isMissing, readChunkedCatalog } from '../catalog';
+import { readChunkedCatalog } from '../catalog';
 import type { ResolvedConfig } from '../types';
 
 export interface GenerateTypesResult {
@@ -16,9 +16,8 @@ export interface GenerateTypesResult {
 export async function generateTypes(resolved: ResolvedConfig): Promise<GenerateTypesResult> {
   const { config, outDir } = resolved;
   const sourceDir = join(outDir, config.source);
-  const flatPath = join(outDir, `${config.source}.json`);
 
-  if (!(await pathExists(sourceDir)) && !(await pathExists(flatPath))) {
+  if (!(await pathExists(sourceDir))) {
     throw new Error(
       `Source catalog not found at ${sourceDir}. Run \`autotranslate extract\` first.`,
     );
@@ -58,7 +57,8 @@ async function pathExists(path: string): Promise<boolean> {
     await stat(path);
     return true;
   } catch (error) {
-    if (isMissing(error)) return false;
+    if (error instanceof Error && 'code' in error && (error as { code?: string }).code === 'ENOENT')
+      return false;
     throw error;
   }
 }
