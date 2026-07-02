@@ -64,12 +64,14 @@ getDirection('ar'); // → 'rtl'
 
 ## Subpath entries
 
-| Entry                        | Purpose                                                          |
-| ---------------------------- | ---------------------------------------------------------------- |
-| `@autotranslate/core`        | Runtime translator, hashing, structured-tree types               |
-| `@autotranslate/core/config` | `defineConfig`, Zod schema, `parseConfig` / `safeParseConfig`    |
-| `@autotranslate/core/locale` | BCP-47 utilities, RTL detection, plural categories, locale match |
-| `@autotranslate/core/icu`    | ICU MessageFormat parser & formatter, `extractVariables`         |
+| Entry                            | Purpose                                                          |
+| -------------------------------- | ---------------------------------------------------------------- |
+| `@autotranslate/core`            | Runtime translator, hashing, structured-tree types               |
+| `@autotranslate/core/config`     | `defineConfig`, Zod schema, `parseConfig` / `safeParseConfig`    |
+| `@autotranslate/core/locale`     | BCP-47 utilities, RTL detection, plural categories, locale match |
+| `@autotranslate/core/icu`        | ICU MessageFormat parser & formatter, `extractVariables`         |
+| `@autotranslate/core/standalone` | Async-context `t()` for non-React code (`/t` is an alias)        |
+| `@autotranslate/core/classifier` | JSX classifier constants shared with the ESLint plugin           |
 
 ## API
 
@@ -103,6 +105,25 @@ getDirection('ar'); // → 'rtl'
 
 - `parseICU`, `formatICU`, `extractVariables`
 - `ICUParseError`
+
+### `@autotranslate/core/standalone` (and `/t`)
+
+Standalone `t()` for use outside React - route handlers, Server Actions, CLI
+scripts.
+
+```ts
+import { t } from '@autotranslate/core/t';
+import { withTranslator } from '@autotranslate/core/standalone';
+
+withTranslator(translator, async () => {
+  await validate(); // t() inside sees `translator`
+});
+```
+
+- `bindTranslator(translator)` - binds to the current `AsyncLocalStorage` chain
+- `withTranslator(translator, fn)` - runs `fn` in a scoped chain
+- `currentTranslator(caller?)` - throws if no translator is bound
+- `t(key, params?)` - calls the bound translator
 
 > **Note**: `@autotranslate/core/internal` is a workspace-private subpath shared
 > between `@autotranslate/cli`, `@autotranslate/react`, and

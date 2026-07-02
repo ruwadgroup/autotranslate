@@ -1,16 +1,2 @@
 # Default owners
-* @nex-systems/maintainers
-
-# Per-package owners
-/packages/core/         @nex-systems/maintainers
-/packages/cli/          @nex-systems/maintainers
-/packages/react/        @nex-systems/maintainers
-/packages/next/         @nex-systems/maintainers
-/packages/vite/         @nex-systems/maintainers
-/packages/providers/    @nex-systems/maintainers
-/packages/eslint-plugin/ @nex-systems/maintainers
-/packages/mcp/          @nex-systems/maintainers
-
-# CI / release
-/.github/               @nex-systems/maintainers
-/.changeset/            @nex-systems/maintainers
+* @tamimbinhakim

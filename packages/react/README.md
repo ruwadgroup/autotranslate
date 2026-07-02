@@ -117,16 +117,6 @@ variable slots — the formatter renders itself.
 
 Returns `(key, params?) => string` bound to the active locale + catalog.
 
-### `useTranslations(namespace?)`
-
-Curries `useT` with a `namespace.` prefix. Mirrors dictionary-mode patterns from
-`next-intl` / `react-intl`.
-
-```ts
-const t = useTranslations('dashboard');
-t('title'); // → catalog['dashboard.title']
-```
-
 ### `useLocale()`
 
 Returns the active locale string.
@@ -157,7 +147,7 @@ bundlers pick this entry automatically when compiling server components.
 
 - `<T>`, `<Var>`, `<Plural>`, `<Branch>`, `<Num>`, `<Currency>`, `<DateTime>`,
   `<RelativeTime>`, `<TranslationProvider>`
-- `useT`, `useTranslations`, `useLocale`, `useTranslationContext`
+- `useT`, `useLocale`, `useTranslationContext`
 - `TranslationContext`, `AutotranslateCatalog` (interface, augmented by
   `autotranslate generate-types`), `CatalogKey`
 - Types: `TProps`, `VarProps`, `PluralProps`, `BranchProps`, `NumProps`,

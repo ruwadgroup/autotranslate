@@ -9,7 +9,7 @@
  */
 
 export type { ChunkPathOptions } from './chunking';
-export { bucketFor, buildChunkLayout } from './chunking';
+export { buildChunkLayout } from './chunking';
 export {
   BRANCH_RESERVED_PROPS,
   canonicalize,

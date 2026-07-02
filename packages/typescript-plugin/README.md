@@ -9,8 +9,8 @@ You have not run `extract` yet on this string.
 ```
 
 The same check runs on `<T>` blocks via the eslint plugin. This package covers
-the string side — `useT()`, `useTranslations()`, standalone `t()` — and runs in
-real time as you type.
+the string side - `useT()` and standalone `t()` - and runs in real time as you
+type.
 
 ## Install
 
@@ -42,18 +42,20 @@ pick it up automatically.
         "name": "@autotranslate/typescript-plugin",
         "outDir": ".translations",
         "source": "en",
-        "severity": "warning"
+        "severity": "warning",
+        "locale": "fr"
       }
     ]
   }
 }
 ```
 
-| option     | default         | meaning                                |
-| ---------- | --------------- | -------------------------------------- |
-| `outDir`   | `.translations` | catalog root, relative to project root |
-| `source`   | `en`            | source-locale folder name              |
-| `severity` | `warning`       | `error` / `warning` / `suggestion`     |
+| option     | default                     | meaning                                            |
+| ---------- | --------------------------- | -------------------------------------------------- |
+| `outDir`   | `.translations`             | catalog root, relative to project root             |
+| `source`   | `en`                        | source-locale folder name                          |
+| `severity` | `warning`                   | `error` / `warning` / `suggestion`                 |
+| `locale`   | first non-source locale dir | locale whose translations are shown as inlay hints |
 
 ## What it tracks
 

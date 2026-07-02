@@ -1,9 +1,10 @@
+import { createRequire } from 'node:module';
 import type { ESLint, Linter, Rule } from 'eslint';
 import noDynamicKey from './rules/no-dynamic-key';
 import noUntranslatedJsx from './rules/no-untranslated-jsx';
 import validIcuFormat from './rules/valid-icu-format';
 
-export const VERSION = '0.0.0';
+const { version } = createRequire(import.meta.url)('../package.json') as { version: string };
 
 export const rules: Readonly<Record<string, Rule.RuleModule>> = {
   'no-untranslated-jsx': noUntranslatedJsx,
@@ -13,7 +14,7 @@ export const rules: Readonly<Record<string, Rule.RuleModule>> = {
 
 const meta = {
   name: '@autotranslate/eslint-plugin',
-  version: VERSION,
+  version,
 } as const;
 
 const recommendedRules: Readonly<Record<string, Linter.RuleEntry>> = {

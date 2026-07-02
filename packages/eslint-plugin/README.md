@@ -70,9 +70,8 @@ Options:
 
 ### `no-dynamic-key`
 
-Translator calls (`t(...)` from `useT()` / `useTranslations()` / `getT()` /
-`getTranslations()`) must use string-literal or template-literal-without-
-expressions keys. Dynamic keys break extraction.
+Translator calls (`t(...)` from `useT()` or `getT()`) must use string-literal or
+template-literal-without-expressions keys. Dynamic keys break extraction.
 
 ```js
 const t = useT();
