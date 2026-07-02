@@ -91,9 +91,8 @@ export function extractFile(filePath: string, source: string): FileExtraction {
       const callee = path.node.callee;
       if (callee.type !== 'Identifier' || !tBindingNames.has(callee.name)) return;
       const arg = path.node.arguments[0];
-      if (arg?.type !== 'StringLiteral') return;
-      const literal = arg.value;
-      if (literal === '') return;
+      const literal = resolveStaticString(arg, path);
+      if (!literal) return;
       const meta = readCallHints(path.node.arguments[1]);
       const key = sourceKey(literal, meta.context);
       messages[key] = literal;
@@ -104,6 +103,33 @@ export function extractFile(filePath: string, source: string): FileExtraction {
   });
 
   return { messages, manifest };
+}
+
+// The no-dynamic-key lint rule accepts `const KEY = '...'; t(KEY)` as static,
+// so the extractor must resolve the same shapes or blessed code silently
+// misses the catalog. Kept in lockstep with the rule: direct string literals,
+// expressionless template literals, and same-file const string bindings.
+function resolveStaticString(
+  arg: t.Node | null | undefined,
+  path: {
+    scope: {
+      getBinding(name: string): { constant: boolean; path: { node: t.Node } } | undefined;
+    };
+  },
+): string | null {
+  if (!arg) return null;
+  if (arg.type === 'StringLiteral') return arg.value || null;
+  if (arg.type === 'TemplateLiteral' && arg.expressions.length === 0) {
+    return arg.quasis[0]?.value.cooked || null;
+  }
+  if (arg.type === 'Identifier') {
+    const binding = path.scope.getBinding(arg.name);
+    const node = binding?.path.node;
+    if (binding?.constant && node?.type === 'VariableDeclarator' && node.init) {
+      return resolveStaticString(node.init, path);
+    }
+  }
+  return null;
 }
 
 function readJSXMeta(opening: t.JSXOpeningElement): MessageHints {

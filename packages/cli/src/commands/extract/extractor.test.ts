@@ -278,3 +278,41 @@ export function C() {
     expect(manifest[sourceKey('Submit', 'navbar')]?.maxChars).toBe(12);
   });
 });
+
+describe('extractFile - static string resolution', () => {
+  it('extracts t(KEY) when KEY is a same-file const string literal', () => {
+    const { messages } = extractFile(
+      FILE,
+      `
+import { t } from '@autotranslate/core/t';
+const KEY = 'Same-file const label';
+export function label() { return t(KEY); }
+      `,
+    );
+    expect(messages[sourceKey('Same-file const label')]).toBe('Same-file const label');
+  });
+
+  it('extracts expressionless template literals', () => {
+    const { messages } = extractFile(
+      FILE,
+      `
+import { t } from '@autotranslate/core/t';
+export function label() { return t(\`Template label\`); }
+      `,
+    );
+    expect(messages[sourceKey('Template label')]).toBe('Template label');
+  });
+
+  it('does not extract reassigned bindings or dynamic values', () => {
+    const { messages } = extractFile(
+      FILE,
+      `
+import { t } from '@autotranslate/core/t';
+let mutable = 'First';
+mutable = 'Second';
+export function label(x: string) { return t(mutable) + t(x) + t(\`joined \${x}\`); }
+      `,
+    );
+    expect(Object.keys(messages)).toHaveLength(0);
+  });
+});
