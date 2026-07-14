@@ -24,6 +24,7 @@
     "next-streaming-dev-mode",
     "openrouter-chat-fix",
     "plugin-is-the-product",
+    "preserve-custom-jsx-tags",
     "quiet-rivers-install",
     "release-package-hardening",
     "remove-mcp",

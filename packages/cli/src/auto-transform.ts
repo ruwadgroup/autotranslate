@@ -100,6 +100,20 @@ export function transformAutoWrap(
   // Inside a wrapped run, dynamic expressions nested in clean child elements
   // must also become <Var> — the runtime tree drops bare dynamic expressions.
   const emitVarsInElement = (el: t.JSXElement) => {
+    const tagName = customElementName(el.openingElement.name);
+    const hasTagHint = el.openingElement.attributes.some(
+      (attr) =>
+        t.isJSXAttribute(attr) &&
+        t.isJSXIdentifier(attr.name) &&
+        attr.name.name === 'data-autotranslate-tag',
+    );
+    if (tagName && !hasTagHint) {
+      insertions.push({
+        pos: el.openingElement.name.end!,
+        order: ORDER_VAR_OPEN,
+        text: ` data-autotranslate-tag="${tagName}"`,
+      });
+    }
     for (const child of el.children) {
       if (t.isJSXElement(child)) emitVarsInElement(child);
       else if (t.isJSXExpressionContainer(child) && isDynamicExpression(child.expression)) {
@@ -193,6 +207,17 @@ export function transformAutoWrap(
   if (importEdit) insertions.push(importEdit);
 
   return { code: applyInsertions(source, insertions), changed: true };
+}
+
+function customElementName(name: t.JSXOpeningElement['name']): string | null {
+  if (t.isJSXIdentifier(name)) {
+    return /^[A-Z]/.test(name.name) ? name.name : null;
+  }
+  if (t.isJSXMemberExpression(name)) {
+    const object = customElementName(name.object);
+    return object ? `${object}.${name.property.name}` : null;
+  }
+  return null;
 }
 
 function classifyChild(node: t.Node): MemberKind {

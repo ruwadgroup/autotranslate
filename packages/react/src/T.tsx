@@ -164,6 +164,12 @@ function renderTag(
     return original ? cloneElement(original) : createElement(node.tag);
   }
   const renderedChildren = renderTree(node.children, serialized, locale, state, poundReplacement);
-  if (original) return cloneElement(original, undefined, renderedChildren);
+  if (original) {
+    return cloneElement(
+      original as ReactElement<Record<string, unknown>>,
+      { 'data-autotranslate-tag': undefined },
+      renderedChildren,
+    );
+  }
   return createElement(node.tag, null, renderedChildren);
 }

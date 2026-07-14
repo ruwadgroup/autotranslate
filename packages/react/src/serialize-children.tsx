@@ -173,7 +173,13 @@ function walk(children: ReactNode, state: WriterState): StructuredMessage {
       return;
     }
 
-    const tag = typeof child.type === 'string' ? child.type : getDisplayName(child);
+    const tagHint = props['data-autotranslate-tag'];
+    const tag =
+      typeof tagHint === 'string'
+        ? tagHint
+        : typeof child.type === 'string'
+          ? child.type
+          : getDisplayName(child);
     const occurrence = state.tagCount.get(tag) ?? 0;
     state.tagCount.set(tag, occurrence + 1);
     state.tagSlots.set(tagKey(tag, occurrence), child);

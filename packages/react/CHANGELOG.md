@@ -1,5 +1,16 @@
 # @autotranslate/react
 
+## 1.0.0-beta.5
+
+### Patch Changes
+
+- Preserve custom JSX component names in auto mode so compound messages
+  containing components such as Next.js `Link` resolve their structured catalog
+  entries at runtime.
+
+  Remove the internal tag hint before cloning the original component so it does
+  not leak into rendered DOM attributes.
+
 ## 1.0.0-beta.4
 
 ### Patch Changes

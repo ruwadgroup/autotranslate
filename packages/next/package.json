@@ -1,6 +1,6 @@
 {
   "name": "@autotranslate/next",
-  "version": "1.0.0-beta.5",
+  "version": "1.0.0-beta.6",
   "description": "Next.js plugin, middleware, and server helpers for autotranslate.",
   "license": "MIT",
   "author": "Tamim Bin Hakim <tamimbinhakim.work@gmail.com>",

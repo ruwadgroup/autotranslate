@@ -1,4 +1,4 @@
-import { createElement } from 'react';
+import { createElement, type ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import { Branch, Currency, DateTime, Num, Plural, RelativeTime, Var } from './markers';
 import { serializeChildren } from './serialize-children';
@@ -63,6 +63,19 @@ describe('serializeChildren', () => {
     expect(tagSlots.size).toBe(2);
     expect(tagSlots.get('a#0')?.props).toMatchObject({ href: '/docs' });
     expect(tagSlots.get('a#1')?.props).toMatchObject({ href: '/api' });
+  });
+
+  it('uses an auto-transform tag hint for custom components', () => {
+    const LinkComponent = ({ children }: { children: ReactNode }) => <a href="/docs">{children}</a>;
+    const { tree } = serializeChildren(
+      <>
+        See <LinkComponent data-autotranslate-tag="Link">docs</LinkComponent>
+      </>,
+    );
+    expect(tree).toEqual([
+      { type: 'text', value: 'See ' },
+      { type: 'tag', tag: 'Link', children: [{ type: 'text', value: 'docs' }] },
+    ]);
   });
 
   it('drops booleans and null/undefined siblings', () => {

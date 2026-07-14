@@ -88,6 +88,13 @@ describe('transformAutoWrap', () => {
     );
   });
 
+  it('preserves custom component tag names for runtime serialization', () => {
+    const result = run('const x = <p>See <Link href="/docs">docs</Link></p>;');
+    expect(result.code).toBe(
+      'import { T } from \'@autotranslate/react\';\nconst x = <p><T>See <Link data-autotranslate-tag="Link" href="/docs">docs</Link></T></p>;',
+    );
+  });
+
   it('includes a leading clean element in the run when the level has direct text', () => {
     const result = run('const x = <p><strong>Bold</strong> rest</p>;');
     expect(result.code).toBe(
