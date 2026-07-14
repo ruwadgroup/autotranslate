@@ -1,4 +1,4 @@
-import { sourceKey } from '@autotranslate/core';
+import { canonicalKey, sourceKey } from '@autotranslate/core';
 import { describe, expect, it } from 'vitest';
 import { extractFile } from './extractor';
 
@@ -314,5 +314,66 @@ export function label(x: string) { return t(mutable) + t(x) + t(\`joined \${x}\`
       `,
     );
     expect(Object.keys(messages)).toHaveLength(0);
+  });
+});
+
+describe('extractFile - auto copy fields', () => {
+  const keyFor = (value: string) => canonicalKey([{ type: 'text', value }]);
+
+  it('extracts static custom-component props and config object fields in auto mode', () => {
+    const { messages } = extractFile(
+      FILE,
+      `
+const views = [
+  { value: 'month', label: 'Monthly' as const },
+  { value: 'week', label: 'Weekly' },
+];
+const emptyTitle = 'Nothing scheduled';
+export function Screen() {
+  return <SettingsSection title="Email Address" description={'Contact support to change it.'} />;
+}
+      `,
+      { includeAutoCopy: true },
+    );
+
+    for (const value of [
+      'Monthly',
+      'Weekly',
+      'Nothing scheduled',
+      'Email Address',
+      'Contact support to change it.',
+    ]) {
+      expect(messages[keyFor(value)]).toEqual([{ type: 'text', value }]);
+    }
+  });
+
+  it('does not extract structural fields or intrinsic DOM attributes', () => {
+    const { messages } = extractFile(
+      FILE,
+      `
+const view = { value: 'month', id: 'calendar-month', href: '/month', label: 'Monthly' };
+const input = <input title="Native title" placeholder="Search" />;
+const skipped = <Card data-no-translate title="Secret title" />;
+const translated = <T description="Translator note">Visible copy</T>;
+      `,
+      { includeAutoCopy: true },
+    );
+
+    expect(messages[keyFor('Monthly')]).toBeDefined();
+    expect(messages[keyFor('month')]).toBeUndefined();
+    expect(messages[keyFor('calendar-month')]).toBeUndefined();
+    expect(messages[keyFor('/month')]).toBeUndefined();
+    expect(messages[keyFor('Native title')]).toBeUndefined();
+    expect(messages[keyFor('Search')]).toBeUndefined();
+    expect(messages[keyFor('Secret title')]).toBeUndefined();
+    expect(messages[keyFor('Translator note')]).toBeUndefined();
+  });
+
+  it('leaves explicit mode unchanged', () => {
+    const { messages } = extractFile(
+      FILE,
+      `const config = { label: 'Monthly' }; const x = <Card title="Email Address" />;`,
+    );
+    expect(messages).toEqual({});
   });
 });

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CLASSIFIER_VERSION,
   isAllowlistedAttribute,
+  isCopyBearingName,
   jsxTextHasContent,
   NO_TRANSLATE_ATTRIBUTE,
   SKIP_ELEMENTS,
@@ -9,8 +10,30 @@ import {
 } from './classifier';
 
 describe('CLASSIFIER_VERSION', () => {
-  it('is 1', () => {
-    expect(CLASSIFIER_VERSION).toBe(1);
+  it('is 2', () => {
+    expect(CLASSIFIER_VERSION).toBe(2);
+  });
+});
+
+describe('isCopyBearingName', () => {
+  it('recognizes conventional interface-copy fields', () => {
+    for (const name of [
+      'label',
+      'title',
+      'description',
+      'helperText',
+      'emptyTitle',
+      'buttonLabel',
+      'cardDescription',
+    ]) {
+      expect(isCopyBearingName(name), `should recognize: ${name}`).toBe(true);
+    }
+  });
+
+  it('rejects structural and data fields', () => {
+    for (const name of ['value', 'id', 'name', 'key', 'href', 'url', 'userName']) {
+      expect(isCopyBearingName(name), `should reject: ${name}`).toBe(false);
+    }
   });
 });
 

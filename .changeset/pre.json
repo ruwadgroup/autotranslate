@@ -16,6 +16,7 @@
   },
   "changesets": [
     "clean-directives-first",
+    "detect-semantic-copy",
     "extract-const-labels",
     "fix-package-exports-types",
     "glossary-hybrid",

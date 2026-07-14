@@ -4,5 +4,11 @@
       "type": "text",
       "value": "Rédigez du texte dans vos composants de manière naturelle. Le CLI extrait chaque chaîne et la traduit avec le modèle IA de votre choix — pas de hiérarchies JSON, pas de gestion des clés."
     }
+  ],
+  "t.3ef2b60b262f": [
+    {
+      "type": "text",
+      "value": "autotraduire · Exemple Next.js"
+    }
   ]
 }

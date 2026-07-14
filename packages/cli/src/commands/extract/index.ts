@@ -31,7 +31,9 @@ export async function collectExtraction(resolved: ResolvedConfig): Promise<Extra
     if (config.mode === 'auto') {
       source = transformAutoWrap(source, { filename: display }).code;
     }
-    const result = extractFile(display, source);
+    const result = extractFile(display, source, {
+      includeAutoCopy: config.mode === 'auto',
+    });
     Object.assign(messages, result.messages);
     for (const [key, meta] of Object.entries(result.manifest)) {
       manifest[key] = mergeMeta(manifest[key], meta);

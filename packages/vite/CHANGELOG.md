@@ -1,5 +1,13 @@
 # @autotranslate/vite
 
+## 1.0.0-beta.7
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @autotranslate/cli@1.0.0-beta.7
+  - @autotranslate/core@1.0.0-beta.5
+
 ## 1.0.0-beta.6
 
 ### Patch Changes

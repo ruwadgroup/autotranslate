@@ -29,6 +29,10 @@ describe('no-untranslated-jsx', () => {
         // Numeric / bool children
         { code: 'const x = <div>{42}</div>;' },
         { code: 'const x = <div>{true}</div>;' },
+        // Dynamic data is not assumed to be interface copy.
+        { code: 'const x = <div>{user.name}</div>;' },
+        // Explicit dynamic-source lookup.
+        { code: 'const x = <T>{title}</T>;' },
       ],
       invalid: [
         {
@@ -42,6 +46,14 @@ describe('no-untranslated-jsx', () => {
         {
           code: 'const x = <button title="Save">x</button>;',
           errors: [{ messageId: 'bareAttribute' }, { messageId: 'bareText' }],
+        },
+        {
+          code: 'const x = <h2>{title}</h2>;',
+          errors: [{ messageId: 'dynamicCopy' }],
+        },
+        {
+          code: 'const x = <button>{view.label}</button>;',
+          errors: [{ messageId: 'dynamicCopy' }],
         },
       ],
     });

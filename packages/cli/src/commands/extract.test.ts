@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { sourceKey } from '@autotranslate/core';
+import { canonicalKey, sourceKey } from '@autotranslate/core';
 import { parseConfig } from '@autotranslate/core/config';
 import { describe, expect, it } from 'vitest';
 import { readChunkedCatalog } from '../catalog';
@@ -83,5 +83,42 @@ export function D() {
 
     // No files written to outDir.
     await expect(readdir(outDir)).rejects.toThrow();
+  });
+
+  it('keeps auto-mode config copy and dynamic render sites key-compatible', async () => {
+    const cwd = await mkdtemp(join(tmpdir(), 'autotranslate-auto-copy-'));
+    await mkdir(join(cwd, 'src'), { recursive: true });
+    await writeFile(
+      join(cwd, 'src', 'settings.tsx'),
+      `
+const views = [
+  { value: 'month', label: 'Monthly' },
+  { value: 'week', label: 'Weekly' },
+];
+function Section({ title, description }) {
+  return <section><h2>{title}</h2><p>{description}</p></section>;
+}
+export function Settings() {
+  return <><Section title="Email Address" description="Contact support to change it." />{views.map((view) => <button key={view.value}>{view.label}</button>)}</>;
+}
+      `,
+      'utf8',
+    );
+    const config = parseConfig({
+      mode: 'auto',
+      targets: ['fr'],
+      content: ['src/**/*.tsx'],
+    });
+    const result = await collectExtraction({
+      cwd,
+      config,
+      outDir: join(cwd, '.translations'),
+    });
+
+    for (const value of ['Monthly', 'Weekly', 'Email Address', 'Contact support to change it.']) {
+      const key = canonicalKey([{ type: 'text', value }]);
+      expect(result.source[key]).toEqual([{ type: 'text', value }]);
+    }
+    expect(result.source[canonicalKey([{ type: 'text', value: 'month' }])]).toBeUndefined();
   });
 });

@@ -207,10 +207,37 @@ In auto mode the compiler inserts `<T>` before the lint rule runs, so
 useful in auto mode for catching untranslated string literals in JSX attributes
 (`title`, `aria-label`, `placeholder`, etc.) that the compiler cannot wrap.
 
+Auto mode recognizes conventional copy-bearing names such as `title`,
+`description`, and `label` when they are rendered as dynamic-only JSX children:
+
+```tsx
+const views = [{ value: 'month', label: 'Monthly' }];
+
+function Card({ title }: { title: string }) {
+  return <h2>{title}</h2>;
+}
+
+<Card title="Email Address" />;
+views.map((view) => <button key={view.value}>{view.label}</button>);
+```
+
+The static prop and config values are cataloged, while runtime values without a
+catalog entry render unchanged. Use `data-no-translate` when a copy-bearing
+field intentionally contains dynamic user or application data.
+
+Intrinsic DOM attributes must remain strings, so translate them explicitly:
+
+```tsx
+const t = useT();
+return <input aria-label={t('Search')} placeholder={t('Search cases')} />;
+```
+
 ## Tips
 
-- **Don't put dynamic expressions inside `<T>` outside markers.** The extractor
-  sees the literal AST, not the runtime value:
+- **Don't put arbitrary dynamic expressions inside `<T>` outside markers.** The
+  extractor sees the literal AST, not the runtime value. Auto mode supports the
+  catalog-backed copy-bearing fields described above, but other dynamic values
+  still need explicit branches:
 
   ```tsx
   // ❌ {label} is opaque at extract time
@@ -224,7 +251,8 @@ useful in auto mode for catching untranslated string literals in JSX attributes
   </T>
   ```
 
-  The [`no-untranslated-jsx`](linting.md) ESLint rule catches the bad case.
+  The [`no-untranslated-jsx`](linting.md) ESLint rule catches bare conventional
+  copy-bearing expressions.
 
 - **Wrap whole sentences, not pieces.** `<T>Hello, <Var>{name}</Var>!</T>`
   translates well; splitting a sentence across multiple `<T>` blocks doesn't -

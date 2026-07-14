@@ -1,4 +1,9 @@
 import { type CatalogEntry, canonicalKey, type Manifest } from '@autotranslate/core';
+import {
+  isCopyBearingName,
+  NO_TRANSLATE_ATTRIBUTE,
+  TRANSLATION_MARKERS,
+} from '@autotranslate/core/classifier';
 import { sourceKey } from '@autotranslate/core/internal';
 import { parse } from '@babel/parser';
 import _traverse from '@babel/traverse';
@@ -11,6 +16,11 @@ const traverse = (_traverse as unknown as { default?: typeof _traverse }).defaul
 export interface FileExtraction {
   readonly messages: Record<string, CatalogEntry>;
   readonly manifest: Manifest;
+}
+
+export interface ExtractFileOptions {
+  /** Extract catalog-backed copy props/config fields used by auto mode. */
+  readonly includeAutoCopy?: boolean;
 }
 
 interface MessageHints {
@@ -31,7 +41,11 @@ const STANDALONE_T_SOURCES: ReadonlySet<string> = new Set([
  * - `t('literal', …)` bound to `useT()` or imported from
  *   `@autotranslate/core/t` → extracted with the literal as the source.
  */
-export function extractFile(filePath: string, source: string): FileExtraction {
+export function extractFile(
+  filePath: string,
+  source: string,
+  options: ExtractFileOptions = {},
+): FileExtraction {
   const ast = parse(source, {
     sourceType: 'module',
     sourceFilename: filePath,
@@ -50,6 +64,14 @@ export function extractFile(filePath: string, source: string): FileExtraction {
     manifest[key] = { ...meta, occurrences: existing };
   };
 
+  const recordAutoCopy = (value: string | null, line: number | null | undefined) => {
+    if (!value) return;
+    const tree = [{ type: 'text' as const, value }];
+    const key = canonicalKey(tree);
+    messages[key] = tree;
+    recordOccurrence(key, line);
+  };
+
   traverse(ast, {
     ImportDeclaration(path) {
       if (!STANDALONE_T_SOURCES.has(path.node.source.value)) return;
@@ -63,6 +85,13 @@ export function extractFile(filePath: string, source: string): FileExtraction {
 
     // `const t = useT()` — track the local alias for call-site extraction.
     VariableDeclarator(path) {
+      if (
+        options.includeAutoCopy &&
+        path.node.id.type === 'Identifier' &&
+        isCopyBearingName(path.node.id.name)
+      ) {
+        recordAutoCopy(readAutoCopyString(path.node.init), path.node.loc?.start.line);
+      }
       const init = path.node.init;
       if (
         init?.type === 'CallExpression' &&
@@ -72,6 +101,33 @@ export function extractFile(filePath: string, source: string): FileExtraction {
       ) {
         tBindingNames.add(path.node.id.name);
       }
+    },
+
+    JSXAttribute(path) {
+      if (!options.includeAutoCopy) return;
+      const attr = path.node;
+      if (attr.name.type !== 'JSXIdentifier' || !isCopyBearingName(attr.name.name)) return;
+      const opening = path.parent;
+      if (opening.type !== 'JSXOpeningElement' || !isCustomJSXName(opening.name)) return;
+      if (
+        (opening.name.type === 'JSXIdentifier' && TRANSLATION_MARKERS.has(opening.name.name)) ||
+        opening.attributes.some(
+          (candidate) =>
+            candidate.type === 'JSXAttribute' &&
+            candidate.name.type === 'JSXIdentifier' &&
+            candidate.name.name === NO_TRANSLATE_ATTRIBUTE,
+        )
+      ) {
+        return;
+      }
+      recordAutoCopy(readAutoCopyString(attr.value), attr.loc?.start.line);
+    },
+
+    ObjectProperty(path) {
+      if (!options.includeAutoCopy || path.node.computed) return;
+      const name = objectPropertyName(path.node.key);
+      if (!name || !isCopyBearingName(name)) return;
+      recordAutoCopy(readAutoCopyString(path.node.value), path.node.loc?.start.line);
     },
 
     JSXElement(path) {
@@ -103,6 +159,36 @@ export function extractFile(filePath: string, source: string): FileExtraction {
   });
 
   return { messages, manifest };
+}
+
+function isCustomJSXName(name: t.JSXOpeningElement['name']): boolean {
+  return (
+    name.type === 'JSXMemberExpression' ||
+    (name.type === 'JSXIdentifier' && /^[A-Z]/.test(name.name))
+  );
+}
+
+function objectPropertyName(key: t.ObjectProperty['key']): string | null {
+  if (key.type === 'Identifier') return key.name;
+  if (key.type === 'StringLiteral') return key.value;
+  return null;
+}
+
+function readAutoCopyString(node: t.Node | null | undefined): string | null {
+  if (!node) return null;
+  if (node.type === 'StringLiteral') return node.value || null;
+  if (node.type === 'TemplateLiteral' && node.expressions.length === 0) {
+    return node.quasis[0]?.value.cooked || null;
+  }
+  if (node.type === 'JSXExpressionContainer') return readAutoCopyString(node.expression);
+  if (
+    node.type === 'TSAsExpression' ||
+    node.type === 'TSTypeAssertion' ||
+    node.type === 'TSNonNullExpression'
+  ) {
+    return readAutoCopyString(node.expression);
+  }
+  return null;
 }
 
 // The no-dynamic-key lint rule accepts `const KEY = '...'; t(KEY)` as static,

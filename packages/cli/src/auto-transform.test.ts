@@ -189,6 +189,43 @@ describe('transformAutoWrap', () => {
     expect(run(source)).toEqual({ code: source, changed: false });
   });
 
+  it('wraps dynamic-only copy-bearing identifiers and member expressions', () => {
+    const source = [
+      'function Card({ title, description }) {',
+      '  return <><h2>{title}</h2><p>{description}</p></>;',
+      '}',
+      'const item = <button>{view.label}</button>;',
+    ].join('\n');
+
+    expect(run(source).code).toBe(
+      [
+        "import { T } from '@autotranslate/react';",
+        'function Card({ title, description }) {',
+        '  return <><h2><T>{title}</T></h2><p><T>{description}</T></p></>;',
+        '}',
+        'const item = <button><T>{view.label}</T></button>;',
+      ].join('\n'),
+    );
+  });
+
+  it('does not wrap dynamic data fields or opted-out copy fields', () => {
+    const source = [
+      'const a = <span>{user.name}</span>;',
+      'const b = <span data-no-translate>{item.title}</span>;',
+    ].join('\n');
+    expect(run(source)).toEqual({ code: source, changed: false });
+  });
+
+  it('keeps copy-bearing expressions as Var slots inside literal sentences', () => {
+    expect(run('const x = <p>Selected: {view.label}</p>;').code).toBe(
+      "import { T, Var } from '@autotranslate/react';\nconst x = <p><T>Selected: <Var>{view.label}</Var></T></p>;",
+    );
+  });
+
+  it('parses files whose only copy signal is a dynamic expression', () => {
+    expect(run('const x = <h2>{title}</h2>;').changed).toBe(true);
+  });
+
   it('keeps untouched code byte-identical (only splices wrappers + import)', () => {
     const weird = 'const config = {a:1,   b:2,\n    c:3};';
     const source = `${weird}\nexport function C() { return <p>Hi {name}</p>; }\n`;

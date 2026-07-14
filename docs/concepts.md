@@ -188,6 +188,13 @@ compile time. You write plain JSX and it gets translated automatically. Use
 `data-no-translate` on any element to opt it out. `code`, `pre`, `script`, and
 `style` elements are always skipped.
 
+Auto mode also recognizes conventional copy-bearing fields such as `title`,
+`description`, and `label`. Static values in custom-component props and config
+objects are added to the catalog, and dynamic-only render sites such as
+`{title}` or `{item.label}` use the matching catalog entry. Uncataloged runtime
+values fall back unchanged. Intrinsic DOM attributes remain explicit string
+translations with `useT()`.
+
 The same classifier rules govern the ESLint plugin and the compiler, so what the
 linter flags is exactly what `mode: 'auto'` would wrap.
 

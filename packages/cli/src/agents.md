@@ -272,15 +272,21 @@ committed catalog:
 `mode: 'auto'` in `autotranslate.config.ts` activates compile-time JSX
 auto-wrapping via `transformAutoWrap` from `@autotranslate/cli/transform`.
 
-Rules (JSX text nodes and static-string JSX expression children only):
+Rules:
 
 - Wrap qualifying contiguous child runs in `<T>`, turning embedded `{expr}` into
   `<Var>{expr}</Var>`
+- Wrap dynamic-only conventional copy fields such as `{title}`, `{description}`,
+  and `{item.label}` in `<T>` so catalog-backed runtime strings can resolve
+- In auto extraction, collect matching static custom-component props, object
+  properties, and const bindings as one-node structured messages
 - Qualifying = `jsxTextHasContent` is true AND no ancestor in
   `TRANSLATION_MARKERS` AND no ancestor element in `SKIP_ELEMENTS` (`code`,
   `pre`, `script`, `style`) AND no `data-no-translate` on self or any JSX
   ancestor
 - Adds `import { T, Var } from '@autotranslate/react'` if not already present
+- Intrinsic DOM attributes remain explicit `useT()` calls because their values
+  must remain primitive strings
 
 Extractor: in `mode: 'auto'`, each source file is piped through
 `transformAutoWrap` before `extractFile` — extraction and compiled output agree

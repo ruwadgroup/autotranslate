@@ -1,5 +1,12 @@
 # @autotranslate/zod
 
+## 1.0.0-beta.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @autotranslate/core@1.0.0-beta.5
+
 ## 1.0.0-beta.4
 
 ### Patch Changes

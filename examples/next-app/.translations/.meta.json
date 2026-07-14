@@ -47,6 +47,14 @@
       }
     ]
   },
+  "t.3ef2b60b262f": {
+    "occurrences": [
+      {
+        "file": "src/app/[lang]/layout.tsx",
+        "line": 15
+      }
+    ]
+  },
   "t.42e1eb39224c": {
     "occurrences": [
       {
@@ -60,6 +68,14 @@
       {
         "file": "src/components/LocaleCard.tsx",
         "line": 14
+      }
+    ]
+  },
+  "t.73f80fbaae0c": {
+    "occurrences": [
+      {
+        "file": "src/app/[lang]/layout.tsx",
+        "line": 16
       }
     ]
   },

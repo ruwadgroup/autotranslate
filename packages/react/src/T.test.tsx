@@ -15,6 +15,23 @@ describe('<T>', () => {
     expect(container.textContent).toBe('Sign out');
   });
 
+  it('translates a catalog-backed dynamic string and leaves unknown data unchanged', () => {
+    const title = 'Email Address';
+    const unknown = 'Customer supplied title';
+    const titleKey = canonicalKey([{ type: 'text', value: title }]);
+    const { container } = render(
+      <TranslationProvider
+        locale="fr"
+        catalog={{ [titleKey]: [{ type: 'text', value: 'Adresse e-mail' }] }}
+      >
+        <T>{title}</T>
+        {' / '}
+        <T>{unknown}</T>
+      </TranslationProvider>,
+    );
+    expect(container.textContent).toBe('Adresse e-mail / Customer supplied title');
+  });
+
   it('renders the translated tree using original Var slots', () => {
     const sourceKey = canonicalKey([
       { type: 'text', value: 'Hello, ' },

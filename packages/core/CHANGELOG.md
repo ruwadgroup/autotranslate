@@ -1,5 +1,16 @@
 # @autotranslate/core
 
+## 1.0.0-beta.5
+
+### Patch Changes
+
+- Detect catalog-backed interface copy carried through semantic component fields
+  such as `label`, `title`, and `description` in auto mode.
+
+  Extract static values for those fields, translate their dynamic JSX render
+  sites, and keep lint classification aligned while leaving unrelated dynamic
+  data untouched.
+
 ## 1.0.0-beta.4
 
 ### Patch Changes

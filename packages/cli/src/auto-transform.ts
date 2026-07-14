@@ -1,4 +1,5 @@
 import {
+  isCopyBearingName,
   jsxTextHasContent,
   NO_TRANSLATE_ATTRIBUTE,
   SKIP_ELEMENTS,
@@ -27,6 +28,9 @@ export interface TransformAutoWrapResult {
  * (a `>` or `}` followed by letters before the next `<`/`{`) are worth parsing.
  */
 const LETTER_BEARING_JSX = /[>}][^<>{}]*[A-Za-z]/;
+
+/** Cheap companion pre-filter for dynamic copy such as `{title}` / `{item.label}`. */
+const COPY_BEARING_JSX_EXPRESSION = /{\s*[$A-Z_a-z][\w$]*(?:\??\.[$A-Z_a-z][\w$]*)*\s*}/;
 
 // Insertion ordering at a shared offset: closes precede opens, and the T
 // wrapper stays outside any Var wrapper it contains.
@@ -72,7 +76,10 @@ export function transformAutoWrap(
 ): TransformAutoWrapResult {
   const { filename } = options;
   const isJsxFile = filename.endsWith('.jsx') || filename.endsWith('.tsx');
-  if (!isJsxFile || !LETTER_BEARING_JSX.test(source)) {
+  if (
+    !isJsxFile ||
+    (!LETTER_BEARING_JSX.test(source) && !COPY_BEARING_JSX_EXPRESSION.test(source))
+  ) {
     return { code: source, changed: false };
   }
 
@@ -142,6 +149,11 @@ export function transformAutoWrap(
     }
   };
 
+  const emitDynamicCopy = (node: t.JSXExpressionContainer) => {
+    insertions.push({ pos: node.start!, order: ORDER_T_OPEN, text: '<T>' });
+    insertions.push({ pos: node.end!, order: ORDER_T_CLOSE, text: '</T>' });
+  };
+
   const recurseInto = (child: t.Node) => {
     if (t.isJSXElement(child) || t.isJSXFragment(child)) walk(child);
     else if (t.isJSXExpressionContainer(child)) {
@@ -162,7 +174,9 @@ export function transformAutoWrap(
     const hasDirectText = members.some((m) => m === 'contentText' || m === 'staticContent');
     if (!hasDirectText) {
       for (let k = 0; k < children.length; k++) {
-        if (members[k] === 'cleanElement' || members[k] === 'boundary') recurseInto(children[k]!);
+        const child = children[k]!;
+        if (isDynamicCopyContainer(child)) emitDynamicCopy(child);
+        else if (members[k] === 'cleanElement' || members[k] === 'boundary') recurseInto(child);
       }
       return;
     }
@@ -207,6 +221,21 @@ export function transformAutoWrap(
   if (importEdit) insertions.push(importEdit);
 
   return { code: applyInsertions(source, insertions), changed: true };
+}
+
+function isDynamicCopyContainer(node: t.Node): node is t.JSXExpressionContainer {
+  return t.isJSXExpressionContainer(node) && isCopyBearingExpression(node.expression);
+}
+
+function isCopyBearingExpression(node: t.Node): boolean {
+  if (t.isIdentifier(node)) return isCopyBearingName(node.name);
+  if (t.isMemberExpression(node) || t.isOptionalMemberExpression(node)) {
+    return !node.computed && t.isIdentifier(node.property) && isCopyBearingName(node.property.name);
+  }
+  if (t.isTSAsExpression(node) || t.isTSTypeAssertion(node) || t.isTSNonNullExpression(node)) {
+    return isCopyBearingExpression(node.expression);
+  }
+  return false;
 }
 
 function customElementName(name: t.JSXOpeningElement['name']): string | null {

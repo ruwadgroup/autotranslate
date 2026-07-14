@@ -2,6 +2,7 @@ import type { Rule } from 'eslint';
 import {
   findMarkerAncestor,
   isAllowlistedAttribute,
+  isCopyBearingName,
   jsxAttributeName,
   jsxTextHasContent,
   readStaticString,
@@ -34,6 +35,8 @@ const rule: Rule.RuleModule = {
         'String literal {{ snippet }} is not wrapped in <T>. Wrap it in <T> or hoist via useT().',
       bareAttribute:
         'String literal in JSX attribute "{{ name }}" is not translated. Use useT() for the value.',
+      dynamicCopy:
+        'Copy-bearing expression "{{ name }}" is not translated. Auto mode handles catalog-backed values; otherwise use <T> or useT().',
     },
   },
   create(context) {
@@ -71,6 +74,21 @@ const rule: Rule.RuleModule = {
           literalValue.length > 24 ? `"${literalValue.slice(0, 21)}…"` : `"${literalValue}"`;
         context.report({ node: node as Rule.Node, messageId: 'bareText', data: { snippet } });
       },
+      JSXExpressionContainer(rawNode: unknown) {
+        const node = rawNode as {
+          type: string;
+          expression?: DynamicExpressionLike;
+          parent?: { type: string };
+        };
+        if (node.parent?.type === 'JSXAttribute') return;
+        const name = copyBearingExpressionName(node.expression);
+        if (!name || findMarkerAncestor(node as never, markerNames)) return;
+        context.report({
+          node: node as Rule.Node,
+          messageId: 'dynamicCopy',
+          data: { name },
+        });
+      },
       JSXAttribute(rawNode: unknown) {
         const node = rawNode as {
           type: string;
@@ -104,5 +122,31 @@ const rule: Rule.RuleModule = {
     };
   },
 };
+
+interface DynamicExpressionLike {
+  readonly type: string;
+  readonly name?: string;
+  readonly computed?: boolean;
+  readonly property?: DynamicExpressionLike;
+  readonly expression?: DynamicExpressionLike;
+}
+
+function copyBearingExpressionName(node: DynamicExpressionLike | undefined): string | null {
+  if (!node) return null;
+  if (node.type === 'Identifier' && node.name && isCopyBearingName(node.name)) return node.name;
+  if (
+    node.type === 'MemberExpression' &&
+    !node.computed &&
+    node.property?.type === 'Identifier' &&
+    node.property.name &&
+    isCopyBearingName(node.property.name)
+  ) {
+    return node.property.name;
+  }
+  if (node.type === 'ChainExpression' || node.type === 'TSAsExpression') {
+    return copyBearingExpressionName(node.expression);
+  }
+  return null;
+}
 
 export default rule;

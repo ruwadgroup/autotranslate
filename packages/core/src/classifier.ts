@@ -1,5 +1,5 @@
 /** Bump this when the classification rules change in a breaking way. */
-export const CLASSIFIER_VERSION = 1;
+export const CLASSIFIER_VERSION = 2;
 
 /** The 8 marker component names that signal translated content. */
 export const TRANSLATION_MARKERS: ReadonlySet<string> = new Set([
@@ -16,6 +16,20 @@ export const TRANSLATION_MARKERS: ReadonlySet<string> = new Set([
 /** True when `text` contains visible content (non-whitespace after collapse). */
 export function jsxTextHasContent(text: string): boolean {
   return text.replace(/\s+/g, ' ').trim() !== '';
+}
+
+/**
+ * Semantic property names that conventionally carry static interface copy.
+ *
+ * Auto mode uses this deliberately narrow signal for values that are rendered
+ * through an expression (`{title}`, `{item.label}`). Runtime values still only
+ * translate when their exact source string exists in the extracted catalog.
+ */
+const COPY_BEARING_NAME =
+  /^(?:label|title|description|subtitle|placeholder|caption|heading|subheading|helperText|message|summary|tooltip|emptyTitle|emptyDescription|[A-Za-z_$][\w$]*(?:Label|Title|Description|Subtitle|Placeholder|Caption|Heading|Subheading|HelperText|Message|Summary|Tooltip))$/;
+
+export function isCopyBearingName(name: string): boolean {
+  return COPY_BEARING_NAME.test(name);
 }
 
 /**

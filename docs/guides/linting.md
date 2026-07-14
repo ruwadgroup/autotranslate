@@ -71,6 +71,11 @@ the rule will not fire for JSX text nodes that the compiler handles. You still
 want the rule enabled for JSX **attribute** values (`title`, `aria-label`,
 `placeholder`, etc.) that the compiler cannot wrap.
 
+The rule also recognizes bare copy-bearing expressions such as `{title}` and
+`{item.label}`. Auto mode resolves these through statically extracted prop or
+config values; explicit mode should wrap them or translate their source strings
+with `useT()`.
+
 The rule and the compiler share the same classifier: `code`, `pre`, `script`,
 and `style` elements are skipped by both, and `data-no-translate` suppresses
 both the compiler and the lint warning on any element and its subtree.
