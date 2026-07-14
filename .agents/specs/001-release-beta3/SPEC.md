@@ -2,7 +2,7 @@
 id: 001
 title: Harden and publish the feature-complete beta 3 release
 slug: 001-release-beta3
-status: go
+status: done
 tags: [area:release, area:packaging, type:fix, type:release]
 priority: P0
 severity: high
