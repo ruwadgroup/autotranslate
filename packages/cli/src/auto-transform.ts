@@ -395,6 +395,10 @@ function planImportEdit(
 
   const stmt = `import { ${toAdd.join(', ')} } from '${REACT_MODULE}';`;
   if (lastImportEnd !== null) return { pos: lastImportEnd, order: 0, text: `\n${stmt}` };
+  const lastDirective = ast.program.directives.at(-1);
+  if (lastDirective?.end != null) {
+    return { pos: lastDirective.end, order: 0, text: `\n${stmt}` };
+  }
   return { pos: 0, order: 0, text: `${stmt}\n` };
 }
 

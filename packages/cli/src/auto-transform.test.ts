@@ -30,6 +30,32 @@ describe('transformAutoWrap', () => {
     );
   });
 
+  it('inserts generated imports after module directives', () => {
+    const source = [
+      "'use client';",
+      "'use strict';",
+      'export function Greeting() {',
+      '  return <p>Hello world</p>;',
+      '}',
+      '',
+    ].join('\n');
+
+    const result = run(source);
+
+    expect(result.changed).toBe(true);
+    expect(result.code).toBe(
+      [
+        "'use client';",
+        "'use strict';",
+        "import { T } from '@autotranslate/react';",
+        'export function Greeting() {',
+        '  return <p><T>Hello world</T></p>;',
+        '}',
+        '',
+      ].join('\n'),
+    );
+  });
+
   it('leaves data-no-translate on self unchanged', () => {
     const source = 'const x = <p data-no-translate>SKU-{id}</p>;';
     expect(run(source)).toEqual({ code: source, changed: false });

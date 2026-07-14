@@ -1,5 +1,13 @@
 # @autotranslate/cli
 
+## 1.0.0-beta.5
+
+### Patch Changes
+
+- Keep generated auto-mode imports after module directives such as
+  `"use client"` and `"use strict"` so transformed Next.js client components
+  remain valid.
+
 ## 1.0.0-beta.4
 
 ### Patch Changes
