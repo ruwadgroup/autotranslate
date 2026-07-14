@@ -25,6 +25,8 @@ jobs:
         with: { fetch-depth: 0 }
 
       - uses: pnpm/action-setup@v6
+        with:
+          version: 10.12.4
 
       # Node 24 ships npm 11+ which is required for Trusted Publishing OIDC
       # (Node 22 only ships npm 10.x; in-place self-upgrade is unreliable).

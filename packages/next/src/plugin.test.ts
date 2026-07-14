@@ -259,42 +259,19 @@ describe('when @autotranslate/cli is not installed', () => {
     });
   });
 
-  it('warns once with install hint on dev phase and does not throw', async () => {
+  it('warns once with an install hint across development and build phases', async () => {
     clearSingletons();
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const { withAutotranslate } = await import('./plugin');
     const fn = withAutotranslate();
 
     await expect(fn('phase-development-server', {})).resolves.toBeDefined();
+    await expect(fn('phase-production-build', {})).resolves.toBeDefined();
 
     expect(warnSpy).toHaveBeenCalledOnce();
     const warningText = warnSpy.mock.calls[0]!.join(' ');
     expect(warningText).toContain('autotranslate');
     expect(warningText).toContain('pnpm add -D @autotranslate/cli');
-  });
-
-  it('warns once with install hint on build phase and does not throw', async () => {
-    clearSingletons();
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const { withAutotranslate } = await import('./plugin');
-    const fn = withAutotranslate();
-
-    await expect(fn('phase-production-build', {})).resolves.toBeDefined();
-
-    expect(warnSpy).toHaveBeenCalledOnce();
-    expect(warnSpy.mock.calls[0]!.join(' ')).toContain('pnpm add -D @autotranslate/cli');
-  });
-
-  it('only warns once across multiple phase invocations', async () => {
-    clearSingletons();
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const { withAutotranslate } = await import('./plugin');
-    const fn = withAutotranslate();
-
-    await fn('phase-development-server', {});
-    await fn('phase-production-build', {});
-
-    expect(warnSpy).toHaveBeenCalledOnce();
   });
 });
 
