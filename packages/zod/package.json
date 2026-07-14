@@ -1,6 +1,6 @@
 {
   "name": "@autotranslate/zod",
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0-beta.3",
   "description": "Zod v4 error map: translates standard Zod issues through your autotranslate catalog.",
   "license": "MIT",
   "author": "Tamim Bin Hakim <tamimbinhakim.work@gmail.com>",

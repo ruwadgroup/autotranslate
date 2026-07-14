@@ -1,5 +1,31 @@
 # @autotranslate/providers
 
+## 1.0.0-beta.3
+
+### Patch Changes
+
+- [`49f6972`](https://github.com/ruwadgroup/autotranslate/commit/49f6972216aca4e497a6b87bf3c9ed819551aea8)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Fix the
+  `openrouter` vendor: use the chat-completions endpoint (the bare OpenAI
+  factory returns a Responses-API model, which OpenRouter does not implement)
+  and pin the `@ai-sdk/*` peer ranges to `>=3 <4` with `ai >=6 <7` so pnpm's
+  auto-install-peers can no longer pair an incompatible spec-v4 SDK with the v6
+  runtime. Also removes the dead `./hybrid` subpath export.
+
+- [`8e63cf9`](https://github.com/ruwadgroup/autotranslate/commit/8e63cf913189c056a82a3c30ee91f26ebfc86011)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Harden package
+  metadata and release verification for ESM and CommonJS consumers. Conditional
+  exports now resolve `.d.ts` declarations for ESM and `.d.cts` declarations for
+  CommonJS without an ambiguous outer `types` condition. The ESLint plugin no
+  longer crashes when loaded through `require()`. Every release now passes
+  strict package linting and runtime entry-point smoke tests before publication.
+  Vite auto mode now transforms JSX before framework plugins compile it, so
+  plain JSX is translated regardless of plugin order.
+- Updated dependencies
+  [[`fdbf0fc`](https://github.com/ruwadgroup/autotranslate/commit/fdbf0fc680ff666546254560f5ca851b310c1b6d),
+  [`8e63cf9`](https://github.com/ruwadgroup/autotranslate/commit/8e63cf913189c056a82a3c30ee91f26ebfc86011)]:
+  - @autotranslate/core@1.0.0-beta.3
+
 ## 1.0.0-beta.2
 
 ### Patch Changes
