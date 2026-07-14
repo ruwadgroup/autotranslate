@@ -254,6 +254,7 @@ describe('build phase', () => {
 describe('when @autotranslate/cli is not installed', () => {
   beforeEach(() => {
     vi.resetModules();
+    vi.doUnmock('@autotranslate/cli');
     vi.doMock('@autotranslate/cli', () => {
       throw new Error('Cannot find module');
     });
