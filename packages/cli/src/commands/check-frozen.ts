@@ -21,9 +21,8 @@ export interface FrozenReport {
  * Frozen-build check: compares live extraction against the committed source
  * catalog and runs existing check() comparisons for target locales.
  *
- * - Source catalog directory AND legacy flat file both absent -> fresh project,
- *   returns `{ ok: true, catalogAbsent: true }` so example projects in CI
- *   never fail.
+ * - Source catalog directory absent -> fresh project, returns
+ *   `{ ok: true, catalogAbsent: true }` so example projects in CI never fail.
  * - Otherwise: keys in live code not in committed catalog -> `missingSource`
  *   (with first occurrence file:line and source text); target problems via
  *   existing check() logic -> `problems`.

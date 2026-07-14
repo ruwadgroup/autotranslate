@@ -26,7 +26,6 @@ export default defineConfig({
   sourcemap: true,
   splitting: true,
   clean: true,
-  treeshake: true,
   external: ['react', 'react-dom', 'react-dom/server'],
   esbuildOptions(options) {
     options.jsx = 'automatic';

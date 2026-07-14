@@ -35,7 +35,7 @@ export async function loadConfig(cwd: string = process.cwd()): Promise<ResolvedC
 
 async function loadModule(path: string): Promise<unknown> {
   if (path.endsWith('.ts') || path.endsWith('.mts')) {
-    const jiti = createJiti(import.meta.url, { interopDefault: true });
+    const jiti = createJiti(path, { interopDefault: true });
     return jiti.import(path);
   }
   return import(/* @vite-ignore */ path);

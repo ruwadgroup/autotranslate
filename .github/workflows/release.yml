@@ -38,6 +38,8 @@ jobs:
 
       - run: pnpm build
 
+      - run: pnpm packages:check
+
       - name: Create release PR or publish
         id: changesets
         uses: changesets/action@v1

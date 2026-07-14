@@ -87,6 +87,9 @@ export default function autotranslate(options: AutotranslatePluginOptions = {}):
 
   return {
     name: '@autotranslate/vite',
+    // Auto mode must see the original JSX before framework plugins compile it.
+    // This also keeps the documented plugin order safe for React applications.
+    enforce: 'pre',
 
     configResolved(viteConfig) {
       if (!options.cwd) cwd = viteConfig.root;

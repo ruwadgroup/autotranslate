@@ -25,7 +25,6 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
       "import": {
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
@@ -36,7 +35,6 @@
       }
     },
     "./plugin": {
-      "types": "./dist/plugin.d.ts",
       "import": {
         "types": "./dist/plugin.d.ts",
         "default": "./dist/plugin.js"
@@ -47,7 +45,6 @@
       }
     },
     "./middleware": {
-      "types": "./dist/middleware.d.ts",
       "import": {
         "types": "./dist/middleware.d.ts",
         "default": "./dist/middleware.js"
@@ -58,7 +55,6 @@
       }
     },
     "./auto-loader": {
-      "types": "./dist/auto-loader.d.ts",
       "import": {
         "types": "./dist/auto-loader.d.ts",
         "default": "./dist/auto-loader.js"

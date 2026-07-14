@@ -24,7 +24,6 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
       "import": {
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
@@ -35,7 +34,6 @@
       }
     },
     "./classifier": {
-      "types": "./dist/classifier.d.ts",
       "import": {
         "types": "./dist/classifier.d.ts",
         "default": "./dist/classifier.js"
@@ -46,7 +44,6 @@
       }
     },
     "./config": {
-      "types": "./dist/config.d.ts",
       "import": {
         "types": "./dist/config.d.ts",
         "default": "./dist/config.js"
@@ -57,7 +54,6 @@
       }
     },
     "./locale": {
-      "types": "./dist/locale.d.ts",
       "import": {
         "types": "./dist/locale.d.ts",
         "default": "./dist/locale.js"
@@ -68,7 +64,6 @@
       }
     },
     "./icu": {
-      "types": "./dist/icu.d.ts",
       "import": {
         "types": "./dist/icu.d.ts",
         "default": "./dist/icu.js"
@@ -79,7 +74,6 @@
       }
     },
     "./internal": {
-      "types": "./dist/internal.d.ts",
       "import": {
         "types": "./dist/internal.d.ts",
         "default": "./dist/internal.js"
@@ -90,7 +84,6 @@
       }
     },
     "./standalone": {
-      "types": "./dist/standalone.d.ts",
       "browser": {
         "import": {
           "types": "./dist/standalone.browser.d.ts",
@@ -111,7 +104,6 @@
       }
     },
     "./t": {
-      "types": "./dist/standalone.d.ts",
       "browser": {
         "import": {
           "types": "./dist/standalone.browser.d.ts",

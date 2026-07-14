@@ -6,6 +6,5 @@ export default defineConfig({
   dts: { compilerOptions: { composite: false, incremental: false } },
   sourcemap: true,
   clean: true,
-  treeshake: true,
   external: ['vite'],
 });

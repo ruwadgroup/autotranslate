@@ -22,12 +22,12 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "sideEffects": false,
   "bin": {
-    "autotranslate": "./dist/cli.js"
+    "autotranslate": "./bin/autotranslate.js"
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
       "import": {
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
@@ -38,7 +38,6 @@
       }
     },
     "./transform": {
-      "types": "./dist/transform.d.ts",
       "import": {
         "types": "./dist/transform.d.ts",
         "default": "./dist/transform.js"
@@ -51,6 +50,7 @@
     "./package.json": "./package.json"
   },
   "files": [
+    "bin",
     "dist",
     "README.md",
     "CHANGELOG.md",

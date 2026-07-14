@@ -8,6 +8,11 @@
       "outputs": ["dist/**"],
       "inputs": ["$TURBO_DEFAULT$", "!**/*.test.ts", "!**/*.test.tsx", "!**/*.spec.ts"]
     },
+    "@autotranslate/example-next-app#build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.test.ts", "!**/*.test.tsx", "!**/*.spec.ts"]
+    },
     "dev": {
       "cache": false,
       "persistent": true,
@@ -15,7 +20,7 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
+      "outputs": []
     },
     "lint": {
       "outputs": []

@@ -1,10 +1,8 @@
-import { createRequire } from 'node:module';
 import type { ESLint, Linter, Rule } from 'eslint';
+import { version } from '../package.json';
 import noDynamicKey from './rules/no-dynamic-key';
 import noUntranslatedJsx from './rules/no-untranslated-jsx';
 import validIcuFormat from './rules/valid-icu-format';
-
-const { version } = createRequire(import.meta.url)('../package.json') as { version: string };
 
 export const rules: Readonly<Record<string, Rule.RuleModule>> = {
   'no-untranslated-jsx': noUntranslatedJsx,

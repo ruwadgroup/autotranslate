@@ -8,9 +8,8 @@ export interface LoadedCatalogs {
 }
 
 /**
- * Read every locale's chunked catalog from `<cwd>/<outDir>/<locale>/**`. Falls
- * back to the legacy flat `<locale>.json` when the directory is missing. Each
- * locale's chunks are deep-merged into one `Catalog`.
+ * Read every locale's chunked catalog from `<cwd>/<outDir>/<locale>/**`.
+ * Each locale's chunks are deep-merged into one `Catalog`.
  */
 export async function loadCatalogs(
   cwd: string,

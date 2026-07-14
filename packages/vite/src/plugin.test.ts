@@ -282,6 +282,12 @@ describe('buildStart - frozen check', () => {
 });
 
 describe('transform - auto mode', () => {
+  it('runs before framework plugins compile JSX', () => {
+    const plugin = autotranslate();
+
+    expect(plugin.enforce).toBe('pre');
+  });
+
   it('applies transformAutoWrap to .tsx files in auto mode', async () => {
     mockTransformAutoWrap.mockReturnValue({ code: '<T>Hello</T>', changed: true });
 

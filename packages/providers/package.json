@@ -25,7 +25,6 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
       "import": {
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
@@ -36,7 +35,6 @@
       }
     },
     "./ai": {
-      "types": "./dist/ai.d.ts",
       "import": {
         "types": "./dist/ai.d.ts",
         "default": "./dist/ai.js"
@@ -47,7 +45,6 @@
       }
     },
     "./deepl": {
-      "types": "./dist/deepl.d.ts",
       "import": {
         "types": "./dist/deepl.d.ts",
         "default": "./dist/deepl.js"
@@ -58,7 +55,6 @@
       }
     },
     "./google": {
-      "types": "./dist/google.d.ts",
       "import": {
         "types": "./dist/google.d.ts",
         "default": "./dist/google.js"
@@ -69,7 +65,6 @@
       }
     },
     "./stub": {
-      "types": "./dist/stub.d.ts",
       "import": {
         "types": "./dist/stub.d.ts",
         "default": "./dist/stub.js"

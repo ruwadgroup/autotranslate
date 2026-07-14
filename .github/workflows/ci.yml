@@ -78,6 +78,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      - run: pnpm packages:check
       - uses: actions/upload-artifact@v7
         with:
           name: dist
