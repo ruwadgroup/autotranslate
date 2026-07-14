@@ -1,5 +1,16 @@
 # @autotranslate/cli
 
+## 1.0.0-beta.4
+
+### Patch Changes
+
+- Fix package manifests so pnpm consumers receive installable versioned
+  dependencies instead of leaked workspace references. Render translated void
+  HTML elements such as `<br />` without invalid React children.
+- Updated dependencies []:
+  - @autotranslate/core@1.0.0-beta.4
+  - @autotranslate/providers@1.0.0-beta.4
+
 ## 1.0.0-beta.3
 
 ### Minor Changes

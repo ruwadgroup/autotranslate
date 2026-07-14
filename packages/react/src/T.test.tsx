@@ -65,6 +65,34 @@ describe('<T>', () => {
     expect(link?.getAttribute('href')).toBe('/docs');
   });
 
+  it('renders translated void HTML elements without children', () => {
+    const sourceKey = canonicalKey([
+      { type: 'text', value: 'First' },
+      { type: 'tag', tag: 'br', children: [] },
+      { type: 'text', value: 'Second' },
+    ]);
+    const { container } = render(
+      <TranslationProvider
+        locale="es"
+        catalog={{
+          [sourceKey]: [
+            { type: 'text', value: 'Primero' },
+            { type: 'tag', tag: 'br', children: [] },
+            { type: 'text', value: 'Segundo' },
+          ],
+        }}
+      >
+        <T>
+          First
+          <br />
+          Second
+        </T>
+      </TranslationProvider>,
+    );
+
+    expect(container.innerHTML).toBe('Primero<br>Segundo');
+  });
+
   it('selects the right plural form and substitutes #', () => {
     const sourceKey = canonicalKey([
       {

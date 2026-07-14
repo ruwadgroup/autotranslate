@@ -56,6 +56,25 @@ export function T({ children, context }: TProps): ReactElement {
 
 const DEBUG_SPAN_STYLE = { display: 'contents' } as const;
 
+const VOID_HTML_ELEMENTS = new Set([
+  'area',
+  'base',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'keygen',
+  'link',
+  'menuitem',
+  'meta',
+  'param',
+  'source',
+  'track',
+  'wbr',
+]);
+
 interface RenderState {
   readonly tagOccurrence: Map<string, number>;
 }
@@ -138,9 +157,13 @@ function renderTag(
   const occurrence = state.tagOccurrence.get(node.tag) ?? 0;
   state.tagOccurrence.set(node.tag, occurrence + 1);
   const original = serialized.tagSlots.get(tagKey(node.tag, occurrence));
-  const renderedChildren = renderTree(node.children, serialized, locale, state, poundReplacement);
-  if (original) {
-    return cloneElement(original, undefined, renderedChildren);
+  const isVoidElement = original
+    ? typeof original.type === 'string' && VOID_HTML_ELEMENTS.has(original.type)
+    : VOID_HTML_ELEMENTS.has(node.tag);
+  if (isVoidElement) {
+    return original ? cloneElement(original) : createElement(node.tag);
   }
+  const renderedChildren = renderTree(node.children, serialized, locale, state, poundReplacement);
+  if (original) return cloneElement(original, undefined, renderedChildren);
   return createElement(node.tag, null, renderedChildren);
 }
