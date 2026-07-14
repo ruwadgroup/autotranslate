@@ -7,7 +7,7 @@ const rule: Rule.RuleModule = {
     type: 'problem',
     docs: {
       description: 'Verify that translator string keys parse as valid ICU MessageFormat.',
-      url: 'https://github.com/tamimbinhakim/autotranslate/tree/main/packages/eslint-plugin#valid-icu-format',
+      url: 'https://github.com/ruwadgroup/autotranslate/tree/main/packages/eslint-plugin#valid-icu-format',
     },
     schema: [],
     messages: {

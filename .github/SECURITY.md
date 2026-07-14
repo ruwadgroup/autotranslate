@@ -11,7 +11,7 @@ vulnerability is exploitable in production and the fix is non-breaking.
 **Do not open a public issue.** Use one of:
 
 1. **Preferred:** GitHub's
-   [private security advisory](https://github.com/tamimbinhakim/autotranslate/security/advisories/new).
+   [private security advisory](https://github.com/ruwadgroup/autotranslate/security/advisories/new).
 2. Email **tamimbinhakim.work@gmail.com** with the subject
    `[autotranslate security]`.
 

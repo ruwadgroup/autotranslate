@@ -1,7 +1,7 @@
 # @autotranslate/core
 
 Framework-free runtime, types, ICU MessageFormat, and locale resolution for
-[autotranslate](https://github.com/tamimbinhakim/autotranslate).
+[autotranslate](https://github.com/ruwadgroup/autotranslate).
 
 Zero React, zero filesystem, zero AI. Synchronous. Edge-runtime safe (Node,
 browsers, Bun, Vercel Edge, Cloudflare Workers).

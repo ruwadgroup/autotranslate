@@ -12,7 +12,7 @@ PR.
 ## Setup
 
 ```bash
-git clone https://github.com/tamimbinhakim/autotranslate.git
+git clone https://github.com/ruwadgroup/autotranslate.git
 cd autotranslate
 pnpm install
 pnpm build

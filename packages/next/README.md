@@ -198,4 +198,4 @@ export async function GET(
 ---
 
 Full docs:
-[github.com/tamimbinhakim/autotranslate/docs/frameworks/nextjs.md](https://github.com/tamimbinhakim/autotranslate/blob/main/docs/frameworks/nextjs.md)
+[github.com/ruwadgroup/autotranslate/docs/frameworks/nextjs.md](https://github.com/ruwadgroup/autotranslate/blob/main/docs/frameworks/nextjs.md)

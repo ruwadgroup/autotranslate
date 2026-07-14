@@ -1,10 +1,9 @@
 # @autotranslate/react
 
-React adapter for
-[autotranslate](https://github.com/tamimbinhakim/autotranslate). `<T>` for
-translatable JSX, `<Var>` / `<Plural>` / `<Branch>` markers for structural
-slots, `<Num>` / `<Currency>` / `<DateTime>` / `<RelativeTime>` for locale-aware
-formatting, and a separate server entry for RSC / SSR.
+React adapter for [autotranslate](https://github.com/ruwadgroup/autotranslate).
+`<T>` for translatable JSX, `<Var>` / `<Plural>` / `<Branch>` markers for
+structural slots, `<Num>` / `<Currency>` / `<DateTime>` / `<RelativeTime>` for
+locale-aware formatting, and a separate server entry for RSC / SSR.
 
 ```bash
 pnpm add @autotranslate/react @autotranslate/core

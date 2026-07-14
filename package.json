@@ -5,13 +5,13 @@
   "description": "Automated, AI-powered i18n for any React framework. Code is the source of truth.",
   "license": "MIT",
   "author": "Tamim Bin Hakim <tamimbinhakim.work@gmail.com>",
-  "homepage": "https://github.com/tamimbinhakim/autotranslate#readme",
+  "homepage": "https://github.com/ruwadgroup/autotranslate#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tamimbinhakim/autotranslate.git"
+    "url": "git+https://github.com/ruwadgroup/autotranslate.git"
   },
   "bugs": {
-    "url": "https://github.com/tamimbinhakim/autotranslate/issues"
+    "url": "https://github.com/ruwadgroup/autotranslate/issues"
   },
   "type": "module",
   "packageManager": "pnpm@10.12.4",
@@ -33,7 +33,7 @@
     "clean": "turbo run clean && rm -rf node_modules",
     "changeset": "changeset",
     "version": "changeset version && pnpm install --lockfile-only",
-    "release": "turbo run build --filter=./packages/* && pnpm packages:check && changeset publish",
+    "release": "turbo run build --filter=./packages/* && pnpm packages:check && node scripts/publish-packages.mjs",
     "prepare": "husky"
   },
   "devDependencies": {

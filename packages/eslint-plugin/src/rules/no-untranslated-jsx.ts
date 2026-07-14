@@ -17,7 +17,7 @@ const rule: Rule.RuleModule = {
     type: 'problem',
     docs: {
       description: 'Require user-visible JSX string literals to be wrapped in a <T> component.',
-      url: 'https://github.com/tamimbinhakim/autotranslate/tree/main/packages/eslint-plugin#no-untranslated-jsx',
+      url: 'https://github.com/ruwadgroup/autotranslate/tree/main/packages/eslint-plugin#no-untranslated-jsx',
     },
     schema: [
       {

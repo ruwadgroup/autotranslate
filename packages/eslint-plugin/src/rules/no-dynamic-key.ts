@@ -7,7 +7,7 @@ const rule: Rule.RuleModule = {
     docs: {
       description:
         'Require translator calls (t / useT / getT) to use string-literal keys; dynamic keys break extraction.',
-      url: 'https://github.com/tamimbinhakim/autotranslate/tree/main/packages/eslint-plugin#no-dynamic-key',
+      url: 'https://github.com/ruwadgroup/autotranslate/tree/main/packages/eslint-plugin#no-dynamic-key',
     },
     schema: [],
     messages: {

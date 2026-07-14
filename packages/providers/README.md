@@ -1,7 +1,7 @@
 # @autotranslate/providers
 
 Pluggable translation providers for
-[autotranslate](https://github.com/tamimbinhakim/autotranslate). Each provider
+[autotranslate](https://github.com/ruwadgroup/autotranslate). Each provider
 implements a single async `translate(request)` method; the CLI handles batching,
 concurrency, and caching on top.
 

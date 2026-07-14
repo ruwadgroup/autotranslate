@@ -6,11 +6,11 @@
   "author": "Tamim Bin Hakim <tamimbinhakim.work@gmail.com>",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tamimbinhakim/autotranslate.git",
+    "url": "git+https://github.com/ruwadgroup/autotranslate.git",
     "directory": "packages/zod"
   },
-  "homepage": "https://github.com/tamimbinhakim/autotranslate/tree/main/packages/zod#readme",
-  "bugs": "https://github.com/tamimbinhakim/autotranslate/issues",
+  "homepage": "https://github.com/ruwadgroup/autotranslate/tree/main/packages/zod#readme",
+  "bugs": "https://github.com/ruwadgroup/autotranslate/issues",
   "keywords": [
     "i18n",
     "zod",

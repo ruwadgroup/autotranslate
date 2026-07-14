@@ -45,10 +45,10 @@ export default function App({ locale, locales, onChangeLocale }: AppProps) {
       <Counter />
 
       <div className="actions">
-        <LinkButton href="https://github.com/tamimbinhakim/autotranslate" variant="primary">
+        <LinkButton href="https://github.com/ruwadgroup/autotranslate" variant="primary">
           View on GitHub
         </LinkButton>
-        <LinkButton href="https://github.com/tamimbinhakim/autotranslate/blob/main/ROADMAP.md">
+        <LinkButton href="https://github.com/ruwadgroup/autotranslate/blob/main/ROADMAP.md">
           Read the roadmap
         </LinkButton>
       </div>

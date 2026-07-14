@@ -128,4 +128,4 @@ is rarely needed.
 ---
 
 Full docs:
-[github.com/tamimbinhakim/autotranslate/docs/frameworks/vite.md](https://github.com/tamimbinhakim/autotranslate/blob/main/docs/frameworks/vite.md)
+[github.com/ruwadgroup/autotranslate/docs/frameworks/vite.md](https://github.com/ruwadgroup/autotranslate/blob/main/docs/frameworks/vite.md)

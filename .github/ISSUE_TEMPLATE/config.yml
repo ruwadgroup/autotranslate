@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Discussions
-    url: https://github.com/tamimbinhakim/autotranslate/discussions
+    url: https://github.com/ruwadgroup/autotranslate/discussions
     about: Ask questions, share ideas, or get help.
   - name: Security advisory
-    url: https://github.com/tamimbinhakim/autotranslate/security/advisories/new
+    url: https://github.com/ruwadgroup/autotranslate/security/advisories/new
     about: Report a security vulnerability privately.

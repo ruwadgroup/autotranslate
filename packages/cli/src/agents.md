@@ -33,7 +33,7 @@ Code-first, AI-powered i18n toolkit for React. The framework plugin drives the
 pipeline: save a file, translations appear. Builds verify the committed catalog
 like a lockfile; CI needs no API key.
 
-Web docs: <https://github.com/tamimbinhakim/autotranslate/tree/main/docs>.
+Web docs: <https://github.com/ruwadgroup/autotranslate/tree/main/docs>.
 
 ## Packages
 
@@ -592,9 +592,8 @@ formatFrozenReport(report); createDevLoop(opts); parity(resolved, opts?);
 
 ## More
 
-- Full prose docs:
-  `https://github.com/tamimbinhakim/autotranslate/tree/main/docs`
+- Full prose docs: `https://github.com/ruwadgroup/autotranslate/tree/main/docs`
 - Cookbook (10+ recipes):
-  `https://github.com/tamimbinhakim/autotranslate/tree/main/docs/cookbook`
-- Roadmap: `https://github.com/tamimbinhakim/autotranslate/blob/main/ROADMAP.md`
-- Issues: `https://github.com/tamimbinhakim/autotranslate/issues`
+  `https://github.com/ruwadgroup/autotranslate/tree/main/docs/cookbook`
+- Roadmap: `https://github.com/ruwadgroup/autotranslate/blob/main/ROADMAP.md`
+- Issues: `https://github.com/ruwadgroup/autotranslate/issues`

@@ -124,5 +124,5 @@ silent and the public API never broke.
   type-narrowed keys everywhere.
 
 If something here is wrong for you,
-[open an issue](https://github.com/tamimbinhakim/autotranslate/issues). The
-roadmap bends; the philosophy stays.
+[open an issue](https://github.com/ruwadgroup/autotranslate/issues). The roadmap
+bends; the philosophy stays.

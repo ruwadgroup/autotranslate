@@ -19,7 +19,7 @@ The [ARCHITECTURE](../ARCHITECTURE.md) doc explains the design.
 ## Bugs
 
 Open a
-[GitHub issue](https://github.com/tamimbinhakim/autotranslate/issues/new/choose).
+[GitHub issue](https://github.com/ruwadgroup/autotranslate/issues/new/choose).
 Please include:
 
 - Affected package(s) and version(s)
@@ -32,7 +32,7 @@ Issues without a reproduction are usually closed.
 ## Questions
 
 For questions, design discussion, or "how do I…" prompts, use
-[GitHub Discussions](https://github.com/tamimbinhakim/autotranslate/discussions).
+[GitHub Discussions](https://github.com/ruwadgroup/autotranslate/discussions).
 Discussions stay searchable, so future users with the same question can find the
 answer.
 
@@ -44,7 +44,7 @@ answer.
 ## Feature requests
 
 File a
-[feature request issue](https://github.com/tamimbinhakim/autotranslate/issues/new/choose)
+[feature request issue](https://github.com/ruwadgroup/autotranslate/issues/new/choose)
 explaining the use case and what you've already tried. Pre-1.0 the API moves
 quickly; the [roadmap](../ROADMAP.md) shows what's planned.
 

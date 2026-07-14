@@ -1,6 +1,6 @@
 packages:
-  - "packages/*"
-  - "examples/*"
+  - packages/*
+  - examples/*
 
 onlyBuiltDependencies:
   - esbuild
@@ -9,3 +9,6 @@ onlyBuiltDependencies:
 overrides:
   esbuild: ^0.28.1
   postcss: ^8.5.10
+
+patchedDependencies:
+  "@changesets/cli@2.31.0": patches/@changesets__cli@2.31.0.patch

@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://github.com/tamimbinhakim/autotranslate">
+  <a href="https://github.com/ruwadgroup/autotranslate">
     <img src="assets/banner.png" alt="autotranslate - code-first, AI-powered i18n for any React framework" width="100%" />
   </a>
 
