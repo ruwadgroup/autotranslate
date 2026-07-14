@@ -272,6 +272,9 @@ describe('when @autotranslate/cli is not installed', () => {
     const warningText = warnSpy.mock.calls[0]!.join(' ');
     expect(warningText).toContain('autotranslate');
     expect(warningText).toContain('pnpm add -D @autotranslate/cli');
+    const config = await fn('phase-production-build', {});
+    expect(config.webpack).toBeUndefined();
+    expect(config.turbopack).toBeUndefined();
   });
 });
 
@@ -363,24 +366,6 @@ describe('auto mode', () => {
     // Autotranslate rule must be first (unshift).
     const firstRule = rules[0] as { use: Array<{ loader: string }> };
     expect(firstRule.use[0]!.loader).toBe('@autotranslate/next/auto-loader');
-  });
-
-  it('does not inject loaders when cli is missing (mode unknown)', async () => {
-    // Override to throw (no CLI = no mode info).
-    vi.resetModules();
-    clearSingletons();
-    vi.doMock('@autotranslate/cli', () => {
-      throw new Error('Cannot find module');
-    });
-
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const { withAutotranslate } = await import('./plugin');
-    const fn = withAutotranslate();
-    const config = await fn('phase-production-build', {});
-
-    expect(config.webpack).toBeUndefined();
-    expect(config.turbopack).toBeUndefined();
-    warnSpy.mockRestore();
   });
 
   it('merges with existing turbopack rules', async () => {

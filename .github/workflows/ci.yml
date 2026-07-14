@@ -22,13 +22,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with: { fetch-depth: 2 }
-      - uses: pnpm/action-setup@v6
-        with:
-          version: 10.12.4
       - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
-          cache: pnpm
+      - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm format:check
@@ -39,13 +36,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with: { fetch-depth: 2 }
-      - uses: pnpm/action-setup@v6
-        with:
-          version: 10.12.4
       - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
-          cache: pnpm
+      - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
 
@@ -60,13 +54,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with: { fetch-depth: 2 }
-      - uses: pnpm/action-setup@v6
-        with:
-          version: 10.12.4
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
-          cache: pnpm
+      - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm test:ci
@@ -77,13 +68,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with: { fetch-depth: 2 }
-      - uses: pnpm/action-setup@v6
-        with:
-          version: 10.12.4
       - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
-          cache: pnpm
+      - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm packages:check
