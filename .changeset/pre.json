@@ -15,11 +15,15 @@
     "@autotranslate/zod": "0.2.0"
   },
   "changesets": [
+    "extract-const-labels",
     "fix-package-exports-types",
     "glossary-hybrid",
     "hash-bucketed-catalogs",
     "migration-guides-cookbook",
     "next-streaming-dev-mode",
+    "openrouter-chat-fix",
+    "plugin-is-the-product",
+    "release-package-hardening",
     "remove-mcp",
     "streaming-dev-mode",
     "typescript-plugin-package",
