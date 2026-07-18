@@ -2,7 +2,7 @@
 id: 002
 title: Auto-mode attribute translation (placeholder, title, aria-label, …)
 slug: 002-auto-attribute-translation
-status: ready
+status: done
 tags: [area:cli, area:compiler, area:eslint, type:feat, auto-mode]
 priority: P1
 severity: medium
