@@ -17,6 +17,7 @@
   "changesets": [
     "auto-attribute-translation",
     "clean-directives-first",
+    "detect-industry-copy-fields",
     "detect-semantic-copy",
     "extract-const-labels",
     "fix-package-exports-types",

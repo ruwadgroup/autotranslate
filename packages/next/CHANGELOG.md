@@ -1,5 +1,15 @@
 # @autotranslate/next
 
+## 1.0.0-beta.13
+
+### Patch Changes
+
+- Updated dependencies
+  [[`e0aa5ca`](https://github.com/ruwadgroup/autotranslate/commit/e0aa5caf41ed90a73939432c5f88c0c5b01adbc3)]:
+  - @autotranslate/cli@1.0.0-beta.13
+  - @autotranslate/core@1.0.0-beta.9
+  - @autotranslate/react@1.0.0-beta.10
+
 ## 1.0.0-beta.12
 
 ### Patch Changes

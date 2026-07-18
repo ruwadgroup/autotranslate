@@ -1,5 +1,17 @@
 # @autotranslate/eslint-plugin
 
+## 1.0.0-beta.9
+
+### Patch Changes
+
+- [`e0aa5ca`](https://github.com/ruwadgroup/autotranslate/commit/e0aa5caf41ed90a73939432c5f88c0c5b01adbc3)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Auto mode now
+  recognizes conventional industry-copy fields such as `singular`, `plural`,
+  `verb`, and call-to-action names ending in `Cta` or `CTA`.
+- Updated dependencies
+  [[`e0aa5ca`](https://github.com/ruwadgroup/autotranslate/commit/e0aa5caf41ed90a73939432c5f88c0c5b01adbc3)]:
+  - @autotranslate/core@1.0.0-beta.9
+
 ## 1.0.0-beta.8
 
 ### Patch Changes
