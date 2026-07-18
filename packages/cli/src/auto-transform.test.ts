@@ -538,12 +538,11 @@ describe('transformAutoWrap - attributes', () => {
     expect(run(source).code).toBe(source);
   });
 
-  it('translates copy-bearing identifiers while leaving template attributes alone', () => {
-    // Build the template-literal source without a literal `${` in this string.
-    const tmpl = ['aria-label={`Hi ', '{label}`}'].join('$');
+  it('translates copy-bearing identifiers and interpolated template attributes', () => {
+    const tmpl = ['aria-label={`Page ', '{page + 1}`}'].join('$');
     const source = [
       "'use client';",
-      'export function A({ label }) {',
+      'export function A({ label, page }) {',
       `  return <input placeholder={label} ${tmpl} />;`,
       '}',
       '',
@@ -552,7 +551,52 @@ describe('transformAutoWrap - attributes', () => {
     expect(result.code).toContain(
       "placeholder={((__copy) => typeof __copy === 'string' ? t(__copy) : __copy)(label)}",
     );
-    expect(result.code).toContain(tmpl);
+    expect(result.code).toContain('aria-label={t("Page {value}", { value: page + 1 })}');
+  });
+
+  it('preserves multiple template expressions once and in source order', () => {
+    const tmpl = ['aria-label={`Showing ', '{from} to ', '{to}`}'].join('$');
+    const source = [
+      "'use client';",
+      'export function Range({ from, to }) {',
+      `  return <button ${tmpl} />;`,
+      '}',
+      '',
+    ].join('\n');
+
+    const result = run(source);
+
+    expect(result.code).toContain(
+      'aria-label={t("Showing {value} to {value2}", { value: from, value2: to })}',
+    );
+    expect(result.code.match(/value: from/g)).toHaveLength(1);
+    expect(result.code.match(/value2: to/g)).toHaveLength(1);
+  });
+
+  it('translates expressionless template attributes', () => {
+    const source = [
+      "'use client';",
+      'export function A() {',
+      '  return <input placeholder={`Search customers`} />;',
+      '}',
+      '',
+    ].join('\n');
+
+    expect(run(source).code).toContain('placeholder={t("Search customers")}');
+  });
+
+  it('leaves non-copy and opted-out template attributes untouched', () => {
+    const valueTemplate = ['value={`Item ', '{id}`}'].join('$');
+    const optedOut = ['aria-label={`Page ', '{page}`}'].join('$');
+    const source = [
+      "'use client';",
+      'export function A({ id, page }) {',
+      `  return <><input ${valueTemplate} /><button data-no-translate ${optedOut} /></>;`,
+      '}',
+      '',
+    ].join('\n');
+
+    expect(run(source)).toEqual({ code: source, changed: false });
   });
 
   it('does not inject when there is no enclosing component/hook function', () => {

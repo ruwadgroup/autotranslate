@@ -488,6 +488,22 @@ const translated = <T description="Translator note">Visible copy</T>;
     expect(Object.keys(messages)).toEqual([key]);
   });
 
+  it('extracts interpolated auto attributes as literal ICU messages', () => {
+    const templateAttribute = ['aria-label={`Page ', '{page + 1}`}'].join('$');
+    const client = [
+      "'use client';",
+      'export function Pagination({ page }) {',
+      `  return <button ${templateAttribute} />;`,
+      '}',
+      '',
+    ].join('\n');
+    const transformed = transformAutoWrap(client, { filename: FILE }).code;
+    const { messages } = extractFile(FILE, transformed, { includeAutoCopy: true });
+
+    expect(messages[sourceKey('Page {value}')]).toBe('Page {value}');
+    expect(Object.keys(messages)).toEqual([sourceKey('Page {value}')]);
+  });
+
   it('extracts every rendered conditional branch from transformed auto copy', () => {
     const client = [
       "'use client';",

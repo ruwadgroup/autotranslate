@@ -45,6 +45,9 @@ const CONDITIONAL_COPY_JSX_EXPRESSION = /[?:]\s*["'`][^"'`<>]*[A-Za-z]/;
  */
 const COPY_BEARING_JSX_ATTRIBUTE = /\s[A-Za-z][\w-]*=["'][^"'<>]*[A-Za-z]/;
 
+/** Cheap companion pre-filter for copy-bearing template-literal attributes. */
+const COPY_BEARING_JSX_TEMPLATE_ATTRIBUTE = /\s[A-Za-z][\w-]*\s*=\s*\{\s*`[^`<>]*[A-Za-z]/;
+
 // Insertion ordering at a shared offset: closes precede opens, and the T
 // wrapper stays outside any Var wrapper it contains.
 const ORDER_VAR_CLOSE = 0;
@@ -61,6 +64,7 @@ const ORDER_INJECT = 5;
 
 interface Insertion {
   readonly pos: number;
+  readonly end?: number;
   readonly order: number;
   readonly text: string;
 }
@@ -101,7 +105,8 @@ export function transformAutoWrap(
     (!LETTER_BEARING_JSX.test(source) &&
       !COPY_BEARING_JSX_EXPRESSION.test(source) &&
       !CONDITIONAL_COPY_JSX_EXPRESSION.test(source) &&
-      !COPY_BEARING_JSX_ATTRIBUTE.test(source))
+      !COPY_BEARING_JSX_ATTRIBUTE.test(source) &&
+      !COPY_BEARING_JSX_TEMPLATE_ATTRIBUTE.test(source))
   ) {
     return { code: source, changed: false };
   }
@@ -257,7 +262,9 @@ export function transformAutoWrap(
   // client hook, so a host element's copy attribute can only be rewritten to
   // `attr={t("…")}` where hooks are legal. Server-component attributes are left
   // for the lint rule (see arch.md).
-  const usedUseT = isClientModule(ast) ? collectAttributeInsertions(ast, insertions) : false;
+  const usedUseT = isClientModule(ast)
+    ? collectAttributeInsertions(ast, insertions, source)
+    : false;
 
   if (insertions.length === 0) return { code: source, changed: false };
 
@@ -548,9 +555,12 @@ function applyInsertions(source: string, insertions: Insertion[]): string {
   let out = '';
   let cursor = 0;
   for (const ins of sorted) {
+    if (ins.pos < cursor) {
+      throw new Error('autotranslate: overlapping auto-transform edits');
+    }
     out += source.slice(cursor, ins.pos);
     out += ins.text;
-    cursor = ins.pos;
+    cursor = ins.end ?? ins.pos;
   }
   return out + source.slice(cursor);
 }
@@ -586,6 +596,7 @@ function isClientModule(ast: ReturnType<typeof parse>): boolean {
 function collectAttributeInsertions(
   ast: ReturnType<typeof parse>,
   insertions: Insertion[],
+  source: string,
 ): boolean {
   const funcBindings = new Map<t.Node, FunctionBinding>();
 
@@ -596,14 +607,15 @@ function collectAttributeInsertions(
       if (!t.isJSXIdentifier(node.name) || !isTranslatableAttribute(node.name.name)) return;
       const isStaticCopy = t.isStringLiteral(node.value) && jsxTextHasContent(node.value.value);
       const expression = t.isJSXExpressionContainer(node.value) ? node.value.expression : null;
+      const template = expression !== null ? copyBearingTemplate(expression) : null;
       const isDynamicCopy = expression !== null && isCopyBearingExpression(expression);
-      if (!isStaticCopy && !isDynamicCopy) return;
+      if (!isStaticCopy && !isDynamicCopy && !template) return;
 
       // Element must not be a skip/marker element or under data-no-translate.
       const openingPath = path.parentPath;
       if (!openingPath?.isJSXOpeningElement()) return;
       if (
-        isStaticCopy &&
+        (isStaticCopy || template !== null) &&
         !isHostElementName(openingPath.node.name) &&
         isCopyBearingName(node.name.name)
       )
@@ -623,6 +635,13 @@ function collectAttributeInsertions(
         const value = node.value as t.StringLiteral;
         insertions.push({ pos: value.start!, order: ORDER_ATTR_OPEN, text: `{${info.binding}(` });
         insertions.push({ pos: value.end!, order: ORDER_ATTR_CLOSE, text: ')}' });
+      } else if (template) {
+        insertions.push({
+          pos: expression!.start!,
+          end: expression!.end!,
+          order: ORDER_ATTR_OPEN,
+          text: renderTemplateTranslation(template, info.binding, source),
+        });
       } else {
         insertions.push({
           pos: expression!.start!,
@@ -645,6 +664,47 @@ function collectAttributeInsertions(
     }
   }
   return injected;
+}
+
+interface CopyBearingTemplate {
+  readonly node: t.TemplateLiteral;
+  readonly message: string;
+  readonly names: readonly string[];
+}
+
+function copyBearingTemplate(node: t.Node): CopyBearingTemplate | null {
+  if (!t.isTemplateLiteral(node)) return null;
+  if (node.expressions.some(containsJSX)) return null;
+  const literalCopy = node.quasis.map((quasi) => quasi.value.cooked ?? quasi.value.raw).join('');
+  if (!jsxTextHasContent(literalCopy)) return null;
+
+  const names = node.expressions.map((_, index) => (index === 0 ? 'value' : `value${index + 1}`));
+  let message = '';
+  for (let index = 0; index < node.quasis.length; index++) {
+    const quasi = node.quasis[index]!;
+    message += escapeIcuLiteral(quasi.value.cooked ?? quasi.value.raw);
+    const name = names[index];
+    if (name) message += `{${name}}`;
+  }
+  return { node, message, names };
+}
+
+function escapeIcuLiteral(value: string): string {
+  return value.replaceAll("'", "''").replaceAll('{', "'{'").replaceAll('}', "'}'");
+}
+
+function renderTemplateTranslation(
+  template: CopyBearingTemplate,
+  binding: string,
+  source: string,
+): string {
+  const call = `${binding}(${JSON.stringify(template.message)}`;
+  if (template.node.expressions.length === 0) return `${call})`;
+  const params = template.node.expressions.map((expression, index) => {
+    const name = template.names[index]!;
+    return `${name}: ${source.slice(expression.start!, expression.end!)}`;
+  });
+  return `${call}, { ${params.join(', ')} })`;
 }
 
 function isHostElementName(name: t.JSXOpeningElement['name']): boolean {
