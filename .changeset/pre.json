@@ -30,6 +30,7 @@
     "quiet-rivers-install",
     "release-package-hardening",
     "remove-mcp",
+    "safe-host-copy-attributes",
     "streaming-dev-mode",
     "typescript-plugin-package",
     "v1-0-0-beta"

@@ -1,6 +1,6 @@
 {
   "name": "@autotranslate/providers",
-  "version": "1.0.0-beta.6",
+  "version": "1.0.0-beta.7",
   "description": "AI & MT translation providers (Vercel AI SDK, DeepL, Google, custom, stub).",
   "license": "MIT",
   "author": "Tamim Bin Hakim <tamimbinhakim.work@gmail.com>",

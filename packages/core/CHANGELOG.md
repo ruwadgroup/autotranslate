@@ -1,5 +1,17 @@
 # @autotranslate/core
 
+## 1.0.0-beta.7
+
+### Patch Changes
+
+- [`7d3d2d4`](https://github.com/ruwadgroup/autotranslate/commit/7d3d2d40eac596a76d1a80181ef614a3ff49b89e)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Restrict
+  auto-mode host-attribute translation to a positive set of visual and
+  accessibility copy attributes. Unknown HTML, SVG, ARIA, React, and library
+  attributes now remain structural by default, preventing values such as
+  `viewBox`, `role`, `aria-live`, SVG paint, file-accept filters, and numeric
+  geometry from entering translation catalogs or being rewritten at runtime.
+
 ## 1.0.0-beta.6
 
 ### Minor Changes
