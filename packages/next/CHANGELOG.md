@@ -1,5 +1,13 @@
 # @autotranslate/next
 
+## 1.0.0-beta.19
+
+### Patch Changes
+
+- Updated dependencies
+  [[`f28d7ec`](https://github.com/ruwadgroup/autotranslate/commit/f28d7ec5118536a29184f8c1374682287c458adc)]:
+  - @autotranslate/cli@1.0.0-beta.19
+
 ## 1.0.0-beta.18
 
 ### Patch Changes

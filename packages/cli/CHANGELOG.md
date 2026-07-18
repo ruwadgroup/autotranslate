@@ -1,5 +1,15 @@
 # @autotranslate/cli
 
+## 1.0.0-beta.19
+
+### Patch Changes
+
+- [`f28d7ec`](https://github.com/ruwadgroup/autotranslate/commit/f28d7ec5118536a29184f8c1374682287c458adc)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Translate
+  copy-bearing JSX template attributes in auto mode as literal ICU messages with
+  interpolation parameters. This includes dynamic accessibility labels such as
+  pagination page numbers.
+
 ## 1.0.0-beta.18
 
 ### Patch Changes
