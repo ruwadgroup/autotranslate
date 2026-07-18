@@ -270,14 +270,20 @@ via `transformAutoWrap` (`packages/cli/src/auto-transform.ts`):
 
 - Wraps qualifying contiguous JSX text runs in `<T>`, turning embedded `{expr}`
   into `<Var>{expr}</Var>`.
+- In client modules (`"use client"`), rewrites copy-bearing attributes on host
+  elements — `placeholder="…"` → `placeholder={t("…")}` — and injects (or
+  reuses) a `const t = useT()` binding in the enclosing component/hook. `useT()`
+  is a client hook, so server-component attributes are left for the lint rule;
+  custom-component copy props are left to the component.
 - Skips `code`, `pre`, `script`, `style` elements and anything with
   `data-no-translate` on self or a JSX ancestor.
-- Adds `import { T, Var } from '@autotranslate/react'` if not already present.
+- Adds `import { T, Var, useT } from '@autotranslate/react'` as needed.
 
 The shared classifier (`packages/core/src/classifier.ts`) defines
-`TRANSLATION_MARKERS`, `SKIP_ELEMENTS`, `jsxTextHasContent`, and
-`NO_TRANSLATE_ATTRIBUTE`. Both the ESLint plugin and the compiler import from
-this module - what the linter flags is exactly what `mode: 'auto'` would wrap.
+`TRANSLATION_MARKERS`, `SKIP_ELEMENTS`, `jsxTextHasContent`,
+`NO_TRANSLATE_ATTRIBUTE`, and `isTranslatableAttribute` (the complement of the
+attribute allowlist). Both the ESLint plugin and the compiler import from this
+module - what the linter flags is exactly what `mode: 'auto'` would wrap.
 
 Bundler wiring (done by the plugins, not the CLI):
 

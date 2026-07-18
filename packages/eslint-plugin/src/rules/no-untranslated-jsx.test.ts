@@ -58,4 +58,40 @@ describe('no-untranslated-jsx', () => {
       ],
     });
   });
+
+  it('suppresses host-element attribute warnings the auto compiler handles (client)', () => {
+    tester.run('no-untranslated-jsx', rule, {
+      valid: [
+        // Host-element copy attribute in a client module — the auto compiler
+        // rewrites it, so the rule must stay quiet.
+        {
+          code: '"use client";\nconst x = <input placeholder="Search" />;',
+          options: [{ autoMode: true }],
+        },
+        {
+          code: '"use client";\nconst x = <button aria-label="Close" />;',
+          options: [{ autoMode: true }],
+        },
+      ],
+      invalid: [
+        // Server module (no "use client"): the compiler does NOT handle it.
+        {
+          code: 'const x = <input placeholder="Search" />;',
+          options: [{ autoMode: true }],
+          errors: [{ messageId: 'bareAttribute' }],
+        },
+        // Custom component: still the component's own responsibility.
+        {
+          code: '"use client";\nconst x = <Field placeholder="Search" />;',
+          options: [{ autoMode: true }],
+          errors: [{ messageId: 'bareAttribute' }],
+        },
+        // Without the option the rule flags host attributes as before.
+        {
+          code: '"use client";\nconst x = <input placeholder="Search" />;',
+          errors: [{ messageId: 'bareAttribute' }],
+        },
+      ],
+    });
+  });
 });

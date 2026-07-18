@@ -3,6 +3,7 @@ import {
   CLASSIFIER_VERSION,
   isAllowlistedAttribute,
   isCopyBearingName,
+  isTranslatableAttribute,
   jsxTextHasContent,
   NO_TRANSLATE_ATTRIBUTE,
   SKIP_ELEMENTS,
@@ -11,7 +12,7 @@ import {
 
 describe('CLASSIFIER_VERSION', () => {
   it('is 2', () => {
-    expect(CLASSIFIER_VERSION).toBe(2);
+    expect(CLASSIFIER_VERSION).toBe(3);
   });
 });
 
@@ -175,5 +176,32 @@ describe('SKIP_ELEMENTS', () => {
     expect(SKIP_ELEMENTS.has('p')).toBe(false);
     expect(SKIP_ELEMENTS.has('div')).toBe(false);
     expect(SKIP_ELEMENTS.has('span')).toBe(false);
+  });
+});
+
+describe('isTranslatableAttribute', () => {
+  it('is the exact complement of isAllowlistedAttribute', () => {
+    for (const name of [
+      'placeholder',
+      'title',
+      'aria-label',
+      'className',
+      'href',
+      'alt',
+      'data-x',
+    ]) {
+      expect(isTranslatableAttribute(name)).toBe(!isAllowlistedAttribute(name));
+    }
+  });
+
+  it('flags copy-bearing attributes and skips locale-neutral / data-* ones', () => {
+    expect(isTranslatableAttribute('placeholder')).toBe(true);
+    expect(isTranslatableAttribute('title')).toBe(true);
+    expect(isTranslatableAttribute('aria-label')).toBe(true);
+    expect(isTranslatableAttribute('className')).toBe(false);
+    expect(isTranslatableAttribute('href')).toBe(false);
+    expect(isTranslatableAttribute('alt')).toBe(false);
+    expect(isTranslatableAttribute('data-testid')).toBe(false);
+    expect(isTranslatableAttribute('data-anything')).toBe(false);
   });
 });

@@ -1,5 +1,6 @@
 import { canonicalKey, sourceKey } from '@autotranslate/core';
 import { describe, expect, it } from 'vitest';
+import { transformAutoWrap } from '../../auto-transform';
 import { extractFile } from './extractor';
 
 const FILE = 'src/Component.tsx';
@@ -375,5 +376,24 @@ const translated = <T description="Translator note">Visible copy</T>;
       `const config = { label: 'Monthly' }; const x = <Card title="Email Address" />;`,
     );
     expect(messages).toEqual({});
+  });
+
+  it('extracts auto-injected attribute t() calls with the same key as hand-written useT', () => {
+    // In auto mode the extractor sees the transformed source. A host-element
+    // copy attribute becomes `attr={t("…")}`, which must extract to the exact
+    // source key a hand-written `t("Search cases")` would produce.
+    const client = [
+      "'use client';",
+      'export function SearchBar() {',
+      '  return <input placeholder="Search cases" />;',
+      '}',
+      '',
+    ].join('\n');
+    const transformed = transformAutoWrap(client, { filename: FILE }).code;
+    const { messages } = extractFile(FILE, transformed, { includeAutoCopy: true });
+
+    const key = sourceKey('Search cases');
+    expect(messages[key]).toBe('Search cases');
+    expect(Object.keys(messages)).toEqual([key]);
   });
 });

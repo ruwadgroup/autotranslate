@@ -99,10 +99,20 @@ In `auto` mode:
 
 - `<p>Hello {user.name}</p>` compiles to
   `<p><T>Hello <Var>{user.name}</Var></T></p>`
-- Opt out with `data-no-translate` on any element
+- **Host-element copy attributes are translated too** — in a `"use client"`
+  file, `<input placeholder="Search cases" />` compiles to
+  `<input placeholder={t("Search cases")} />` and a `const t = useT()` binding
+  is injected into (or reused from) the enclosing component/hook. Non-copy
+  attributes (`className`, `href`, `type`, `data-*`, …) are left alone. Because
+  `useT()` is a client hook, attribute translation runs **only in client
+  modules**; server-component attributes keep their literal and are surfaced by
+  the lint rule. Custom-component copy props (`<Field placeholder=…>`) are left
+  to the component — extraction still records the string.
+- Opt out with `data-no-translate` on any element (text and attributes)
 - `code`, `pre`, `script`, and `style` elements are always skipped
 - The extractor pipes source files through the same transform before running so
-  extracted keys match compiled output key-for-key
+  extracted keys match compiled output key-for-key — the injected `t("…")` calls
+  extract identically to hand-written `useT()`
 - `withAutotranslate` registers `@autotranslate/next/auto-loader` for webpack
   and turbopack; `@autotranslate/vite` applies the transform hook
 

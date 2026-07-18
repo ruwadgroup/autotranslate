@@ -11,6 +11,13 @@ import {
 interface RuleOptions {
   readonly allowAttributes?: ReadonlyArray<string>;
   readonly markers?: ReadonlyArray<string>;
+  /**
+   * When `true`, do not flag copy attributes the `mode: 'auto'` compiler now
+   * handles itself: host-element (lowercase) string attributes in a
+   * `"use client"` file. Server-component and custom-component attributes are
+   * still flagged (the compiler leaves those alone). Off by default.
+   */
+  readonly autoMode?: boolean;
 }
 
 const rule: Rule.RuleModule = {
@@ -26,6 +33,7 @@ const rule: Rule.RuleModule = {
         properties: {
           allowAttributes: { type: 'array', items: { type: 'string' } },
           markers: { type: 'array', items: { type: 'string' } },
+          autoMode: { type: 'boolean' },
         },
         additionalProperties: false,
       },
@@ -43,10 +51,22 @@ const rule: Rule.RuleModule = {
     const options = (context.options[0] ?? {}) as RuleOptions;
     const extraAttrs = new Set(options.allowAttributes ?? []);
     const extraMarkers = new Set(options.markers ?? []);
+    const autoMode = options.autoMode ?? false;
     const markerNames = new Set([
       ...['T', 'Var', 'Plural', 'Branch', 'Num', 'Currency', 'DateTime', 'RelativeTime'],
       ...extraMarkers,
     ]);
+
+    // In auto mode the compiler auto-translates host-element copy attributes,
+    // but only in client modules where `useT()` is legal.
+    const programBody = context.sourceCode?.ast?.body as
+      | ReadonlyArray<{ type: string; directive?: string }>
+      | undefined;
+    const isClientModule =
+      autoMode &&
+      programBody?.some(
+        (stmt) => stmt.type === 'ExpressionStatement' && stmt.directive === 'use client',
+      ) === true;
 
     return {
       // ESLint's bundled types don't model JSX nodes; cast through `unknown`.
@@ -100,12 +120,16 @@ const rule: Rule.RuleModule = {
         if (!name) return;
         if (isAllowlistedAttribute(name) || extraAttrs.has(name)) return;
         const opening = node.parent;
-        if (
-          opening?.type === 'JSXOpeningElement' &&
-          opening.name?.type === 'JSXIdentifier' &&
-          opening.name.name &&
-          markerNames.has(opening.name.name)
-        ) {
+        const openingName =
+          opening?.type === 'JSXOpeningElement' && opening.name?.type === 'JSXIdentifier'
+            ? opening.name.name
+            : undefined;
+        if (openingName && markerNames.has(openingName)) {
+          return;
+        }
+        // Auto mode wraps host-element (lowercase) copy attributes at compile
+        // time in client modules — don't double-flag what the compiler handles.
+        if (isClientModule && openingName && /^[a-z]/.test(openingName)) {
           return;
         }
         const value = node.value;

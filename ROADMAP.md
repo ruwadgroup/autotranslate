@@ -105,5 +105,7 @@ This release ships the zero-command DX the philosophy always promised.
 - React Native / Expo first-class
 - Edge KV catalog backend
 - AI-driven glossary inference
-- Attribute auto-wrapping (`placeholder`, `aria-label`, …)
+- [x] Attribute auto-wrapping (`placeholder`, `aria-label`, …) — auto mode
+      rewrites host-element copy attributes to `attr={t("…")}` in client modules
 - Back-translation column in parity reports
+- Server-component attribute auto-wrapping (needs a non-hook resolution path)

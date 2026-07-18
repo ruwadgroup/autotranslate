@@ -67,9 +67,20 @@ A built-in allowlist covers structural / locale-neutral attributes (`className`,
 
 When `mode: 'auto'` is set in `autotranslate.config.ts`, the compiler wraps
 qualifying JSX text in `<T>` at build time before the lint rule runs. This means
-the rule will not fire for JSX text nodes that the compiler handles. You still
-want the rule enabled for JSX **attribute** values (`title`, `aria-label`,
-`placeholder`, etc.) that the compiler cannot wrap.
+the rule will not fire for JSX text nodes that the compiler handles.
+
+The compiler also translates **host-element copy attributes** (`title`,
+`aria-label`, `placeholder`, …) in `"use client"` files. Pass `autoMode: true`
+so the rule doesn't double-flag those:
+
+```js
+'@autotranslate/no-untranslated-jsx': ['warn', { autoMode: true }],
+```
+
+With `autoMode`, the rule stays quiet on host-element attributes in client
+modules (the compiler handles them) but keeps flagging the cases the compiler
+leaves alone: **server-component** attributes (no `"use client"`) and
+**custom-component** copy props. Leave `autoMode` off in `explicit` mode.
 
 The rule also recognizes bare copy-bearing expressions such as `{title}` and
 `{item.label}`. Auto mode resolves these through statically extracted prop or

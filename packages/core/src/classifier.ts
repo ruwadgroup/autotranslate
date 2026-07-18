@@ -1,5 +1,5 @@
 /** Bump this when the classification rules change in a breaking way. */
-export const CLASSIFIER_VERSION = 2;
+export const CLASSIFIER_VERSION = 3;
 
 /** The 8 marker component names that signal translated content. */
 export const TRANSLATION_MARKERS: ReadonlySet<string> = new Set([
@@ -86,6 +86,17 @@ const ALLOWLIST_ATTRIBUTES_SET: ReadonlySet<string> = new Set([
  */
 export function isAllowlistedAttribute(name: string): boolean {
   return ALLOWLIST_ATTRIBUTES_SET.has(name) || name.startsWith('data-');
+}
+
+/**
+ * True when a JSX attribute `name` carries user-visible copy and should be
+ * translated - the exact complement of {@link isAllowlistedAttribute}. Shared
+ * by the ESLint rule (what it flags) and the `mode: 'auto'` compiler (what it
+ * wraps) so the two never disagree. Value-shape checks (static string with
+ * visible content) live at the call site via `jsxTextHasContent`.
+ */
+export function isTranslatableAttribute(name: string): boolean {
+  return !isAllowlistedAttribute(name);
 }
 
 /** Attribute that suppresses translation warnings on a JSX element and its subtree. */

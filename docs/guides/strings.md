@@ -15,6 +15,14 @@ function SignOutButton() {
 `useT()` returns `(key, params?) => string` bound to the active locale and
 catalog. The literal string is both the source and the catalog key.
 
+> **Auto mode handles host-element attributes for you.** With `mode: 'auto'`, a
+> copy attribute on a DOM element in a `"use client"` file —
+> `<input placeholder="Search cases" />` — is rewritten to
+> `<input placeholder={t("Search cases")} />` at compile time, with the `useT()`
+> binding injected automatically. You only reach for `useT()` by hand for
+> programmatic copy (toasts, thrown errors), custom-component props, and
+> server-component attributes. Opt any element out with `data-no-translate`.
+
 ## ICU placeholders
 
 Keys are ICU MessageFormat templates:

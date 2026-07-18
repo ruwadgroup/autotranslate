@@ -243,3 +243,205 @@ describe('transformAutoWrap', () => {
     );
   });
 });
+
+describe('transformAutoWrap - attributes', () => {
+  it('rewrites host copy attributes and injects useT in a client component', () => {
+    const result = run(
+      [
+        "'use client';",
+        'export function SearchBar() {',
+        '  return <input placeholder="Search cases" aria-label="Search" />;',
+        '}',
+        '',
+      ].join('\n'),
+    );
+    expect(result.changed).toBe(true);
+    expect(result.code).toBe(
+      [
+        "'use client';",
+        "import { useT } from '@autotranslate/react';",
+        'export function SearchBar() {',
+        '  const t = useT();',
+        '  return <input placeholder={t("Search cases")} aria-label={t("Search")} />;',
+        '}',
+        '',
+      ].join('\n'),
+    );
+  });
+
+  it('reuses an existing useT binding instead of injecting a second', () => {
+    const result = run(
+      [
+        "'use client';",
+        "import { useT } from '@autotranslate/react';",
+        'export function Row() {',
+        '  const tr = useT();',
+        '  return <button title="Delete customer">{tr(\'X\')}</button>;',
+        '}',
+        '',
+      ].join('\n'),
+    );
+    expect(result.code).toBe(
+      [
+        "'use client';",
+        "import { useT } from '@autotranslate/react';",
+        'export function Row() {',
+        '  const tr = useT();',
+        '  return <button title={tr("Delete customer")}>{tr(\'X\')}</button>;',
+        '}',
+        '',
+      ].join('\n'),
+    );
+  });
+
+  it('injects once at component scope and references it from a nested closure', () => {
+    const result = run(
+      [
+        "'use client';",
+        'export function List({ items }) {',
+        '  return items.map((it) => <input key={it.id} placeholder="Filter" />);',
+        '}',
+        '',
+      ].join('\n'),
+    );
+    expect(result.code).toBe(
+      [
+        "'use client';",
+        "import { useT } from '@autotranslate/react';",
+        'export function List({ items }) {',
+        '  const t = useT();',
+        '  return items.map((it) => <input key={it.id} placeholder={t("Filter")} />);',
+        '}',
+        '',
+      ].join('\n'),
+    );
+  });
+
+  it('merges useT into an existing @autotranslate/react import and adds T for text', () => {
+    const result = run(
+      [
+        "'use client';",
+        "import { Var } from '@autotranslate/react';",
+        'export function A() {',
+        '  return <button title="Save now">Save</button>;',
+        '}',
+        '',
+      ].join('\n'),
+    );
+    expect(result.code).toBe(
+      [
+        "'use client';",
+        "import { Var, T, useT } from '@autotranslate/react';",
+        'export function A() {',
+        '  const t = useT();',
+        '  return <button title={t("Save now")}><T>Save</T></button>;',
+        '}',
+        '',
+      ].join('\n'),
+    );
+  });
+
+  it('falls back to a non-conflicting binding name when `t` is taken', () => {
+    const result = run(
+      [
+        "'use client';",
+        'export function A({ t }) {',
+        '  return <input placeholder="Search" title="Filter" />;',
+        '}',
+        '',
+      ].join('\n'),
+    );
+    expect(result.code).toContain('const __t = useT();');
+    expect(result.code).toContain('placeholder={__t("Search")}');
+    expect(result.code).toContain('title={__t("Filter")}');
+  });
+
+  it('leaves server-component attributes untouched (no "use client")', () => {
+    const source = [
+      'export function Server() {',
+      '  return <input placeholder="Search cases" />;',
+      '}',
+      '',
+    ].join('\n');
+    expect(run(source).code).toBe(source);
+  });
+
+  it('does not inject on custom-component copy props', () => {
+    const source = [
+      "'use client';",
+      'export function Form() {',
+      '  return <Field placeholder="Search cases" />;',
+      '}',
+      '',
+    ].join('\n');
+    expect(run(source).code).toBe(source);
+  });
+
+  it('leaves allowlisted attributes as literals', () => {
+    const result = run(
+      [
+        "'use client';",
+        'export function A() {',
+        '  return <a href="/x" className="y" data-id="z" type="button" />;',
+        '}',
+        '',
+      ].join('\n'),
+    );
+    expect(result.changed).toBe(false);
+  });
+
+  it('respects data-no-translate on the element', () => {
+    const source = [
+      "'use client';",
+      'export function A() {',
+      '  return <input data-no-translate placeholder="Search" />;',
+      '}',
+      '',
+    ].join('\n');
+    expect(run(source).code).toBe(source);
+  });
+
+  it('respects data-no-translate on an ancestor', () => {
+    const source = [
+      "'use client';",
+      'export function A() {',
+      '  return <div data-no-translate><input placeholder="Search" /></div>;',
+      '}',
+      '',
+    ].join('\n');
+    expect(run(source).code).toBe(source);
+  });
+
+  it('leaves dynamic/template attribute values alone', () => {
+    // Build the template-literal source without a literal `${` in this string.
+    const tmpl = ['aria-label={`Hi ', '{label}`}'].join('$');
+    const source = [
+      "'use client';",
+      'export function A({ label }) {',
+      `  return <input placeholder={label} ${tmpl} />;`,
+      '}',
+      '',
+    ].join('\n');
+    expect(run(source).code).toBe(source);
+  });
+
+  it('does not inject when there is no enclosing component/hook function', () => {
+    const source = [
+      "'use client';",
+      'export const node = <input placeholder="Search" />;',
+      '',
+    ].join('\n');
+    expect(run(source).code).toBe(source);
+  });
+
+  it('skips skip-elements (style/script) attributes', () => {
+    const source = [
+      "'use client';",
+      'export function A() {',
+      '  return <style title="x">{".a{}"}</style>;',
+      '}',
+      '',
+    ].join('\n');
+    expect(run(source).code).toBe(source);
+  });
+});
