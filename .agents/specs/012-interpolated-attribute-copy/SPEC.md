@@ -2,7 +2,7 @@
 id: 012
 title: Translate interpolated accessibility attributes in auto mode
 slug: 012-interpolated-attribute-copy
-status: go
+status: done
 tags: [area:cli, type:fix, auto-mode, accessibility]
 priority: P0
 severity: high
@@ -95,20 +95,20 @@ transformation on `main`.
 
 ## AI verification checklist (automatable)
 
-- [ ] `pnpm --filter @autotranslate/cli test:ci` - all CLI transform and
+- [x] `pnpm --filter @autotranslate/cli test:ci` - all CLI transform and
       extraction tests pass.
-- [ ] `pnpm typecheck` - all package type checks pass.
-- [ ] `pnpm lint` - Biome reports no errors.
-- [ ] `CI=1 pnpm test` - the complete monorepo test suite passes.
-- [ ] `pnpm build` - all packages and examples build.
-- [ ] `pnpm packages:check` - all public package artifacts pass publint.
-- [ ] Generated code contains only literal translation keys and
+- [x] `pnpm typecheck` - all package type checks pass.
+- [x] `pnpm lint` - Biome reports no errors.
+- [x] `CI=1 pnpm test` - the complete monorepo test suite passes.
+- [x] `pnpm build` - all packages and examples build.
+- [x] `pnpm packages:check` - all public package artifacts pass publint.
+- [x] Generated code contains only literal translation keys and
       single-evaluation parameter expressions.
 
 ## Human verification checklist (judgment calls)
 
-- [ ] Pagination accessibility labels read naturally in Arabic.
-- [ ] Interpolated values remain correct after translation and reordering.
-- [ ] No visible or accessibility-only English interface copy remains on the
+- [x] Pagination accessibility labels read naturally in Arabic.
+- [x] Interpolated values remain correct after translation and reordering.
+- [x] No visible or accessibility-only English interface copy remains on the
       NexAML customer register.
-- [ ] The deployed customer register still uses Noto Sans Arabic and RTL layout.
+- [x] The deployed customer register still uses Noto Sans Arabic and RTL layout.
