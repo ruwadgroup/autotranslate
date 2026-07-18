@@ -402,7 +402,7 @@ describe('transformAutoWrap - attributes', () => {
     expect(run(source).code).toBe(source);
   });
 
-  it('translates positive copy attributes on custom components', () => {
+  it('leaves semantic custom-component copy props to dynamic propagation', () => {
     const source = [
       "'use client';",
       'export function Form() {',
@@ -410,7 +410,7 @@ describe('transformAutoWrap - attributes', () => {
       '}',
       '',
     ].join('\n');
-    expect(run(source).code).toContain('<Field placeholder={t("Search cases")} />');
+    expect(run(source).code).toBe(source);
   });
 
   it('leaves structural and unknown attributes as literals', () => {

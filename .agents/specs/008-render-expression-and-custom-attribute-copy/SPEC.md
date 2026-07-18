@@ -44,8 +44,10 @@ The NexAML Arabic customer register reproduces both failures in production.
    TypeScript wrappers.
 3. Preserve dynamic expressions, identifiers, non-rendered call arguments, and
    structural values unchanged.
-4. Rewrite the positive copy-attribute set on custom JSX components in client
-   modules, while preserving the existing skip and `data-no-translate` rules.
+4. Rewrite positive accessibility-copy attributes on custom JSX components in
+   client modules when semantic copy propagation does not already own the prop,
+   while preserving the existing skip, `data-no-translate`, and catalog-key
+   behavior.
 5. Add transform and extraction regressions for a custom trigger with an
    `aria-label`.
 6. Add a patch changeset for CLI and run the full verification suite.
@@ -62,12 +64,12 @@ The NexAML Arabic customer register reproduces both failures in production.
 
 ## AI verification checklist
 
-- [ ] CLI transform tests cover flat and nested conditional string branches.
-- [ ] CLI transform tests cover custom-component accessibility attributes.
-- [ ] Extraction tests contain every terminal source string.
-- [ ] `pnpm typecheck` passes.
-- [ ] `pnpm lint` passes.
-- [ ] `pnpm test` passes.
-- [ ] `pnpm build` passes.
-- [ ] `pnpm packages:check` passes.
+- [x] CLI transform tests cover flat and nested conditional string branches.
+- [x] CLI transform tests cover custom-component accessibility attributes.
+- [x] Extraction tests contain every terminal source string.
+- [x] `pnpm typecheck` passes.
+- [x] `pnpm lint` passes.
+- [x] `pnpm test` passes.
+- [x] `pnpm build` passes.
+- [x] `pnpm packages:check` passes.
 - [ ] NexAML catalogs contain Arabic for the three production reproductions.

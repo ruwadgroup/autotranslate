@@ -565,8 +565,8 @@ function applyInsertions(source: string, insertions: Insertion[]): string {
 // and ensures a `const t = useT()` binding exists at the top of the enclosing
 // component/hook. `useT` is a client hook, so this only runs in files carrying a
 // `"use client"` directive; server-component attributes are left for the lint
-// rule. The positive attribute contract applies equally to host elements and
-// custom components that forward accessibility or visible copy to a host.
+// rule. Custom components also translate positive attributes that are not
+// already handled by semantic copy propagation, such as `aria-label` and `alt`.
 // ---------------------------------------------------------------------------
 
 interface FunctionBinding {
@@ -598,6 +598,7 @@ function collectAttributeInsertions(
       // Element must not be a skip/marker element or under data-no-translate.
       const openingPath = path.parentPath;
       if (!openingPath?.isJSXOpeningElement()) return;
+      if (!isHostElementName(openingPath.node.name) && isCopyBearingName(node.name.name)) return;
       const elementPath = openingPath.parentPath;
       if (!elementPath?.isJSXElement()) return;
       if (isBlockingElement(elementPath.node)) return;
@@ -623,6 +624,10 @@ function collectAttributeInsertions(
     }
   }
   return injected;
+}
+
+function isHostElementName(name: t.JSXOpeningElement['name']): boolean {
+  return t.isJSXIdentifier(name) && /^[a-z]/.test(name.name);
 }
 
 function hasBlockingJSXAncestor(path: NodePath): boolean {
