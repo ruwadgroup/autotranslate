@@ -2,7 +2,7 @@
 id: 003
 title: Restrict auto-mode host attributes to user-facing copy
 slug: 003-safe-host-attribute-classification
-status: go
+status: done
 tags: [area:core, area:cli, area:eslint, type:fix, auto-mode]
 priority: P0
 severity: critical
