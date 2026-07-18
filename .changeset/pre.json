@@ -30,6 +30,7 @@
     "openrouter-chat-fix",
     "plugin-is-the-product",
     "preserve-custom-jsx-tags",
+    "preserve-semantic-prop-keys",
     "quiet-rivers-install",
     "release-package-hardening",
     "remove-mcp",

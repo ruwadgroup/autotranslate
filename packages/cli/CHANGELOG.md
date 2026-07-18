@@ -1,5 +1,14 @@
 # @autotranslate/cli
 
+## 1.0.0-beta.15
+
+### Patch Changes
+
+- [`dacb126`](https://github.com/ruwadgroup/autotranslate/commit/dacb126b8ebf7a2e9974a5e9237fd0f60a70fdfb)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Preserve
+  structured catalog keys for semantic custom-component copy props while
+  translating forwarded accessibility attributes.
+
 ## 1.0.0-beta.14
 
 ### Patch Changes
