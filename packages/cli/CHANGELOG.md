@@ -1,5 +1,24 @@
 # @autotranslate/cli
 
+## 1.0.0-beta.10
+
+### Patch Changes
+
+- [`d90aae1`](https://github.com/ruwadgroup/autotranslate/commit/d90aae11c14d9bfb9fb0f93cf0eff82701bfb0de)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Auto mode now
+  traverses JSX embedded in JSX-valued props and spread expressions. Composition
+  APIs such as `<ListPage actions={<Button><Icon /> Export</Button>} />` now
+  wrap and extract their rendered copy just like ordinary JSX children.
+
+  Semantic `header` fields are now classified as rendered interface copy, so
+  table column definitions are extracted and dynamic header expressions are
+  translated in auto mode.
+
+- Updated dependencies
+  [[`d90aae1`](https://github.com/ruwadgroup/autotranslate/commit/d90aae11c14d9bfb9fb0f93cf0eff82701bfb0de)]:
+  - @autotranslate/core@1.0.0-beta.8
+  - @autotranslate/providers@1.0.0-beta.8
+
 ## 1.0.0-beta.9
 
 ### Patch Changes

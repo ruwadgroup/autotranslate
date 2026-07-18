@@ -32,6 +32,7 @@
     "remove-mcp",
     "safe-host-copy-attributes",
     "streaming-dev-mode",
+    "traverse-jsx-prop-subtrees",
     "typescript-plugin-package",
     "v1-0-0-beta"
   ]
