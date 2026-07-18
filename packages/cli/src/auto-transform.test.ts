@@ -191,8 +191,8 @@ describe('transformAutoWrap', () => {
 
   it('wraps dynamic-only copy-bearing identifiers and member expressions', () => {
     const source = [
-      'function Card({ title, description, header }) {',
-      '  return <><h2>{title}</h2><p>{description}</p><th>{header}</th></>;',
+      'function Card({ title, description, header, createCta }) {',
+      '  return <><h2>{title}</h2><p>{description}</p><th>{header}</th><button>{createCta}</button></>;',
       '}',
       'const item = <button>{view.label}</button>;',
     ].join('\n');
@@ -200,8 +200,8 @@ describe('transformAutoWrap', () => {
     expect(run(source).code).toBe(
       [
         "import { T } from '@autotranslate/react';",
-        'function Card({ title, description, header }) {',
-        '  return <><h2><T>{title}</T></h2><p><T>{description}</T></p><th><T>{header}</T></th></>;',
+        'function Card({ title, description, header, createCta }) {',
+        '  return <><h2><T>{title}</T></h2><p><T>{description}</T></p><th><T>{header}</T></th><button><T>{createCta}</T></button></>;',
         '}',
         'const item = <button><T>{view.label}</T></button>;',
       ].join('\n'),

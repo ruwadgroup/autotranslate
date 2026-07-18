@@ -330,6 +330,10 @@ const views = [
   { value: 'week', label: 'Weekly' },
 ];
 const columns = [{ accessorKey: 'relationship', header: 'Relationship' }];
+const copy = {
+  noun: { customer: { singular: 'Customer', plural: 'Customers', verb: 'Add a customer' } },
+  customer: { createCta: 'Add a customer', primaryCTA: 'Create customer' },
+};
 const emptyTitle = 'Nothing scheduled';
 export function Screen() {
   return <SettingsSection title="Email Address" description={'Contact support to change it.'} />;
@@ -342,6 +346,10 @@ export function Screen() {
       'Monthly',
       'Weekly',
       'Relationship',
+      'Customer',
+      'Customers',
+      'Add a customer',
+      'Create customer',
       'Nothing scheduled',
       'Email Address',
       'Contact support to change it.',
