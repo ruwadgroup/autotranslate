@@ -2,7 +2,7 @@
 id: 006
 title: Ignore object fields nested in JSX styling props
 slug: 006-ignore-jsx-styling-prop-fields
-status: go
+status: done
 tags: [area:cli, area:extractor, type:fix, auto-mode]
 priority: P0
 severity: high
