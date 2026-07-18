@@ -15,6 +15,7 @@
     "@autotranslate/zod": "0.2.0"
   },
   "changesets": [
+    "auto-attribute-translation",
     "clean-directives-first",
     "detect-semantic-copy",
     "extract-const-labels",

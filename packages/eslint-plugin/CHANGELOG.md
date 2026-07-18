@@ -1,5 +1,35 @@
 # @autotranslate/eslint-plugin
 
+## 1.0.0-beta.6
+
+### Minor Changes
+
+- [`bd0c24a`](https://github.com/ruwadgroup/autotranslate/commit/bd0c24ae45f826f0d07b5bca48f4900f27c73ac0)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Auto mode now
+  translates host-element copy attributes. In a `"use client"` file,
+  `mode: 'auto'` rewrites `<input placeholder="Search cases" />` to
+  `<input placeholder={t("Search cases")} />` and injects (or reuses) a
+  `const t = useT()` binding in the enclosing component/hook. Non-copy
+  attributes (`className`, `href`, `type`, `data-*`, …) and custom-component
+  props are left alone; `data-no-translate` opts an element out. Because
+  `useT()` is a client hook, this runs only in client modules — server-component
+  attributes remain lint warnings.
+
+  - `@autotranslate/core`: new `isTranslatableAttribute` classifier export;
+    `CLASSIFIER_VERSION` bumped to 3.
+  - `@autotranslate/cli`: `transformAutoWrap` handles copy attributes; the
+    extractor's transform-then-extract path keeps keys identical to hand-written
+    `useT()`.
+  - `@autotranslate/eslint-plugin`: `no-untranslated-jsx` gains an `autoMode`
+    option that suppresses the host-element attribute warnings the compiler now
+    handles.
+
+### Patch Changes
+
+- Updated dependencies
+  [[`bd0c24a`](https://github.com/ruwadgroup/autotranslate/commit/bd0c24ae45f826f0d07b5bca48f4900f27c73ac0)]:
+  - @autotranslate/core@1.0.0-beta.6
+
 ## 1.0.0-beta.5
 
 ### Patch Changes
