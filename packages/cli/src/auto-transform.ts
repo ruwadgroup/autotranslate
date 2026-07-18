@@ -627,7 +627,7 @@ function collectAttributeInsertions(
         insertions.push({
           pos: expression!.start!,
           order: ORDER_ATTR_OPEN,
-          text: `${info.binding}(`,
+          text: `((__copy) => typeof __copy === 'string' ? ${info.binding}(__copy) : __copy)(`,
         });
         insertions.push({ pos: expression!.end!, order: ORDER_ATTR_CLOSE, text: ')' });
       }

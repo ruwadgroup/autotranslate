@@ -423,9 +423,31 @@ describe('transformAutoWrap - attributes', () => {
         '',
       ].join('\n'),
     );
-    expect(result.code).toContain('aria-label={t(resolvedSearchPlaceholder)}');
-    expect(result.code).toContain('placeholder={t(item.placeholder)}');
+    expect(result.code).toContain(
+      "aria-label={((__copy) => typeof __copy === 'string' ? t(__copy) : __copy)(resolvedSearchPlaceholder)}",
+    );
+    expect(result.code).toContain(
+      "placeholder={((__copy) => typeof __copy === 'string' ? t(__copy) : __copy)(item.placeholder)}",
+    );
     expect(result.code).toContain('value={item.value}');
+  });
+
+  it('preserves optional and non-string forwarded copy values', () => {
+    const result = run(
+      [
+        "'use client';",
+        'let reads = 0;',
+        'const item = { get label() { reads += 1; return undefined; } };',
+        'export function Field() {',
+        '  return <Input aria-label={item.label} />;',
+        '}',
+        '',
+      ].join('\n'),
+    );
+    expect(result.code).toContain(
+      "aria-label={((__copy) => typeof __copy === 'string' ? t(__copy) : __copy)(item.label)}",
+    );
+    expect(result.code.match(/item\.label/g)).toHaveLength(1);
   });
 
   it('injects translation into a named concise arrow component', () => {
@@ -527,7 +549,9 @@ describe('transformAutoWrap - attributes', () => {
       '',
     ].join('\n');
     const result = run(source);
-    expect(result.code).toContain('placeholder={t(label)}');
+    expect(result.code).toContain(
+      "placeholder={((__copy) => typeof __copy === 'string' ? t(__copy) : __copy)(label)}",
+    );
     expect(result.code).toContain(tmpl);
   });
 
