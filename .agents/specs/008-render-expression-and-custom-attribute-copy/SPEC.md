@@ -2,7 +2,7 @@
 id: 008
 title: Translate rendered branch strings and custom-component accessibility copy
 slug: 008-render-expression-and-custom-attribute-copy
-status: go
+status: done
 tags: [area:cli, type:fix, auto-mode, accessibility]
 priority: P0
 severity: high
@@ -72,4 +72,4 @@ The NexAML Arabic customer register reproduces both failures in production.
 - [x] `pnpm test` passes.
 - [x] `pnpm build` passes.
 - [x] `pnpm packages:check` passes.
-- [ ] NexAML catalogs contain Arabic for the three production reproductions.
+- [x] NexAML catalogs contain Arabic for the three production reproductions.
