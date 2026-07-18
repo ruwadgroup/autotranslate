@@ -39,6 +39,13 @@ const STYLING_CONFIG_SOURCES: ReadonlySet<string> = new Set([
   'class-variance-authority',
 ]);
 
+const JSX_STYLING_PROPS: ReadonlySet<string> = new Set([
+  'className',
+  'classNames',
+  'classes',
+  'styles',
+]);
+
 /**
  * Walk a TS / JSX file and extract translatable messages.
  *
@@ -132,7 +139,7 @@ export function extractFile(
       if (!options.includeAutoCopy || path.node.computed) return;
       const name = objectPropertyName(path.node.key);
       if (!name || !isCopyBearingName(name)) return;
-      if (isInsideStylingConfigCall(path)) return;
+      if (isInsideStylingConfigCall(path) || isInsideJSXStylingProp(path)) return;
       recordAutoCopy(readAutoCopyString(path.node.value), path.node.loc?.start.line);
     },
 
@@ -179,6 +186,17 @@ function isInsideStylingConfigCall(path: NodePath<t.ObjectProperty>): boolean {
         STYLING_CONFIG_SOURCES.has(declaration.node.source.value)
       );
     }),
+  );
+}
+
+function isInsideJSXStylingProp(path: NodePath<t.ObjectProperty>): boolean {
+  return Boolean(
+    path.findParent(
+      (parent) =>
+        parent.isJSXAttribute() &&
+        parent.node.name.type === 'JSXIdentifier' &&
+        JSX_STYLING_PROPS.has(parent.node.name.name),
+    ),
   );
 }
 

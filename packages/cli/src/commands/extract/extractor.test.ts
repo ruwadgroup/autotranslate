@@ -379,6 +379,36 @@ const columns = [{ accessorKey: 'relationship', header: 'Relationship' }];
     }
   });
 
+  it.each([
+    'className',
+    'classNames',
+    'classes',
+    'styles',
+  ])('ignores semantic fields nested in the JSX %s styling prop', (prop) => {
+    const { messages } = extractFile(
+      FILE,
+      `
+const card = (
+  <Card
+    ${prop}={{
+      header: 'px-5 pt-5 pb-3',
+      nested: { title: 'text-sm', description: 'text-muted-foreground' },
+    }}
+    title="Customer details"
+  />
+);
+const columns = [{ accessorKey: 'relationship', header: 'Relationship' }];
+        `,
+      { includeAutoCopy: true },
+    );
+
+    expect(messages[keyFor('Customer details')]).toBeDefined();
+    expect(messages[keyFor('Relationship')]).toBeDefined();
+    for (const structural of ['px-5 pt-5 pb-3', 'text-sm', 'text-muted-foreground']) {
+      expect(messages[keyFor(structural)], structural).toBeUndefined();
+    }
+  });
+
   it('does not extract structural fields or intrinsic DOM attributes', () => {
     const { messages } = extractFile(
       FILE,
