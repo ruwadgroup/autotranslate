@@ -118,7 +118,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.1.0",
-    "ai": "^6.0.218",
+    "ai": "^7.0.31",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.1.9"
