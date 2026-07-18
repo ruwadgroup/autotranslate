@@ -6,7 +6,7 @@ import {
 } from '@autotranslate/core/classifier';
 import { sourceKey } from '@autotranslate/core/internal';
 import { parse } from '@babel/parser';
-import _traverse from '@babel/traverse';
+import _traverse, { type NodePath } from '@babel/traverse';
 import type * as t from '@babel/types';
 import { jsxChildrenToTree } from './jsx-tree';
 
@@ -32,6 +32,11 @@ interface MessageHints {
 const STANDALONE_T_SOURCES: ReadonlySet<string> = new Set([
   '@autotranslate/core/t',
   '@autotranslate/core/standalone',
+]);
+
+const STYLING_CONFIG_SOURCES: ReadonlySet<string> = new Set([
+  'tailwind-variants',
+  'class-variance-authority',
 ]);
 
 /**
@@ -127,6 +132,7 @@ export function extractFile(
       if (!options.includeAutoCopy || path.node.computed) return;
       const name = objectPropertyName(path.node.key);
       if (!name || !isCopyBearingName(name)) return;
+      if (isInsideStylingConfigCall(path)) return;
       recordAutoCopy(readAutoCopyString(path.node.value), path.node.loc?.start.line);
     },
 
@@ -159,6 +165,21 @@ export function extractFile(
   });
 
   return { messages, manifest };
+}
+
+function isInsideStylingConfigCall(path: NodePath<t.ObjectProperty>): boolean {
+  return Boolean(
+    path.findParent((parent) => {
+      if (!parent.isCallExpression() || parent.node.callee.type !== 'Identifier') return false;
+      const binding = parent.scope.getBinding(parent.node.callee.name);
+      const declaration = binding?.path.parentPath;
+      return (
+        binding?.path.isImportSpecifier() === true &&
+        declaration?.isImportDeclaration() === true &&
+        STYLING_CONFIG_SOURCES.has(declaration.node.source.value)
+      );
+    }),
+  );
 }
 
 function isCustomJSXName(name: t.JSXOpeningElement['name']): boolean {

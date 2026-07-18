@@ -350,6 +350,35 @@ export function Screen() {
     }
   });
 
+  it.each([
+    ['tailwind-variants', 'tv', 'makeVariants'],
+    ['class-variance-authority', 'cva', 'makeVariants'],
+  ])('ignores semantic slot names inside styling calls from %s', (source, imported, local) => {
+    const { messages } = extractFile(
+      FILE,
+      `
+import { ${imported} as ${local} } from '${source}';
+const styles = ${local}({
+  slots: {
+    header: 'flex px-6',
+    title: 'text-sm',
+    description: 'text-muted-foreground',
+  },
+  variants: {
+    compact: { true: { header: 'gap-1 py-2' } },
+  },
+});
+const columns = [{ accessorKey: 'relationship', header: 'Relationship' }];
+      `,
+      { includeAutoCopy: true },
+    );
+
+    expect(messages[keyFor('Relationship')]).toEqual([{ type: 'text', value: 'Relationship' }]);
+    for (const structural of ['flex px-6', 'text-sm', 'text-muted-foreground', 'gap-1 py-2']) {
+      expect(messages[keyFor(structural)], structural).toBeUndefined();
+    }
+  });
+
   it('does not extract structural fields or intrinsic DOM attributes', () => {
     const { messages } = extractFile(
       FILE,
