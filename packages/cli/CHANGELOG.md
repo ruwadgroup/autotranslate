@@ -1,5 +1,15 @@
 # @autotranslate/cli
 
+## 1.0.0-beta.11
+
+### Patch Changes
+
+- [`1952ee2`](https://github.com/ruwadgroup/autotranslate/commit/1952ee25c69cf13245872668f923a35ee4e03192)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Auto extraction
+  now ignores semantic-looking slot fields nested inside statically imported
+  `tailwind-variants` and `class-variance-authority` styling factory calls. Real
+  configuration labels and table headers remain extractable.
+
 ## 1.0.0-beta.10
 
 ### Patch Changes
