@@ -22,6 +22,7 @@
     "fix-package-exports-types",
     "glossary-hybrid",
     "hash-bucketed-catalogs",
+    "ignore-jsx-styling-props",
     "ignore-styling-config-copy",
     "migration-guides-cookbook",
     "next-streaming-dev-mode",

@@ -1,5 +1,14 @@
 # @autotranslate/cli
 
+## 1.0.0-beta.12
+
+### Patch Changes
+
+- [`b15e75c`](https://github.com/ruwadgroup/autotranslate/commit/b15e75c6ca227d95bf7657bb85fbbac75ae8b0db)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Auto extraction
+  now ignores semantic-looking object fields nested inside explicit JSX styling
+  props such as `classNames` and `styles`.
+
 ## 1.0.0-beta.11
 
 ### Patch Changes
