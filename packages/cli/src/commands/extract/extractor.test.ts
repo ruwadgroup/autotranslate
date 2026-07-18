@@ -466,6 +466,36 @@ const translated = <T description="Translator note">Visible copy</T>;
     expect(Object.keys(messages)).toEqual([key]);
   });
 
+  it('extracts every rendered conditional branch from transformed auto copy', () => {
+    const client = [
+      "'use client';",
+      'export function Relationship({ kind }) {',
+      '  return <Badge>{kind === "related" ? "Related party" : kind === "direct" ? `Direct customer` : "Prospect customer"}</Badge>;',
+      '}',
+      '',
+    ].join('\n');
+    const transformed = transformAutoWrap(client, { filename: FILE }).code;
+    const { messages } = extractFile(FILE, transformed, { includeAutoCopy: true });
+
+    for (const value of ['Related party', 'Direct customer', 'Prospect customer']) {
+      expect(messages[keyFor(value)]).toEqual([{ type: 'text', value }]);
+    }
+  });
+
+  it('extracts custom-component accessibility copy from the injected t call', () => {
+    const client = [
+      "'use client';",
+      'export function Actions() {',
+      '  return <DropdownMenuTrigger aria-label="Row actions" />;',
+      '}',
+      '',
+    ].join('\n');
+    const transformed = transformAutoWrap(client, { filename: FILE }).code;
+    const { messages } = extractFile(FILE, transformed, { includeAutoCopy: true });
+
+    expect(messages[sourceKey('Row actions')]).toBe('Row actions');
+  });
+
   it('extracts copy attributes but never structural host attributes', () => {
     const client = [
       "'use client';",

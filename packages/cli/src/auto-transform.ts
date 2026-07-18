@@ -33,6 +33,9 @@ const LETTER_BEARING_JSX = /[>}][^<>{}]*[A-Za-z]/;
 /** Cheap companion pre-filter for dynamic copy such as `{title}` / `{item.label}`. */
 const COPY_BEARING_JSX_EXPRESSION = /{\s*[$A-Z_a-z][\w$]*(?:\??\.[$A-Z_a-z][\w$]*)*\s*}/;
 
+/** Cheap companion pre-filter for rendered conditional string branches. */
+const CONDITIONAL_COPY_JSX_EXPRESSION = /[?:]\s*["'`][^"'`<>]*[A-Za-z]/;
+
 /**
  * Cheap companion pre-filter for copy-bearing JSX attributes such as
  * `placeholder="Search cases"` (a component whose only copy lives in attributes
@@ -97,6 +100,7 @@ export function transformAutoWrap(
     !isJsxFile ||
     (!LETTER_BEARING_JSX.test(source) &&
       !COPY_BEARING_JSX_EXPRESSION.test(source) &&
+      !CONDITIONAL_COPY_JSX_EXPRESSION.test(source) &&
       !COPY_BEARING_JSX_ATTRIBUTE.test(source))
   ) {
     return { code: source, changed: false };
@@ -285,6 +289,23 @@ function isCopyBearingExpression(node: t.Node): boolean {
   }
   if (t.isTSAsExpression(node) || t.isTSTypeAssertion(node) || t.isTSNonNullExpression(node)) {
     return isCopyBearingExpression(node.expression);
+  }
+  if (t.isConditionalExpression(node)) return conditionalBranchesCarryCopy(node);
+  return false;
+}
+
+function conditionalBranchesCarryCopy(node: t.ConditionalExpression): boolean {
+  return isRenderedCopyBranch(node.consequent) && isRenderedCopyBranch(node.alternate);
+}
+
+function isRenderedCopyBranch(node: t.Node): boolean {
+  if (t.isStringLiteral(node)) return jsxTextHasContent(node.value);
+  if (t.isTemplateLiteral(node) && node.expressions.length === 0) {
+    return jsxTextHasContent(node.quasis[0]?.value.cooked ?? '');
+  }
+  if (t.isConditionalExpression(node)) return conditionalBranchesCarryCopy(node);
+  if (t.isTSAsExpression(node) || t.isTSTypeAssertion(node) || t.isTSNonNullExpression(node)) {
+    return isRenderedCopyBranch(node.expression);
   }
   return false;
 }
@@ -537,15 +558,15 @@ function applyInsertions(source: string, insertions: Insertion[]): string {
 // ---------------------------------------------------------------------------
 // Attribute auto-translation (mode: 'auto', client modules only)
 //
-// Rewrites a host element's copy-bearing string attribute
+// Rewrites an element's copy-bearing string attribute
 //   <input placeholder="Search cases" />
 // into
 //   <input placeholder={t("Search cases")} />
 // and ensures a `const t = useT()` binding exists at the top of the enclosing
 // component/hook. `useT` is a client hook, so this only runs in files carrying a
 // `"use client"` directive; server-component attributes are left for the lint
-// rule. Custom-component copy props (`<Field placeholder=…>`) are untouched —
-// the extractor's includeAutoCopy path owns those.
+// rule. The positive attribute contract applies equally to host elements and
+// custom components that forward accessibility or visible copy to a host.
 // ---------------------------------------------------------------------------
 
 interface FunctionBinding {
@@ -574,10 +595,9 @@ function collectAttributeInsertions(
       // Value must be a plain string literal with visible content.
       if (!t.isStringLiteral(node.value) || !jsxTextHasContent(node.value.value)) return;
 
-      // Element must be a host element (lowercase tag), not a skip/marker
-      // element, and not under data-no-translate.
+      // Element must not be a skip/marker element or under data-no-translate.
       const openingPath = path.parentPath;
-      if (!openingPath?.isJSXOpeningElement() || !isHostElementName(openingPath.node.name)) return;
+      if (!openingPath?.isJSXOpeningElement()) return;
       const elementPath = openingPath.parentPath;
       if (!elementPath?.isJSXElement()) return;
       if (isBlockingElement(elementPath.node)) return;
@@ -603,10 +623,6 @@ function collectAttributeInsertions(
     }
   }
   return injected;
-}
-
-function isHostElementName(name: t.JSXOpeningElement['name']): boolean {
-  return t.isJSXIdentifier(name) && /^[a-z]/.test(name.name);
 }
 
 function hasBlockingJSXAncestor(path: NodePath): boolean {

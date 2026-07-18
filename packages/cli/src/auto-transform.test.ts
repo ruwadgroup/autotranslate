@@ -226,6 +226,29 @@ describe('transformAutoWrap', () => {
     expect(run('const x = <h2>{title}</h2>;').changed).toBe(true);
   });
 
+  it('wraps rendered conditional string branches as dynamic catalog copy', () => {
+    const source = 'const x = <Badge>{isDependant ? "Related party" : "Direct customer"}</Badge>;';
+    expect(run(source).code).toBe(
+      'import { T } from \'@autotranslate/react\';\nconst x = <Badge><T>{isDependant ? "Related party" : "Direct customer"}</T></Badge>;',
+    );
+  });
+
+  it('recognizes nested conditional branches through transparent TypeScript wrappers', () => {
+    const source =
+      'const x = <Badge>{(kind === "a" ? "Primary customer" : kind === "b" ? `Related party` : "Direct customer") as string}</Badge>;';
+    expect(run(source).code).toContain(
+      '<Badge><T>{(kind === "a" ? "Primary customer" : kind === "b" ? `Related party` : "Direct customer") as string}</T></Badge>',
+    );
+  });
+
+  it('leaves mixed dynamic conditional branches and non-rendered conditionals unchanged', () => {
+    const source = [
+      'const value = ready ? "Internal token" : "Fallback token";',
+      'const x = <Badge>{isDependant ? title : "Direct customer"}</Badge>;',
+    ].join('\n');
+    expect(run(source)).toEqual({ code: source, changed: false });
+  });
+
   it('keeps untouched code byte-identical (only splices wrappers + import)', () => {
     const weird = 'const config = {a:1,   b:2,\n    c:3};';
     const source = `${weird}\nexport function C() { return <p>Hi {name}</p>; }\n`;
@@ -267,6 +290,19 @@ describe('transformAutoWrap - attributes', () => {
         '',
       ].join('\n'),
     );
+  });
+
+  it('rewrites accessibility copy forwarded through a custom component', () => {
+    const result = run(
+      [
+        "'use client';",
+        'export function Actions() {',
+        '  return <DropdownMenuTrigger aria-label="Row actions" />;',
+        '}',
+        '',
+      ].join('\n'),
+    );
+    expect(result.code).toContain('<DropdownMenuTrigger aria-label={t("Row actions")} />');
   });
 
   it('reuses an existing useT binding instead of injecting a second', () => {
@@ -366,7 +402,7 @@ describe('transformAutoWrap - attributes', () => {
     expect(run(source).code).toBe(source);
   });
 
-  it('does not inject on custom-component copy props', () => {
+  it('translates positive copy attributes on custom components', () => {
     const source = [
       "'use client';",
       'export function Form() {',
@@ -374,7 +410,7 @@ describe('transformAutoWrap - attributes', () => {
       '}',
       '',
     ].join('\n');
-    expect(run(source).code).toBe(source);
+    expect(run(source).code).toContain('<Field placeholder={t("Search cases")} />');
   });
 
   it('leaves structural and unknown attributes as literals', () => {

@@ -2,6 +2,7 @@ import { type CatalogEntry, canonicalKey, type Manifest } from '@autotranslate/c
 import {
   isCopyBearingName,
   NO_TRANSLATE_ATTRIBUTE,
+  SKIP_ELEMENTS,
   TRANSLATION_MARKERS,
 } from '@autotranslate/core/classifier';
 import { sourceKey } from '@autotranslate/core/internal';
@@ -135,6 +136,14 @@ export function extractFile(
       recordAutoCopy(readAutoCopyString(attr.value), attr.loc?.start.line);
     },
 
+    JSXExpressionContainer(path) {
+      if (!options.includeAutoCopy || path.parent.type !== 'JSXElement') return;
+      if (isInsideUntranslatedJSX(path)) return;
+      const values = readRenderedConditionalStrings(path.node.expression, true);
+      if (!values) return;
+      for (const value of values) recordAutoCopy(value, path.node.loc?.start.line);
+    },
+
     ObjectProperty(path) {
       if (!options.includeAutoCopy || path.node.computed) return;
       const name = objectPropertyName(path.node.key);
@@ -198,6 +207,49 @@ function isInsideJSXStylingProp(path: NodePath<t.ObjectProperty>): boolean {
         JSX_STYLING_PROPS.has(parent.node.name.name),
     ),
   );
+}
+
+function isInsideUntranslatedJSX(path: NodePath): boolean {
+  return Boolean(
+    path.findParent((parent) => {
+      if (!parent.isJSXElement()) return false;
+      const opening = parent.node.openingElement;
+      if (opening.name.type === 'JSXIdentifier' && SKIP_ELEMENTS.has(opening.name.name)) {
+        return true;
+      }
+      return opening.attributes.some(
+        (attr) =>
+          attr.type === 'JSXAttribute' &&
+          attr.name.type === 'JSXIdentifier' &&
+          attr.name.name === NO_TRANSLATE_ATTRIBUTE,
+      );
+    }),
+  );
+}
+
+function readRenderedConditionalStrings(
+  node: t.Node,
+  requireConditional: boolean,
+): string[] | null {
+  if (
+    node.type === 'TSAsExpression' ||
+    node.type === 'TSTypeAssertion' ||
+    node.type === 'TSNonNullExpression'
+  ) {
+    return readRenderedConditionalStrings(node.expression, requireConditional);
+  }
+  if (node.type === 'ConditionalExpression') {
+    const consequent = readRenderedConditionalStrings(node.consequent, false);
+    const alternate = readRenderedConditionalStrings(node.alternate, false);
+    return consequent && alternate ? [...consequent, ...alternate] : null;
+  }
+  if (requireConditional) return null;
+  if (node.type === 'StringLiteral') return node.value ? [node.value] : null;
+  if (node.type === 'TemplateLiteral' && node.expressions.length === 0) {
+    const value = node.quasis[0]?.value.cooked;
+    return value ? [value] : null;
+  }
+  return null;
 }
 
 function isCustomJSXName(name: t.JSXOpeningElement['name']): boolean {
