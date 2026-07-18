@@ -2,7 +2,7 @@
 id: 005
 title: Ignore styling configuration fields during auto extraction
 slug: 005-ignore-styling-config-copy-fields
-status: go
+status: done
 tags: [area:cli, area:extractor, type:fix, auto-mode]
 priority: P0
 severity: high
