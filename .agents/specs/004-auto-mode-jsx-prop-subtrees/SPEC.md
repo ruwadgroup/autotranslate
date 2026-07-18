@@ -2,7 +2,7 @@
 id: 004
 title: Detect composed JSX and semantic headers in auto mode
 slug: 004-auto-mode-jsx-prop-subtrees
-status: go
+status: done
 tags: [area:cli, area:compiler, area:core, type:fix, auto-mode]
 priority: P0
 severity: high
