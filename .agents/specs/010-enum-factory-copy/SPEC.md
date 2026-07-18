@@ -48,11 +48,11 @@ Arabic catalog has no matching messages.
 
 ## AI verification checklist
 
-- [ ] Enum factory extraction tests pass.
-- [ ] Ordinary object exclusion tests pass.
-- [ ] `pnpm typecheck` passes.
-- [ ] `pnpm lint` passes.
-- [ ] `pnpm test` passes.
-- [ ] `pnpm build` passes.
-- [ ] `pnpm packages:check` passes.
+- [x] Enum factory extraction tests pass.
+- [x] Ordinary object exclusion tests pass.
+- [x] `pnpm typecheck` passes.
+- [x] `pnpm lint` passes.
+- [x] `pnpm test` passes.
+- [x] `pnpm build` passes.
+- [x] `pnpm packages:check` passes.
 - [ ] NexAML production renders customer enum labels in Arabic.

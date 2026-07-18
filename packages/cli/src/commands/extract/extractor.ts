@@ -147,7 +147,7 @@ export function extractFile(
     ObjectProperty(path) {
       if (!options.includeAutoCopy || path.node.computed) return;
       const name = objectPropertyName(path.node.key);
-      if (!name || !isCopyBearingName(name)) return;
+      if ((!name || !isCopyBearingName(name)) && !isDirectCreateEnumProperty(path)) return;
       if (isInsideStylingConfigCall(path) || isInsideJSXStylingProp(path)) return;
       recordAutoCopy(readAutoCopyString(path.node.value), path.node.loc?.start.line);
     },
@@ -263,6 +263,19 @@ function objectPropertyName(key: t.ObjectProperty['key']): string | null {
   if (key.type === 'Identifier') return key.name;
   if (key.type === 'StringLiteral') return key.value;
   return null;
+}
+
+function isDirectCreateEnumProperty(path: NodePath<t.ObjectProperty>): boolean {
+  const objectPath = path.parentPath;
+  if (!objectPath?.isObjectExpression()) return false;
+  const callPath = objectPath.parentPath;
+  if (!callPath?.isCallExpression()) return false;
+  const callee = callPath.node.callee;
+  return (
+    callee.type === 'Identifier' &&
+    callee.name === 'createEnum' &&
+    callPath.node.arguments[0] === objectPath.node
+  );
 }
 
 function readAutoCopyString(node: t.Node | null | undefined): string | null {

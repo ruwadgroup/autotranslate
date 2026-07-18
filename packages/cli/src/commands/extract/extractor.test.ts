@@ -358,6 +358,28 @@ export function Screen() {
     }
   });
 
+  it('extracts direct display values from createEnum mappings', () => {
+    const { messages } = extractFile(
+      FILE,
+      `
+const status = createEnum({
+  prospect: 'Prospect',
+  kyc_pending: 'KYC pending',
+  nested: { code: 'Nested label' },
+  dynamic: getLabel(),
+});
+const machineTokens = { prospect: 'prospect', kyc_pending: 'kyc_pending' };
+      `,
+      { includeAutoCopy: true },
+    );
+
+    expect(messages[keyFor('Prospect')]).toEqual([{ type: 'text', value: 'Prospect' }]);
+    expect(messages[keyFor('KYC pending')]).toEqual([{ type: 'text', value: 'KYC pending' }]);
+    expect(messages[keyFor('prospect')]).toBeUndefined();
+    expect(messages[keyFor('kyc_pending')]).toBeUndefined();
+    expect(messages[keyFor('Nested label')]).toBeUndefined();
+  });
+
   it.each([
     ['tailwind-variants', 'tv', 'makeVariants'],
     ['class-variance-authority', 'cva', 'makeVariants'],
