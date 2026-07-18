@@ -2,7 +2,7 @@
 id: 010
 title: Extract display copy from enum factories
 slug: 010-enum-factory-copy
-status: go
+status: done
 tags: [area:cli, type:fix, auto-mode]
 priority: P0
 severity: high
@@ -55,4 +55,4 @@ Arabic catalog has no matching messages.
 - [x] `pnpm test` passes.
 - [x] `pnpm build` passes.
 - [x] `pnpm packages:check` passes.
-- [ ] NexAML production renders customer enum labels in Arabic.
+- [x] NexAML production renders customer enum labels in Arabic.

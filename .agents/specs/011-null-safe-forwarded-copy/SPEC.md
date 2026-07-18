@@ -2,7 +2,7 @@
 id: 011
 title: Preserve optional forwarded copy in auto mode
 slug: 011-null-safe-forwarded-copy
-status: go
+status: done
 tags: [area:cli, type:fix, auto-mode]
 priority: P0
 severity: critical
@@ -52,4 +52,4 @@ NexAML reproduced this in production through its shared data-table toolbar.
 - [x] `pnpm test` passes.
 - [x] `pnpm build` passes.
 - [x] `pnpm packages:check` passes.
-- [ ] NexAML production customer register renders without an error boundary.
+- [x] NexAML production customer register renders without an error boundary.

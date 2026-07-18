@@ -2,7 +2,7 @@
 id: 009
 title: Translate concise components and forwarded dynamic copy
 slug: 009-concise-components-and-forwarded-copy
-status: go
+status: done
 tags: [area:cli, type:fix, auto-mode, accessibility]
 priority: P0
 severity: high
@@ -65,4 +65,4 @@ The NexAML Arabic customer register reproduces both failures in production.
 - [x] `pnpm test` passes.
 - [x] `pnpm build` passes.
 - [x] `pnpm packages:check` passes.
-- [ ] NexAML production renders the two reproductions in Arabic.
+- [x] NexAML production renders the two reproductions in Arabic.
