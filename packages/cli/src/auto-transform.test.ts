@@ -191,8 +191,8 @@ describe('transformAutoWrap', () => {
 
   it('wraps dynamic-only copy-bearing identifiers and member expressions', () => {
     const source = [
-      'function Card({ title, description }) {',
-      '  return <><h2>{title}</h2><p>{description}</p></>;',
+      'function Card({ title, description, header }) {',
+      '  return <><h2>{title}</h2><p>{description}</p><th>{header}</th></>;',
       '}',
       'const item = <button>{view.label}</button>;',
     ].join('\n');
@@ -200,8 +200,8 @@ describe('transformAutoWrap', () => {
     expect(run(source).code).toBe(
       [
         "import { T } from '@autotranslate/react';",
-        'function Card({ title, description }) {',
-        '  return <><h2><T>{title}</T></h2><p><T>{description}</T></p></>;',
+        'function Card({ title, description, header }) {',
+        '  return <><h2><T>{title}</T></h2><p><T>{description}</T></p><th><T>{header}</T></th></>;',
         '}',
         'const item = <button><T>{view.label}</T></button>;',
       ].join('\n'),
@@ -479,5 +479,55 @@ describe('transformAutoWrap - attributes', () => {
       '',
     ].join('\n');
     expect(run(source).code).toBe(source);
+  });
+});
+
+describe('transformAutoWrap - JSX composition props', () => {
+  it('wraps icon-plus-text controls nested in a JSX-valued prop', () => {
+    const result = run(
+      [
+        "'use client';",
+        'export function Screen() {',
+        '  return <ListPage actions={<div><Button><Download /> Export</Button></div>} />;',
+        '}',
+        '',
+      ].join('\n'),
+    );
+
+    expect(result.code).toContain(
+      '<Button><T><Download data-autotranslate-tag="Download" /> Export</T></Button>',
+    );
+    expect(result.code.match(/<T>/g)).toHaveLength(1);
+  });
+
+  it('handles dynamic copy and opt-out subtrees inside JSX-valued props', () => {
+    const result = run(
+      [
+        "'use client';",
+        'export function Screen({ title }) {',
+        '  return <Shell header={<h2>{title}</h2>} actions={<><Button>Save</Button><Button data-no-translate>Internal</Button></>} />;',
+        '}',
+        '',
+      ].join('\n'),
+    );
+
+    expect(result.code).toContain('header={<h2><T>{title}</T></h2>}');
+    expect(result.code).toContain('actions={<><Button><T>Save</T></Button>');
+    expect(result.code).toContain('<Button data-no-translate>Internal</Button>');
+  });
+
+  it('walks JSX nested in a spread expression without double wrapping', () => {
+    const result = run(
+      [
+        "'use client';",
+        'export function Screen() {',
+        '  return <Shell {...{ actions: <Button>Export</Button> }} />;',
+        '}',
+        '',
+      ].join('\n'),
+    );
+
+    expect(result.code).toContain('actions: <Button><T>Export</T></Button>');
+    expect(result.code.match(/<T>/g)).toHaveLength(1);
   });
 });

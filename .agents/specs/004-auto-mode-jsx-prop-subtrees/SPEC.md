@@ -1,9 +1,9 @@
 ---
 id: 004
-title: Traverse JSX subtrees passed through JSX props in auto mode
+title: Detect composed JSX and semantic headers in auto mode
 slug: 004-auto-mode-jsx-prop-subtrees
 status: go
-tags: [area:cli, area:compiler, type:fix, auto-mode]
+tags: [area:cli, area:compiler, area:core, type:fix, auto-mode]
 priority: P0
 severity: high
 effort: S
@@ -19,7 +19,7 @@ mockups:
 research: null
 ---
 
-# Spec 004: Traverse JSX subtrees passed through JSX props in auto mode
+# Spec 004: Detect composed JSX and semantic headers in auto mode
 
 > **Executor instructions**: This spec is portable. Follow it top to bottom and
 > run every AI verification command.
@@ -36,6 +36,11 @@ followed by static text, such as `<Button><Download /> Export</Button>`. Auto
 mode leaves `Export`, `Queue`, `Duplicates`, and `Import` byte-identical, and
 extraction records no occurrences for those sites. Production therefore renders
 the English labels in Arabic mode.
+
+The same page defines rendered table column labels through static `header`
+fields. The shared classifier recognizes `heading` but not the conventional
+`header` name, so those labels are neither extracted nor recognized when
+rendered from dynamic header expressions.
 
 The compiler already has `collectTopLevelJSX()` for JSX-bearing expressions and
 already knows how to wrap icon-plus-text runs. The missing behavior is traversal
@@ -57,13 +62,15 @@ provides `collectTopLevelJSX()`. `walk()` at
 Babel root visitor skips every JSX element that has any JSX ancestor, so JSX
 passed through an outer element's attribute is never visited separately.
 
-The safe host-attribute classifier from spec 003 is already published and must
-not change. This fix affects JSX subtrees inside attribute expressions, not the
-string value of the attribute itself.
+The safe host-attribute classifier from spec 003 is already published and its
+host-attribute rules must not change. This fix affects JSX subtrees inside
+attribute expressions and semantic copy-bearing field names, not host attribute
+string classification.
 
 ## Non-goals
 
-- Translating arbitrary non-JSX object properties or programmatic strings.
+- Translating arbitrary non-JSX object properties without a recognized semantic
+  copy-bearing name.
 - Changing custom-component prop extraction.
 - Changing host-attribute classification.
 - Traversing JSX inside code that is not reachable from a JSX root.
@@ -81,11 +88,17 @@ string value of the attribute itself.
    `data-no-translate` subtree.
 5. Add an extraction regression proving the nested action copy appears in the
    source catalog with the occurrence line from the consumer file.
-6. Add a patch changeset for `@autotranslate/cli`.
-7. Run all verification commands, commit, push, version through Changesets,
+6. Add `header` and names ending in `Header` to the shared copy-bearing name
+   classifier, bump its classifier version, and cover both accepted and rejected
+   names in core tests.
+7. Add extraction coverage for a static table column `header` field and dynamic
+   transform coverage for a rendered `{header}` expression.
+8. Add patch changesets for `@autotranslate/cli`, `@autotranslate/core`, and
+   `@autotranslate/eslint-plugin`.
+9. Run all verification commands, commit, push, version through Changesets,
    publish with Trusted Publishing, and verify the npm beta tag.
-8. Re-run NexAML extraction against the release and prove customer action labels
-   have customer-page occurrences.
+10. Re-run NexAML extraction against the release and prove customer action
+    labels have customer-page occurrences.
 
 ## STOP conditions
 
@@ -107,6 +120,8 @@ string value of the attribute itself.
 - [ ] `pnpm build` succeeds.
 - [ ] `pnpm packages:check` succeeds.
 - [ ] A CLI patch changeset exists.
+- [ ] Core classifier tests prove `header` and suffix `Header` names are copy.
+- [ ] Extraction records static table `header` fields.
 - [ ] NexAML extraction records customer-page occurrences for `Export`, `Queue`,
       `Duplicates`, and `Import`.
 

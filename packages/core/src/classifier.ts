@@ -1,5 +1,5 @@
 /** Bump this when the classification rules change in a breaking way. */
-export const CLASSIFIER_VERSION = 4;
+export const CLASSIFIER_VERSION = 5;
 
 /** The 8 marker component names that signal translated content. */
 export const TRANSLATION_MARKERS: ReadonlySet<string> = new Set([
@@ -26,7 +26,7 @@ export function jsxTextHasContent(text: string): boolean {
  * translate when their exact source string exists in the extracted catalog.
  */
 const COPY_BEARING_NAME =
-  /^(?:label|title|description|subtitle|placeholder|caption|heading|subheading|helperText|message|summary|tooltip|emptyTitle|emptyDescription|[A-Za-z_$][\w$]*(?:Label|Title|Description|Subtitle|Placeholder|Caption|Heading|Subheading|HelperText|Message|Summary|Tooltip))$/;
+  /^(?:label|title|description|subtitle|placeholder|caption|heading|subheading|header|helperText|message|summary|tooltip|emptyTitle|emptyDescription|[A-Za-z_$][\w$]*(?:Label|Title|Description|Subtitle|Placeholder|Caption|Heading|Subheading|Header|HelperText|Message|Summary|Tooltip))$/;
 
 export function isCopyBearingName(name: string): boolean {
   return COPY_BEARING_NAME.test(name);

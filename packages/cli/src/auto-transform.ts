@@ -186,6 +186,24 @@ export function transformAutoWrap(
   const walk = (node: t.JSXElement | t.JSXFragment): void => {
     if (t.isJSXElement(node) && isBlockingElement(node)) return;
 
+    // JSX passed through composition props (for example
+    // `<ListPage actions={<Button>Export</Button>} />`) is not a child of the
+    // outer element and Babel's root visitor correctly treats it as nested JSX.
+    // Follow those expression subtrees here so they receive the same wrapping
+    // as ordinary children, exactly once through their nearest JSX owner.
+    if (t.isJSXElement(node)) {
+      for (const attr of node.openingElement.attributes) {
+        const expression =
+          t.isJSXAttribute(attr) && t.isJSXExpressionContainer(attr.value)
+            ? attr.value.expression
+            : t.isJSXSpreadAttribute(attr)
+              ? attr.argument
+              : null;
+        if (!expression || t.isJSXEmptyExpression(expression)) continue;
+        for (const jsx of collectTopLevelJSX(expression)) walk(jsx);
+      }
+    }
+
     const children = node.children;
     const members = children.map(classifyChild);
 

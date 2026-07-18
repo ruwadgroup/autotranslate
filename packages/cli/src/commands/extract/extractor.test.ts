@@ -329,6 +329,7 @@ const views = [
   { value: 'month', label: 'Monthly' as const },
   { value: 'week', label: 'Weekly' },
 ];
+const columns = [{ accessorKey: 'relationship', header: 'Relationship' }];
 const emptyTitle = 'Nothing scheduled';
 export function Screen() {
   return <SettingsSection title="Email Address" description={'Contact support to change it.'} />;
@@ -340,6 +341,7 @@ export function Screen() {
     for (const value of [
       'Monthly',
       'Weekly',
+      'Relationship',
       'Nothing scheduled',
       'Email Address',
       'Contact support to change it.',
@@ -422,5 +424,29 @@ const translated = <T description="Translator note">Visible copy</T>;
     ]) {
       expect(messages[sourceKey(structural)], structural).toBeUndefined();
     }
+  });
+});
+
+describe('extractFile - JSX composition props', () => {
+  it('extracts action copy nested in a JSX-valued prop', () => {
+    const client = [
+      "'use client';",
+      'export function Screen() {',
+      '  return <ListPage actions={<div><Button><Download /> Export</Button></div>} />;',
+      '}',
+      '',
+    ].join('\n');
+    const transformed = transformAutoWrap(client, { filename: FILE }).code;
+    const { messages, manifest } = extractFile(FILE, transformed, { includeAutoCopy: true });
+    const key = canonicalKey([
+      { type: 'tag', tag: 'Download', children: [] },
+      { type: 'text', value: ' Export' },
+    ]);
+
+    expect(messages[key]).toEqual([
+      { type: 'tag', tag: 'Download', children: [] },
+      { type: 'text', value: ' Export' },
+    ]);
+    expect(manifest[key]?.occurrences).toEqual([{ file: FILE, line: 4 }]);
   });
 });

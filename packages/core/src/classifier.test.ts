@@ -11,8 +11,8 @@ import {
 } from './classifier';
 
 describe('CLASSIFIER_VERSION', () => {
-  it('is 4', () => {
-    expect(CLASSIFIER_VERSION).toBe(4);
+  it('is 5', () => {
+    expect(CLASSIFIER_VERSION).toBe(5);
   });
 });
 
@@ -22,10 +22,12 @@ describe('isCopyBearingName', () => {
       'label',
       'title',
       'description',
+      'header',
       'helperText',
       'emptyTitle',
       'buttonLabel',
       'cardDescription',
+      'tableHeader',
     ]) {
       expect(isCopyBearingName(name), `should recognize: ${name}`).toBe(true);
     }
