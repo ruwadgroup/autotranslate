@@ -2,7 +2,7 @@
 id: 007
 title: Detect conventional industry copy fields
 slug: 007-detect-industry-copy-fields
-status: go
+status: done
 tags: [area:core, area:cli, type:fix, auto-mode]
 priority: P0
 severity: high
