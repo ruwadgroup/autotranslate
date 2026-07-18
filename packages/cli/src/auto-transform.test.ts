@@ -413,6 +413,38 @@ describe('transformAutoWrap - attributes', () => {
     expect(run(source).code).toBe(source);
   });
 
+  it('translates forwarded dynamic copy-bearing attribute expressions', () => {
+    const result = run(
+      [
+        "'use client';",
+        'export function Toolbar({ resolvedSearchPlaceholder, item }) {',
+        '  return <Input aria-label={resolvedSearchPlaceholder} placeholder={item.placeholder} value={item.value} />;',
+        '}',
+        '',
+      ].join('\n'),
+    );
+    expect(result.code).toContain('aria-label={t(resolvedSearchPlaceholder)}');
+    expect(result.code).toContain('placeholder={t(item.placeholder)}');
+    expect(result.code).toContain('value={item.value}');
+  });
+
+  it('injects translation into a named concise arrow component', () => {
+    const result = run(
+      [
+        "'use client';",
+        'const ColumnVisibilityMenu = () => (',
+        '  <DropdownMenuTrigger aria-label="Toggle columns" />',
+        ');',
+        '',
+      ].join('\n'),
+    );
+    expect(result.code).toContain(
+      'const ColumnVisibilityMenu = () => {\n  const t = useT();\n  return (',
+    );
+    expect(result.code).toContain('<DropdownMenuTrigger aria-label={t("Toggle columns")} />');
+    expect(result.code).toContain(');\n};');
+  });
+
   it('leaves structural and unknown attributes as literals', () => {
     const result = run(
       [
@@ -484,7 +516,7 @@ describe('transformAutoWrap - attributes', () => {
     expect(run(source).code).toBe(source);
   });
 
-  it('leaves dynamic/template attribute values alone', () => {
+  it('translates copy-bearing identifiers while leaving template attributes alone', () => {
     // Build the template-literal source without a literal `${` in this string.
     const tmpl = ['aria-label={`Hi ', '{label}`}'].join('$');
     const source = [
@@ -494,7 +526,9 @@ describe('transformAutoWrap - attributes', () => {
       '}',
       '',
     ].join('\n');
-    expect(run(source).code).toBe(source);
+    const result = run(source);
+    expect(result.code).toContain('placeholder={t(label)}');
+    expect(result.code).toContain(tmpl);
   });
 
   it('does not inject when there is no enclosing component/hook function', () => {

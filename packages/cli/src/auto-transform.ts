@@ -574,6 +574,8 @@ interface FunctionBinding {
   readonly needsInjection: boolean;
   readonly injectPos: number;
   readonly injectText: string;
+  readonly closePos?: number;
+  readonly closeText?: string;
 }
 
 /** True when the module opens with a `"use client"` directive. */
@@ -592,13 +594,20 @@ function collectAttributeInsertions(
       const node = path.node;
       // Name must be a plain identifier that carries copy.
       if (!t.isJSXIdentifier(node.name) || !isTranslatableAttribute(node.name.name)) return;
-      // Value must be a plain string literal with visible content.
-      if (!t.isStringLiteral(node.value) || !jsxTextHasContent(node.value.value)) return;
+      const isStaticCopy = t.isStringLiteral(node.value) && jsxTextHasContent(node.value.value);
+      const expression = t.isJSXExpressionContainer(node.value) ? node.value.expression : null;
+      const isDynamicCopy = expression !== null && isCopyBearingExpression(expression);
+      if (!isStaticCopy && !isDynamicCopy) return;
 
       // Element must not be a skip/marker element or under data-no-translate.
       const openingPath = path.parentPath;
       if (!openingPath?.isJSXOpeningElement()) return;
-      if (!isHostElementName(openingPath.node.name) && isCopyBearingName(node.name.name)) return;
+      if (
+        isStaticCopy &&
+        !isHostElementName(openingPath.node.name) &&
+        isCopyBearingName(node.name.name)
+      )
+        return;
       const elementPath = openingPath.parentPath;
       if (!elementPath?.isJSXElement()) return;
       if (isBlockingElement(elementPath.node)) return;
@@ -610,9 +619,18 @@ function collectAttributeInsertions(
       if (!hostFn) return;
       const info = resolveBinding(hostFn, funcBindings);
 
-      const value = node.value;
-      insertions.push({ pos: value.start!, order: ORDER_ATTR_OPEN, text: `{${info.binding}(` });
-      insertions.push({ pos: value.end!, order: ORDER_ATTR_CLOSE, text: ')}' });
+      if (isStaticCopy) {
+        const value = node.value as t.StringLiteral;
+        insertions.push({ pos: value.start!, order: ORDER_ATTR_OPEN, text: `{${info.binding}(` });
+        insertions.push({ pos: value.end!, order: ORDER_ATTR_CLOSE, text: ')}' });
+      } else {
+        insertions.push({
+          pos: expression!.start!,
+          order: ORDER_ATTR_OPEN,
+          text: `${info.binding}(`,
+        });
+        insertions.push({ pos: expression!.end!, order: ORDER_ATTR_CLOSE, text: ')' });
+      }
     },
   });
 
@@ -620,6 +638,9 @@ function collectAttributeInsertions(
   for (const info of funcBindings.values()) {
     if (info.needsInjection) {
       insertions.push({ pos: info.injectPos, order: ORDER_INJECT, text: info.injectText });
+      if (info.closePos !== undefined && info.closeText !== undefined) {
+        insertions.push({ pos: info.closePos, order: ORDER_INJECT, text: info.closeText });
+      }
       injected = true;
     }
   }
@@ -644,7 +665,12 @@ function hasBlockingJSXAncestor(path: NodePath): boolean {
 function findHostFunction(path: NodePath): NodePath<t.Function> | null {
   let fn = path.getFunctionParent();
   while (fn) {
-    if (t.isBlockStatement(fn.node.body) && functionComponentName(fn) !== null) return fn;
+    if (
+      functionComponentName(fn) !== null &&
+      (t.isBlockStatement(fn.node.body) || t.isArrowFunctionExpression(fn.node))
+    ) {
+      return fn;
+    }
     fn = fn.getFunctionParent();
   }
   return null;
@@ -690,8 +716,23 @@ function resolveBinding(
     }
   }
 
-  const body = fn.node.body as t.BlockStatement;
   const binding = pickBindingName(fn);
+  if (t.isArrowFunctionExpression(fn.node) && !t.isBlockStatement(fn.node.body)) {
+    const body = fn.node.body;
+    const parenStart = body.extra?.parenthesized ? body.extra.parenStart : undefined;
+    const info: FunctionBinding = {
+      binding,
+      needsInjection: true,
+      injectPos: typeof parenStart === 'number' ? parenStart : body.start!,
+      injectText: `{\n  const ${binding} = useT();\n  return `,
+      closePos: fn.node.end!,
+      closeText: ';\n}',
+    };
+    cache.set(fn.node, info);
+    return info;
+  }
+
+  const body = fn.node.body as t.BlockStatement;
   const info: FunctionBinding = {
     binding,
     needsInjection: true,

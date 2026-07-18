@@ -57,12 +57,12 @@ The NexAML Arabic customer register reproduces both failures in production.
 
 ## AI verification checklist
 
-- [ ] Concise component transform tests pass.
-- [ ] Forwarded dynamic attribute transform tests pass.
-- [ ] Static custom-component key preservation tests pass.
-- [ ] `pnpm typecheck` passes.
-- [ ] `pnpm lint` passes.
-- [ ] `pnpm test` passes.
-- [ ] `pnpm build` passes.
-- [ ] `pnpm packages:check` passes.
+- [x] Concise component transform tests pass.
+- [x] Forwarded dynamic attribute transform tests pass.
+- [x] Static custom-component key preservation tests pass.
+- [x] `pnpm typecheck` passes.
+- [x] `pnpm lint` passes.
+- [x] `pnpm test` passes.
+- [x] `pnpm build` passes.
+- [x] `pnpm packages:check` passes.
 - [ ] NexAML production renders the two reproductions in Arabic.
