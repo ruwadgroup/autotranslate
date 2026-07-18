@@ -20,6 +20,7 @@
     "detect-industry-copy-fields",
     "detect-semantic-copy",
     "extract-const-labels",
+    "extract-enum-factory-copy",
     "fix-package-exports-types",
     "glossary-hybrid",
     "hash-bucketed-catalogs",

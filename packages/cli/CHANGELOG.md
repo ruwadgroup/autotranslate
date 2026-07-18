@@ -1,5 +1,13 @@
 # @autotranslate/cli
 
+## 1.0.0-beta.17
+
+### Patch Changes
+
+- [`ee1eca0`](https://github.com/ruwadgroup/autotranslate/commit/ee1eca0c107ddb780f2d3df54c69007431bc467b)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Extract static
+  display labels from direct `createEnum` mappings in auto mode.
+
 ## 1.0.0-beta.16
 
 ### Patch Changes
