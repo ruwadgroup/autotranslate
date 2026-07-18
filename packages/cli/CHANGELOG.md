@@ -1,5 +1,14 @@
 # @autotranslate/cli
 
+## 1.0.0-beta.16
+
+### Patch Changes
+
+- [`f4fdc73`](https://github.com/ruwadgroup/autotranslate/commit/f4fdc737ffc674a3c62aa54a6fb4ac18efd02fff)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Translate
+  accessibility copy in concise arrow components and copy-bearing dynamic values
+  forwarded through JSX attributes in auto mode.
+
 ## 1.0.0-beta.15
 
 ### Patch Changes

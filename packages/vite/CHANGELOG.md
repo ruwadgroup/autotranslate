@@ -1,5 +1,13 @@
 # @autotranslate/vite
 
+## 1.0.0-beta.16
+
+### Patch Changes
+
+- Updated dependencies
+  [[`f4fdc73`](https://github.com/ruwadgroup/autotranslate/commit/f4fdc737ffc674a3c62aa54a6fb4ac18efd02fff)]:
+  - @autotranslate/cli@1.0.0-beta.16
+
 ## 1.0.0-beta.15
 
 ### Patch Changes
