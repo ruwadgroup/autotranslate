@@ -1,5 +1,15 @@
 # @autotranslate/cli
 
+## 1.0.0-beta.18
+
+### Patch Changes
+
+- [`f2a1fb4`](https://github.com/ruwadgroup/autotranslate/commit/f2a1fb4bfa5ee4e86b7c88d5e7a1efd4ea32b642)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Make auto-mode
+  translation of forwarded copy-bearing JSX attributes null-safe. Generated code
+  now translates only string values while preserving optional and other
+  non-string prop values unchanged.
+
 ## 1.0.0-beta.17
 
 ### Patch Changes

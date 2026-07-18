@@ -28,6 +28,7 @@
     "ignore-styling-config-copy",
     "migration-guides-cookbook",
     "next-streaming-dev-mode",
+    "null-safe-forwarded-copy",
     "openrouter-chat-fix",
     "plugin-is-the-product",
     "preserve-custom-jsx-tags",
