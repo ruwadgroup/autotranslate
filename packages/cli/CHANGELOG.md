@@ -1,5 +1,14 @@
 # @autotranslate/cli
 
+## 1.0.0-beta.14
+
+### Patch Changes
+
+- [`feaa78d`](https://github.com/ruwadgroup/autotranslate/commit/feaa78d3f6860d82edb0cb93ce4bf3b89c506bb4)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Translate static
+  strings selected by JSX conditional expressions and positive copy attributes
+  forwarded through custom components in auto mode.
+
 ## 1.0.0-beta.13
 
 ### Patch Changes

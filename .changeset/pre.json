@@ -33,6 +33,7 @@
     "quiet-rivers-install",
     "release-package-hardening",
     "remove-mcp",
+    "rendered-conditional-copy",
     "safe-host-copy-attributes",
     "streaming-dev-mode",
     "traverse-jsx-prop-subtrees",
