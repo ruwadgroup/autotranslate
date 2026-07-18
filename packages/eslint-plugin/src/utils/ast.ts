@@ -1,12 +1,19 @@
 import {
   isAllowlistedAttribute,
   isCopyBearingName,
+  isTranslatableAttribute,
   jsxTextHasContent,
   TRANSLATION_MARKERS,
 } from '@autotranslate/core/classifier';
 import type { Rule } from 'eslint';
 
-export { isAllowlistedAttribute, isCopyBearingName, jsxTextHasContent, TRANSLATION_MARKERS };
+export {
+  isAllowlistedAttribute,
+  isCopyBearingName,
+  isTranslatableAttribute,
+  jsxTextHasContent,
+  TRANSLATION_MARKERS,
+};
 
 export const TRANSLATOR_FACTORIES: ReadonlySet<string> = new Set(['useT', 'getT']);
 

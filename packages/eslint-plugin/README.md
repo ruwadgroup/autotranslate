@@ -47,6 +47,11 @@ Flag user-visible string literals inside JSX that aren't wrapped in a
 translation marker (`<T>`, `<Var>`, `<Plural>`, `<Branch>`, `<Num>`,
 `<Currency>`, `<DateTime>`, `<RelativeTime>`).
 
+Host attributes use a conservative positive set: `title`, `placeholder`, `alt`,
+`label`, `aria-label`, `aria-description`, `aria-placeholder`,
+`aria-roledescription`, and `aria-valuetext`. Unknown HTML, SVG, ARIA, React,
+and library attributes are structural by default and are not reported.
+
 ```jsx
 <p>Hello</p>                    // ❌ bare text outside <T>
 <button title="Save">x</button> // ❌ untranslated attribute
@@ -63,6 +68,8 @@ Options:
       allowAttributes: ['placeholder'],
       // Extra components treated as translation markers.
       markers: ['MyTranslatedThing'],
+      // Auto mode handles supported host attributes in client modules.
+      autoMode: true,
     }],
   },
 }

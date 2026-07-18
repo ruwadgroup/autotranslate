@@ -396,4 +396,31 @@ const translated = <T description="Translator note">Visible copy</T>;
     expect(messages[key]).toBe('Search cases');
     expect(Object.keys(messages)).toEqual([key]);
   });
+
+  it('extracts copy attributes but never structural host attributes', () => {
+    const client = [
+      "'use client';",
+      'export function Gauge() {',
+      '  return <svg aria-label="Risk gauge" viewBox="0 0 220 126" role="img" aria-live="polite" fill="var(--foreground)" strokeLinecap="round" vectorEffect="none"><title>Gauge</title></svg>;',
+      '}',
+      '',
+    ].join('\n');
+    const transformed = transformAutoWrap(client, { filename: FILE }).code;
+    const { messages } = extractFile(FILE, transformed, { includeAutoCopy: true });
+
+    expect(messages[sourceKey('Risk gauge')]).toBe('Risk gauge');
+    expect(messages[canonicalKey([{ type: 'text', value: 'Gauge' }])]).toEqual([
+      { type: 'text', value: 'Gauge' },
+    ]);
+    for (const structural of [
+      '0 0 220 126',
+      'img',
+      'polite',
+      'var(--foreground)',
+      'round',
+      'none',
+    ]) {
+      expect(messages[sourceKey(structural)], structural).toBeUndefined();
+    }
+  });
 });

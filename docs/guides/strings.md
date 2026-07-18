@@ -19,9 +19,13 @@ catalog. The literal string is both the source and the catalog key.
 > copy attribute on a DOM element in a `"use client"` file —
 > `<input placeholder="Search cases" />` — is rewritten to
 > `<input placeholder={t("Search cases")} />` at compile time, with the `useT()`
-> binding injected automatically. You only reach for `useT()` by hand for
-> programmatic copy (toasts, thrown errors), custom-component props, and
-> server-component attributes. Opt any element out with `data-no-translate`.
+> binding injected automatically. Auto mode uses a conservative positive set:
+> `title`, `placeholder`, `alt`, `label`, `aria-label`, `aria-description`,
+> `aria-placeholder`, `aria-roledescription`, and `aria-valuetext`. Unknown
+> attributes are structural and never translated by default. You only reach for
+> `useT()` by hand for programmatic copy (toasts, thrown errors),
+> custom-component props, and server-component attributes. Opt any element out
+> with `data-no-translate`.
 
 ## ICU placeholders
 

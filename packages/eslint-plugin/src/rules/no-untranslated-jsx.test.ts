@@ -26,6 +26,10 @@ describe('no-untranslated-jsx', () => {
         { code: 'const x = <div className="foo" />;' },
         { code: 'const x = <a href="/docs" />;' },
         { code: 'const x = <input type="text" name="email" />;' },
+        {
+          code: 'const x = <svg viewBox="0 0 10 10" fill="none" role="img" aria-live="polite" />;',
+        },
+        { code: 'const x = <input accept=".csv,text/csv" unknownToken="keep-me" />;' },
         // Numeric / bool children
         { code: 'const x = <div>{42}</div>;' },
         { code: 'const x = <div>{true}</div>;' },
@@ -46,6 +50,10 @@ describe('no-untranslated-jsx', () => {
         {
           code: 'const x = <button title="Save">x</button>;',
           errors: [{ messageId: 'bareAttribute' }, { messageId: 'bareText' }],
+        },
+        {
+          code: 'const x = <img alt="Customer portrait" />;',
+          errors: [{ messageId: 'bareAttribute' }],
         },
         {
           code: 'const x = <h2>{title}</h2>;',

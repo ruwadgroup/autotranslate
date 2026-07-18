@@ -102,12 +102,15 @@ In `auto` mode:
 - **Host-element copy attributes are translated too** — in a `"use client"`
   file, `<input placeholder="Search cases" />` compiles to
   `<input placeholder={t("Search cases")} />` and a `const t = useT()` binding
-  is injected into (or reused from) the enclosing component/hook. Non-copy
-  attributes (`className`, `href`, `type`, `data-*`, …) are left alone. Because
-  `useT()` is a client hook, attribute translation runs **only in client
-  modules**; server-component attributes keep their literal and are surfaced by
-  the lint rule. Custom-component copy props (`<Field placeholder=…>`) are left
-  to the component — extraction still records the string.
+  is injected into (or reused from) the enclosing component/hook. The supported
+  positive set is `title`, `placeholder`, `alt`, `label`, `aria-label`,
+  `aria-description`, `aria-placeholder`, `aria-roledescription`, and
+  `aria-valuetext`. Every unknown HTML, SVG, ARIA, React, or library attribute
+  is treated as structural and left alone. Because `useT()` is a client hook,
+  attribute translation runs **only in client modules**; server-component
+  attributes keep their literal and are surfaced by the lint rule.
+  Custom-component copy props (`<Field placeholder=…>`) are left to the
+  component — extraction still records the string.
 - Opt out with `data-no-translate` on any element (text and attributes)
 - `code`, `pre`, `script`, and `style` elements are always skipped
 - The extractor pipes source files through the same transform before running so

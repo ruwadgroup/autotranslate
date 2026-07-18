@@ -270,10 +270,13 @@ via `transformAutoWrap` (`packages/cli/src/auto-transform.ts`):
 
 - Wraps qualifying contiguous JSX text runs in `<T>`, turning embedded `{expr}`
   into `<Var>{expr}</Var>`.
-- In client modules (`"use client"`), rewrites copy-bearing attributes on host
-  elements — `placeholder="…"` → `placeholder={t("…")}` — and injects (or
-  reuses) a `const t = useT()` binding in the enclosing component/hook. `useT()`
-  is a client hook, so server-component attributes are left for the lint rule;
+- In client modules (`"use client"`), rewrites the positive set of user-facing
+  host attributes (`title`, `placeholder`, `alt`, `label`, `aria-label`,
+  `aria-description`, `aria-placeholder`, `aria-roledescription`, and
+  `aria-valuetext`) and injects or reuses a `const t = useT()` binding in the
+  enclosing component or hook. Unknown HTML, SVG, ARIA, React, and library
+  attributes are structural by default and stay byte-identical. `useT()` is a
+  client hook, so server-component attributes are left for the lint rule;
   custom-component copy props are left to the component.
 - Skips `code`, `pre`, `script`, `style` elements and anything with
   `data-no-translate` on self or a JSX ancestor.
@@ -281,9 +284,10 @@ via `transformAutoWrap` (`packages/cli/src/auto-transform.ts`):
 
 The shared classifier (`packages/core/src/classifier.ts`) defines
 `TRANSLATION_MARKERS`, `SKIP_ELEMENTS`, `jsxTextHasContent`,
-`NO_TRANSLATE_ATTRIBUTE`, and `isTranslatableAttribute` (the complement of the
-attribute allowlist). Both the ESLint plugin and the compiler import from this
-module - what the linter flags is exactly what `mode: 'auto'` would wrap.
+`NO_TRANSLATE_ATTRIBUTE`, and `isTranslatableAttribute` (a positive set of
+user-facing host attributes). Both the ESLint plugin and the compiler import
+from this module - what the linter flags is exactly what `mode: 'auto'` would
+wrap.
 
 Bundler wiring (done by the plugins, not the CLI):
 

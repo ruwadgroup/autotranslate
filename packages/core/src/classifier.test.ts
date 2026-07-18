@@ -11,8 +11,8 @@ import {
 } from './classifier';
 
 describe('CLASSIFIER_VERSION', () => {
-  it('is 2', () => {
-    expect(CLASSIFIER_VERSION).toBe(3);
+  it('is 4', () => {
+    expect(CLASSIFIER_VERSION).toBe(4);
   });
 });
 
@@ -180,28 +180,46 @@ describe('SKIP_ELEMENTS', () => {
 });
 
 describe('isTranslatableAttribute', () => {
-  it('is the exact complement of isAllowlistedAttribute', () => {
+  it('recognizes the complete positive set of visual and accessibility copy', () => {
     for (const name of [
       'placeholder',
       'title',
-      'aria-label',
-      'className',
-      'href',
       'alt',
-      'data-x',
+      'label',
+      'aria-label',
+      'aria-description',
+      'aria-placeholder',
+      'aria-roledescription',
+      'aria-valuetext',
     ]) {
-      expect(isTranslatableAttribute(name)).toBe(!isAllowlistedAttribute(name));
+      expect(isTranslatableAttribute(name), `should translate: ${name}`).toBe(true);
     }
   });
 
-  it('flags copy-bearing attributes and skips locale-neutral / data-* ones', () => {
-    expect(isTranslatableAttribute('placeholder')).toBe(true);
-    expect(isTranslatableAttribute('title')).toBe(true);
-    expect(isTranslatableAttribute('aria-label')).toBe(true);
-    expect(isTranslatableAttribute('className')).toBe(false);
-    expect(isTranslatableAttribute('href')).toBe(false);
-    expect(isTranslatableAttribute('alt')).toBe(false);
-    expect(isTranslatableAttribute('data-testid')).toBe(false);
-    expect(isTranslatableAttribute('data-anything')).toBe(false);
+  it('rejects structural HTML, SVG, ARIA, styling, and unknown attributes', () => {
+    for (const name of [
+      'className',
+      'href',
+      'id',
+      'role',
+      'accept',
+      'aria-live',
+      'aria-describedby',
+      'aria-controls',
+      'viewBox',
+      'fill',
+      'stroke',
+      'strokeLinecap',
+      'textAnchor',
+      'vectorEffect',
+      'shapeRendering',
+      'xmlns',
+      'data-testid',
+      'data-anything',
+      'unknownLibraryToken',
+      'value',
+    ]) {
+      expect(isTranslatableAttribute(name), `should not translate: ${name}`).toBe(false);
+    }
   });
 });

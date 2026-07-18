@@ -377,17 +377,53 @@ describe('transformAutoWrap - attributes', () => {
     expect(run(source).code).toBe(source);
   });
 
-  it('leaves allowlisted attributes as literals', () => {
+  it('leaves structural and unknown attributes as literals', () => {
     const result = run(
       [
         "'use client';",
         'export function A() {',
-        '  return <a href="/x" className="y" data-id="z" type="button" />;',
+        '  return <svg viewBox="0 0 220 126" role="img" aria-live="polite" fill="var(--foreground)" stroke="none" strokeLinecap="round" textAnchor="middle" vectorEffect="none" shapeRendering="crispEdges" xmlns="http://www.w3.org/2000/svg" data-id="z"><path d="M0 0" unknownToken="keep-me" /></svg>;',
         '}',
         '',
       ].join('\n'),
     );
     expect(result.changed).toBe(false);
+  });
+
+  it('rewrites the full positive copy-attribute set', () => {
+    const result = run(
+      [
+        "'use client';",
+        'export function A() {',
+        '  return <img title="Profile" placeholder="Search" alt="Customer portrait" label="Customer" aria-label="Open profile" aria-description="Customer details" aria-placeholder="Search customers" aria-roledescription="Customer card" aria-valuetext="High risk" />;',
+        '}',
+        '',
+      ].join('\n'),
+    );
+    for (const value of [
+      'Profile',
+      'Search',
+      'Customer portrait',
+      'Customer',
+      'Open profile',
+      'Customer details',
+      'Search customers',
+      'Customer card',
+      'High risk',
+    ]) {
+      expect(result.code).toContain(`t("${value}")`);
+    }
+  });
+
+  it('leaves form-control tokens and numeric geometry untouched', () => {
+    const source = [
+      "'use client';",
+      'export function A() {',
+      '  return <input accept=".csv,text/csv" autoComplete="off" inputMode="numeric" value="100" min="0" max="100" step="5" />;',
+      '}',
+      '',
+    ].join('\n');
+    expect(run(source)).toEqual({ code: source, changed: false });
   });
 
   it('respects data-no-translate on the element', () => {

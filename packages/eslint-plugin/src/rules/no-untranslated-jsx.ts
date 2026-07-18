@@ -1,8 +1,8 @@
 import type { Rule } from 'eslint';
 import {
   findMarkerAncestor,
-  isAllowlistedAttribute,
   isCopyBearingName,
+  isTranslatableAttribute,
   jsxAttributeName,
   jsxTextHasContent,
   readStaticString,
@@ -118,7 +118,7 @@ const rule: Rule.RuleModule = {
         };
         const name = jsxAttributeName(node);
         if (!name) return;
-        if (isAllowlistedAttribute(name) || extraAttrs.has(name)) return;
+        if (!isTranslatableAttribute(name) || extraAttrs.has(name)) return;
         const opening = node.parent;
         const openingName =
           opening?.type === 'JSXOpeningElement' && opening.name?.type === 'JSXIdentifier'

@@ -203,9 +203,11 @@ in sync.
 ### Auto mode and the ESLint rule
 
 In auto mode the compiler inserts `<T>` before the lint rule runs, so
-`no-untranslated-jsx` will not fire on wrapped text nodes. The rule is still
-useful in auto mode for catching untranslated string literals in JSX attributes
-(`title`, `aria-label`, `placeholder`, etc.) that the compiler cannot wrap.
+`no-untranslated-jsx` will not fire on wrapped text nodes. In `"use client"`
+modules it also translates the supported host-element copy attributes: `title`,
+`placeholder`, `alt`, `label`, `aria-label`, `aria-description`,
+`aria-placeholder`, `aria-roledescription`, and `aria-valuetext`. The rule stays
+useful for server-component attributes and custom-component copy props.
 
 Auto mode recognizes conventional copy-bearing names such as `title`,
 `description`, and `label` when they are rendered as dynamic-only JSX children:
@@ -225,12 +227,15 @@ The static prop and config values are cataloged, while runtime values without a
 catalog entry render unchanged. Use `data-no-translate` when a copy-bearing
 field intentionally contains dynamic user or application data.
 
-Intrinsic DOM attributes must remain strings, so translate them explicitly:
+Auto mode translates supported intrinsic attributes in client modules:
 
 ```tsx
-const t = useT();
-return <input aria-label={t('Search')} placeholder={t('Search cases')} />;
+return <input aria-label="Search" placeholder="Search cases" />;
 ```
+
+Unknown HTML, SVG, ARIA, React, and library attributes are structural by
+default. Auto mode leaves values such as `role="listbox"`, `aria-live="polite"`,
+`viewBox="0 0 24 24"`, and `fill="none"` byte-identical.
 
 ## Tips
 

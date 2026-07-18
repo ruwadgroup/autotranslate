@@ -59,9 +59,11 @@ Options:
 | `allowAttributes` | `string[]` | `[]`    | Extra attributes that may carry untranslated string literals. |
 | `markers`         | `string[]` | `[]`    | Extra components treated as translation markers.              |
 
-A built-in allowlist covers structural / locale-neutral attributes (`className`,
-`id`, `key`, `ref`, `name`, `type`, `role`, `slot`, `style`, `data-*`, `href`,
-`src`, `alt`, `lang`, `dir`, and others).
+The rule reports a positive set of user-facing host attributes: `title`,
+`placeholder`, `alt`, `label`, `aria-label`, `aria-description`,
+`aria-placeholder`, `aria-roledescription`, and `aria-valuetext`. Unknown
+attributes are structural by default, so SVG paint, ARIA behavior tokens, form
+control tokens, and library-defined attributes are not false positives.
 
 #### `no-untranslated-jsx` in auto mode
 
@@ -69,9 +71,9 @@ When `mode: 'auto'` is set in `autotranslate.config.ts`, the compiler wraps
 qualifying JSX text in `<T>` at build time before the lint rule runs. This means
 the rule will not fire for JSX text nodes that the compiler handles.
 
-The compiler also translates **host-element copy attributes** (`title`,
-`aria-label`, `placeholder`, …) in `"use client"` files. Pass `autoMode: true`
-so the rule doesn't double-flag those:
+The compiler also translates the supported **host-element copy attributes** in
+`"use client"` files. Pass `autoMode: true` so the rule doesn't double-flag
+those:
 
 ```js
 '@autotranslate/no-untranslated-jsx': ['warn', { autoMode: true }],
