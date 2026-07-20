@@ -28,7 +28,7 @@
     "@autotranslate/cli": "workspace:*",
     "@autotranslate/typescript-plugin": "workspace:*",
     "@tailwindcss/postcss": "^4.3.2",
-    "@types/node": "^26.1.0",
+    "@types/node": "^26.1.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "ai": "^6.0.218",
