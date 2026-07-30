@@ -19,7 +19,7 @@
     "@autotranslate/core": "workspace:*",
     "@autotranslate/next": "workspace:*",
     "@autotranslate/react": "workspace:*",
-    "next": "16.2.10",
+    "next": "16.2.12",
     "react": "19.2.7",
     "react-dom": "19.2.7"
   },

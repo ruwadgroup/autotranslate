@@ -8,4 +8,9 @@ onlyBuiltDependencies:
 
 overrides:
   esbuild: ^0.28.1
-  postcss: ^8.5.10
+  # Security overrides for transitive dev/example dependencies. Each pins the
+  # first patched release; drop an entry once every dependent has moved past it.
+  postcss: ^8.5.18 # GHSA path traversal in previous source map (via @tailwindcss/postcss)
+  fast-uri: ^3.1.4 # GHSA-v2hh-gcrm-f6hx host confusion (via commitlint > ajv)
+  brace-expansion: ^5.0.8 # GHSA DoS via unbounded expansion (via eslint > minimatch)
+  sharp: ^0.35.0 # inherited libvips vulnerabilities (via next)
