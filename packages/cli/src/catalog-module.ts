@@ -48,20 +48,43 @@ async function buildModuleText(
   const targets = [...locales].filter((l) => l !== source).sort();
   const orderedLocales = [source, ...targets];
 
+  const specifiers = new Map<string, ReadonlyArray<string>>();
+  for (const locale of orderedLocales) {
+    const files = await listJsonFilesRecursive(join(outDir, locale));
+    if (files.length === 0) continue;
+    // Import specifiers need forward slashes even on Windows.
+    specifiers.set(
+      locale,
+      files.map((f) => `./${relative(outDir, f).replace(/\\/g, '/')}`),
+    );
+  }
+
+  return renderCatalogModule(source, orderedLocales, specifiers);
+}
+
+/**
+ * Render the catalog module from an explicit chunk map. Exported so the git
+ * merge driver can re-emit the file from the union of two branches' chunks
+ * instead of leaving conflict markers in generated TypeScript.
+ */
+export function renderCatalogModule(
+  source: Locale,
+  orderedLocales: ReadonlyArray<Locale>,
+  specifiersByLocale: ReadonlyMap<string, ReadonlyArray<string>>,
+): string {
   const chunkLines: string[] = [];
   for (const locale of orderedLocales) {
-    const localeDir = join(outDir, locale);
-    const files = await listJsonFilesRecursive(localeDir);
-    if (files.length === 0) continue;
-
-    const imports = files.map((f) => {
-      // Import specifiers need forward slashes even on Windows. The cast stops
-      // TypeScript widening the inferred JSON literal type in the emitted file.
-      const rel = relative(outDir, f).replace(/\\/g, '/');
-      return `() => import('./${rel}') as Promise<{ default: Catalog }>`;
-    });
-
-    chunkLines.push(`  ${locale}: [${imports.join(', ')}],`);
+    const specifiers = specifiersByLocale.get(locale);
+    if (!specifiers || specifiers.length === 0) continue;
+    // One import per line, sorted. This file is committed, so two branches
+    // that each add a string land in different bucket files - on a single
+    // packed line that is one conflict, line-per-import it merges cleanly.
+    chunkLines.push(`  ${locale}: [`);
+    for (const specifier of specifiers) {
+      // The cast stops TypeScript widening the inferred JSON literal type.
+      chunkLines.push(`    () => import('${specifier}') as Promise<{ default: Catalog }>,`);
+    }
+    chunkLines.push(`  ],`);
   }
 
   const localesLiteral = orderedLocales.map((l) => `'${l}'`).join(', ');

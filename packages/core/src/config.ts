@@ -18,6 +18,24 @@ const aiProviderSchema = z.object({
   options: z.record(z.string(), z.unknown()).optional(),
 });
 
+/**
+ * Drive a local coding agent CLI (Claude Code, Codex) in headless mode. Uses
+ * the subscription already authenticated on the machine, so no API key is
+ * needed - at the cost of one process per batch, which is slower than HTTP.
+ */
+const agentProviderSchema = z.object({
+  name: z.literal('agent'),
+  agent: z.enum(['claude', 'codex']).default('claude'),
+  /** Passed through to the agent CLI (e.g. `claude-haiku-4-5`, `gpt-5.6`). */
+  model: z.string().min(1).optional(),
+  /** Override the executable when it is not on `PATH` under its own name. */
+  command: z.string().min(1).optional(),
+  args: z.array(z.string()).optional(),
+  /** Hard timeout per agent invocation, in ms. */
+  timeoutMs: z.number().int().positive().optional(),
+  options: z.record(z.string(), z.unknown()).optional(),
+});
+
 const deeplProviderSchema = z.object({
   name: z.literal('deepl'),
   apiKey: z.string().min(1),
@@ -42,6 +60,7 @@ const customProviderSchema = z.object({
 export const providerConfigSchema = z.discriminatedUnion('name', [
   stubProviderSchema,
   aiProviderSchema,
+  agentProviderSchema,
   deeplProviderSchema,
   googleProviderSchema,
   customProviderSchema,
@@ -55,6 +74,12 @@ export const autotranslateConfigSchema = z
     outDir: z.string().min(1).default('.translations'),
     provider: providerConfigSchema.default({ name: 'stub' }),
     concurrency: z.number().int().positive().max(64).default(8),
+    /**
+     * Strings per provider request. Large batches make models silently omit
+     * items from structured output, so the default stays conservative; raise it
+     * only for providers with a per-request cost floor.
+     */
+    batchSize: z.number().int().positive().max(500).default(25),
     overrides: z.record(z.string(), z.record(z.string(), z.string())).optional(),
     instruction: z.string().optional(),
     /** Branded terms or proper nouns the AI must never translate or transliterate. */
@@ -75,6 +100,7 @@ export const autotranslateConfigSchema = z
 export type ProviderConfig = z.infer<typeof providerConfigSchema>;
 export type StubProviderConfig = z.infer<typeof stubProviderSchema>;
 export type AIProviderConfig = z.infer<typeof aiProviderSchema>;
+export type AgentProviderConfig = z.infer<typeof agentProviderSchema>;
 export type DeepLProviderConfig = z.infer<typeof deeplProviderSchema>;
 export type GoogleProviderConfig = z.infer<typeof googleProviderSchema>;
 export type CustomProviderConfig = z.infer<typeof customProviderSchema>;

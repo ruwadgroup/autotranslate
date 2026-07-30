@@ -2,14 +2,6 @@ import type { CatalogEntry, Locale, Manifest, MessageMeta } from '@autotranslate
 import { buildChunkLayout } from '@autotranslate/core/internal';
 import type { Provider, TranslationContextItem, TranslationItem } from '@autotranslate/providers';
 import {
-  type CacheItem,
-  cacheChunkPath,
-  computeChunkHash,
-  contentHash,
-  readCacheChunk,
-  writeCacheChunk,
-} from '../cache';
-import {
   type CatalogFile,
   readChunkedCatalog,
   readManifest,
@@ -17,16 +9,35 @@ import {
 } from '../catalog';
 import { writeCatalogModule } from '../catalog-module';
 import { resolveProvider } from '../provider-resolver';
-import type { LocaleStats, ResolvedConfig, TranslateResult, TranslateStats } from '../types';
+import {
+  contentHash,
+  migrateLegacyCache,
+  pruneStateChunks,
+  readStateChunk,
+  stateChunkPath,
+  writeStateChunk,
+} from '../state';
+import type { LocaleStats, ResolvedConfig, TranslateFailure, TranslateResult } from '../types';
 
 export interface TranslateProgress {
   readonly target: Locale;
-  readonly chunkPath: string;
-  readonly status: 'started' | 'completed';
+  /** 1-based index of this batch within the run. */
+  readonly batch: number;
+  /** Total batches in the run, across every target. */
+  readonly totalBatches: number;
+  readonly items: number;
+  readonly status: 'started' | 'completed' | 'failed';
   readonly fetched?: number;
-  readonly cached?: number;
-  readonly overridden?: number;
+  readonly error?: Error;
 }
+
+/**
+ * Reference translations sent alongside a batch for tone consistency. Kept
+ * small on purpose: the payload rides along on every batch, so an unbounded
+ * count makes prompts grow with catalog size and pushes batches past the size
+ * where models answer reliably.
+ */
+const MAX_CONTEXT_ITEMS = 8;
 
 export interface TranslateOptions {
   /** Programmatic provider override (takes precedence over config). */
@@ -35,11 +46,27 @@ export interface TranslateOptions {
   readonly only?: ReadonlyArray<Locale>;
   /** Override `config.concurrency` for this run. */
   readonly concurrency?: number;
-  /** Per-chunk progress events. Fires for `started` and `completed`. */
+  /** Override `config.batchSize` for this run. */
+  readonly batchSize?: number;
+  /** Per-batch progress events. Fires for `started`, `completed` and `failed`. */
   readonly onProgress?: (event: TranslateProgress) => void;
 }
 
-/** Translate the source catalog into every target locale; chunks run in parallel. */
+/**
+ * Translate the source catalog into every target locale.
+ *
+ * Three phases:
+ *  1. **Plan** - diff each locale's committed catalog against the source using
+ *     the recorded source hashes. Unchanged keys with a translation on disk are
+ *     reused and never re-sent.
+ *  2. **Fetch** - collapse duplicate copy, split the remainder into uniform
+ *     batches and run them with bounded concurrency. Batch size is independent
+ *     of how keys happen to land in chunk buckets, and a failing batch is
+ *     isolated from the rest of the run.
+ *  3. **Commit** - write catalogs and per-chunk state. Keys the provider never
+ *     answered for keep their previous translation and stay out of state, so
+ *     the next run retries exactly those.
+ */
 export async function translate(
   resolved: ResolvedConfig,
   options: TranslateOptions = {},
@@ -59,180 +86,282 @@ export async function translate(
   for (const t of requested) stats[t] = { fetched: 0, cached: 0, overridden: 0 };
 
   const targets = requested.filter((t): t is Locale => t !== config.source);
-  if (targets.length === 0) return { stats };
+  if (targets.length === 0) return { stats, failures: [] };
+
+  await migrateLegacyCache(outDir, config.source, targets);
 
   const filtered: Record<string, MessageMeta | undefined> = {};
   for (const k of Object.keys(sourceCatalog)) filtered[k] = manifest[k];
   const layout = buildChunkLayout(filtered);
 
-  const targetCatalogs = new Map<Locale, CatalogFile>();
-  for (const t of targets) targetCatalogs.set(t, {});
+  // ---- Phase 1: plan -----------------------------------------------------
+  const plans = new Map<Locale, LocalePlan>();
+  await Promise.all(
+    targets.map(async (target) => {
+      const plan = await planTarget({
+        outDir,
+        target,
+        layout,
+        sourceCatalog,
+        manifest,
+        overrides: config.overrides,
+      });
+      plans.set(target, plan);
+      stats[target] = {
+        fetched: 0,
+        cached: plan.cached,
+        overridden: plan.overridden,
+      };
+    }),
+  );
 
-  type Task = { target: Locale; chunkPath: string; keys: ReadonlyArray<string> };
-  const tasks: Task[] = [];
+  // ---- Phase 2: fetch ----------------------------------------------------
+  const batchSize = Math.max(1, options.batchSize ?? config.batchSize);
+  const batches: Batch[] = [];
   for (const target of targets) {
-    for (const [chunkPath, keys] of layout) tasks.push({ target, chunkPath, keys });
+    const plan = plans.get(target);
+    if (!plan) continue;
+    for (const slice of chunkArray(plan.toFetch, batchSize)) {
+      batches.push({ target, items: slice });
+    }
   }
 
   const concurrency = Math.max(1, options.concurrency ?? config.concurrency);
   const onProgress = options.onProgress;
+  const failures: TranslateFailure[] = [];
+  let batchNumber = 0;
 
-  await runWithConcurrency(tasks, concurrency, async (task) => {
-    onProgress?.({ target: task.target, chunkPath: task.chunkPath, status: 'started' });
-    const result = await translateChunk({
-      provider,
-      source: config.source,
-      target: task.target,
-      sourceCatalog,
-      manifest,
-      chunkPath: task.chunkPath,
-      keys: task.keys,
-      outDir,
-      overrides: config.overrides,
-      instruction: mergedInstruction,
-    });
-    Object.assign(targetCatalogs.get(task.target) ?? {}, result.catalog);
-    const s = stats[task.target] ?? { fetched: 0, cached: 0, overridden: 0 };
-    stats[task.target] = {
-      fetched: s.fetched + result.fetched,
-      cached: s.cached + result.cached,
-      overridden: s.overridden + result.overridden,
+  await runWithConcurrency(batches, concurrency, async (batch) => {
+    batchNumber += 1;
+    const index = batchNumber;
+    const plan = plans.get(batch.target);
+    if (!plan) return;
+    const event = {
+      target: batch.target,
+      batch: index,
+      totalBatches: batches.length,
+      items: batch.items.length,
     };
-    onProgress?.({
-      target: task.target,
-      chunkPath: task.chunkPath,
-      status: 'completed',
-      fetched: result.fetched,
-      cached: result.cached,
-      overridden: result.overridden,
-    });
+    onProgress?.({ ...event, status: 'started' });
+    try {
+      const result = await provider.translate({
+        source: config.source,
+        target: batch.target,
+        items: batch.items,
+        ...(plan.context.length > 0 ? { context: plan.context } : {}),
+        ...(mergedInstruction ? { instruction: mergedInstruction } : {}),
+      });
+      let fetched = 0;
+      for (const item of batch.items) {
+        const translation = result.translations[item.key];
+        // A key the provider skipped keeps its previous translation and stays
+        // out of state, so the next run retries it. Never write a hole.
+        if (translation === undefined) continue;
+        for (const key of plan.aliases.get(item.key) ?? [item.key]) {
+          plan.translated.set(key, translation);
+          fetched += 1;
+        }
+      }
+      const s = stats[batch.target];
+      if (s) stats[batch.target] = { ...s, fetched: s.fetched + fetched };
+      onProgress?.({ ...event, status: 'completed', fetched });
+    } catch (error) {
+      // One bad batch must not discard the run. Everything else still commits.
+      const err = error instanceof Error ? error : new Error(String(error));
+      failures.push({
+        target: batch.target,
+        keys: batch.items.flatMap((i) => plan.aliases.get(i.key) ?? [i.key]),
+        error: err,
+      });
+      onProgress?.({ ...event, status: 'failed', error: err });
+    }
   });
 
+  // ---- Phase 3: commit ---------------------------------------------------
   await Promise.all(
-    [...targetCatalogs].map(([target, catalog]) =>
-      writeChunkedCatalog(outDir, target, catalog, manifest),
-    ),
+    targets.map(async (target) => {
+      const plan = plans.get(target);
+      if (!plan) return;
+      const catalog: CatalogFile = {};
+      // Keys nobody answered for fall back to whatever is already committed.
+      for (const [key, value] of plan.carryForward) catalog[key] = value;
+      for (const [key, value] of plan.settled) catalog[key] = value;
+      for (const [key, value] of plan.translated) catalog[key] = value;
+
+      await writeChunkedCatalog(outDir, target, catalog, manifest);
+      await commitState({ outDir, target, plan, layout });
+      await pruneStateChunks(outDir, target, new Set(layout.keys()));
+    }),
   );
 
   await writeCatalogModule(outDir, config.source, [config.source, ...config.targets]);
 
-  return { stats };
+  return { stats, failures };
 }
 
-interface TranslateChunkArgs {
-  readonly provider: Provider;
-  readonly source: Locale;
+interface Batch {
   readonly target: Locale;
+  readonly items: ReadonlyArray<TranslationItem>;
+}
+
+interface LocalePlan {
+  /** Keys that already have a current translation: reused or overridden. */
+  readonly settled: Map<string, CatalogEntry>;
+  /** Previous translations for keys being re-fetched, used if a fetch fails. */
+  readonly carryForward: Map<string, CatalogEntry>;
+  /** Deduped items to send to the provider. */
+  readonly toFetch: ReadonlyArray<TranslationItem>;
+  /** Representative key -> every key sharing that exact source and guidance. */
+  readonly aliases: Map<string, ReadonlyArray<string>>;
+  /** Source hash per key, for the state file. */
+  readonly hashes: Map<string, string>;
+  /** Bounded reference sample for tone consistency. */
+  readonly context: ReadonlyArray<TranslationContextItem>;
+  /** Filled during phase 2. */
+  readonly translated: Map<string, CatalogEntry>;
+  readonly cached: number;
+  readonly overridden: number;
+}
+
+interface PlanTargetArgs {
+  readonly outDir: string;
+  readonly target: Locale;
+  readonly layout: Map<string, ReadonlyArray<string>>;
   readonly sourceCatalog: CatalogFile;
   readonly manifest: Manifest;
-  readonly chunkPath: string;
-  readonly keys: ReadonlyArray<string>;
-  readonly outDir: string;
   readonly overrides: ResolvedConfig['config']['overrides'];
-  readonly instruction: string | undefined;
 }
 
-interface TranslateChunkResult extends TranslateStats {
-  readonly catalog: CatalogFile;
-}
+async function planTarget(args: PlanTargetArgs): Promise<LocalePlan> {
+  const { outDir, target, layout, sourceCatalog, manifest } = args;
+  const existing = await readChunkedCatalog(outDir, target);
+  const targetOverrides = args.overrides?.[target] ?? {};
 
-async function translateChunk(args: TranslateChunkArgs): Promise<TranslateChunkResult> {
-  const {
-    provider,
-    source,
-    target,
-    sourceCatalog,
-    manifest,
-    chunkPath,
-    keys,
-    outDir,
-    overrides,
-    instruction,
-  } = args;
-
-  const chunkSource: CatalogFile = {};
-  for (const k of keys) {
-    const v = sourceCatalog[k];
-    if (v !== undefined) chunkSource[k] = v;
-  }
-  const chunkHash = computeChunkHash(chunkSource);
-  const ctx = { source, target, providerSignature: provider.signature };
-  const cachePath = cacheChunkPath(outDir, ctx, chunkPath);
-  const cache = await readCacheChunk(cachePath);
-
-  const targetOverrides = overrides?.[target] ?? {};
-  const result: CatalogFile = {};
-  const newCacheItems: Record<string, CacheItem> = {};
-  const itemsToFetch: TranslationItem[] = [];
-  const contextItems: TranslationContextItem[] = [];
-
-  const chunkUnchanged = cache.chunkHash !== '' && cache.chunkHash === chunkHash;
-  let fetched = 0;
+  const settled = new Map<string, CatalogEntry>();
+  const carryForward = new Map<string, CatalogEntry>();
+  const hashes = new Map<string, string>();
+  const context: TranslationContextItem[] = [];
+  const pending: TranslationItem[] = [];
   let cached = 0;
   let overridden = 0;
 
-  for (const k of keys) {
-    const sourceEntry = chunkSource[k];
-    if (sourceEntry === undefined) continue;
-    const sourceHash = contentHash(sourceEntry);
+  for (const [chunkPath, keys] of layout) {
+    const state = await readStateChunk(stateChunkPath(outDir, target, chunkPath));
+    for (const key of keys) {
+      const sourceEntry = sourceCatalog[key];
+      if (sourceEntry === undefined) continue;
+      hashes.set(key, contentHash(sourceEntry));
 
-    // Overrides are user-keyed by source string for ergonomics; storage is
-    // keyed by hash. Look up overrides via the literal source value.
-    const literalSource = typeof sourceEntry === 'string' ? sourceEntry : undefined;
-    const overrideValue = literalSource ? targetOverrides[literalSource] : undefined;
-    if (overrideValue !== undefined) {
-      result[k] = overrideValue;
-      newCacheItems[k] = { sourceHash, translation: overrideValue };
-      overridden += 1;
-      continue;
-    }
+      // Overrides are user-keyed by source string for ergonomics; storage is
+      // keyed by hash. Look up overrides via the literal source value.
+      const literalSource = typeof sourceEntry === 'string' ? sourceEntry : undefined;
+      const overrideValue = literalSource ? targetOverrides[literalSource] : undefined;
+      if (overrideValue !== undefined) {
+        settled.set(key, overrideValue);
+        overridden += 1;
+        continue;
+      }
 
-    const hit = cache.items[k];
-    if (hit && hit.sourceHash === sourceHash) {
-      result[k] = hit.translation;
-      newCacheItems[k] = hit;
-      cached += 1;
-      contextItems.push({ source: sourceEntry, translation: hit.translation });
-      continue;
-    }
+      const previous = existing[key];
+      if (previous !== undefined && state.keys[key] === hashes.get(key)) {
+        settled.set(key, previous);
+        cached += 1;
+        if (context.length < MAX_CONTEXT_ITEMS) {
+          context.push({ source: sourceEntry, translation: previous });
+        }
+        continue;
+      }
 
-    if (chunkUnchanged && hit) {
-      result[k] = hit.translation;
-      newCacheItems[k] = hit;
-      cached += 1;
-      continue;
-    }
-
-    const meta = manifest[k];
-    const item: TranslationItem = {
-      key: k,
-      source: sourceEntry,
-      ...(meta?.context ? { context: meta.context } : {}),
-      ...(meta?.description ? { description: meta.description } : {}),
-      ...(typeof meta?.maxChars === 'number' ? { maxChars: meta.maxChars } : {}),
-    };
-    itemsToFetch.push(item);
-  }
-
-  if (itemsToFetch.length > 0) {
-    const apiResult = await provider.translate({
-      source,
-      target,
-      items: itemsToFetch,
-      ...(contextItems.length > 0 ? { context: contextItems } : {}),
-      ...(instruction ? { instruction } : {}),
-    });
-    for (const item of itemsToFetch) {
-      const translation = apiResult.translations[item.key];
-      if (translation === undefined) continue;
-      result[item.key] = translation;
-      newCacheItems[item.key] = { sourceHash: contentHash(item.source), translation };
-      fetched += 1;
+      if (previous !== undefined) carryForward.set(key, previous);
+      const meta = manifest[key];
+      pending.push({
+        key,
+        source: sourceEntry,
+        ...(meta?.context ? { context: meta.context } : {}),
+        ...(meta?.description ? { description: meta.description } : {}),
+        ...(typeof meta?.maxChars === 'number' ? { maxChars: meta.maxChars } : {}),
+      });
     }
   }
 
-  await writeCacheChunk(cachePath, { chunkHash, items: newCacheItems });
-  return { catalog: result, fetched, cached, overridden };
+  const { items, aliases } = dedupeItems(pending);
+  return {
+    settled,
+    carryForward,
+    toFetch: items,
+    aliases,
+    hashes,
+    context,
+    translated: new Map(),
+    cached,
+    overridden,
+  };
+}
+
+interface CommitStateArgs {
+  readonly outDir: string;
+  readonly target: Locale;
+  readonly plan: LocalePlan;
+  readonly layout: Map<string, ReadonlyArray<string>>;
+}
+
+/**
+ * Record the source hash for every key that now has a current translation.
+ * Keys that failed or were skipped are omitted, which is what makes the next
+ * run retry precisely those and nothing else.
+ */
+async function commitState(args: CommitStateArgs): Promise<void> {
+  const { outDir, target, plan, layout } = args;
+  await Promise.all(
+    [...layout].map(async ([chunkPath, keys]) => {
+      const chunkKeys: Record<string, string> = {};
+      for (const key of keys) {
+        if (!plan.settled.has(key) && !plan.translated.has(key)) continue;
+        const hash = plan.hashes.get(key);
+        if (hash !== undefined) chunkKeys[key] = hash;
+      }
+      await writeStateChunk(stateChunkPath(outDir, target, chunkPath), chunkKeys);
+    }),
+  );
+}
+
+/**
+ * Collapse items whose source and guidance are identical to a single request
+ * item. The same copy routinely appears under several keys (per-context keys,
+ * repeated labels) and hash bucketing scatters them across chunks - translating
+ * each separately is duplicate spend and invites two different renderings of
+ * the same string.
+ */
+function dedupeItems(items: ReadonlyArray<TranslationItem>): {
+  readonly items: ReadonlyArray<TranslationItem>;
+  readonly aliases: Map<string, ReadonlyArray<string>>;
+} {
+  const unique: TranslationItem[] = [];
+  const aliases = new Map<string, string[]>();
+  const byFingerprint = new Map<string, string>();
+  for (const item of items) {
+    const fingerprint = JSON.stringify([
+      item.source,
+      item.context ?? null,
+      item.description ?? null,
+      item.maxChars ?? null,
+    ]);
+    const representative = byFingerprint.get(fingerprint);
+    if (representative !== undefined) {
+      aliases.get(representative)?.push(item.key);
+      continue;
+    }
+    byFingerprint.set(fingerprint, item.key);
+    aliases.set(item.key, [item.key]);
+    unique.push(item);
+  }
+  return { items: unique, aliases };
+}
+
+function chunkArray<T>(items: ReadonlyArray<T>, size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
 }
 
 async function runWithConcurrency<T>(
@@ -258,7 +387,7 @@ function mergeInstruction(
 ): string | undefined {
   if (!glossary || glossary.length === 0) return instruction;
   const preamble =
-    'Glossary — preserve these terms exactly; never translate or transliterate:\n' +
+    'Glossary - preserve these terms exactly; never translate or transliterate:\n' +
     glossary.map((term) => `- ${term}`).join('\n');
   return instruction ? `${preamble}\n\n${instruction}` : preamble;
 }

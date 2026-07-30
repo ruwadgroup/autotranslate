@@ -34,6 +34,16 @@
         "default": "./dist/index.cjs"
       }
     },
+    "./agent": {
+      "import": {
+        "types": "./dist/agent.d.ts",
+        "default": "./dist/agent.js"
+      },
+      "require": {
+        "types": "./dist/agent.d.cts",
+        "default": "./dist/agent.cjs"
+      }
+    },
     "./ai": {
       "import": {
         "types": "./dist/ai.d.ts",
@@ -132,6 +142,9 @@
   },
   "typesVersions": {
     "*": {
+      "agent": [
+        "./dist/agent.d.ts"
+      ],
       "ai": [
         "./dist/ai.d.ts"
       ],

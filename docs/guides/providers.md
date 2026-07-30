@@ -3,7 +3,7 @@
 Providers turn source-locale entries into translations. In development, the
 framework plugin's dev loop calls the provider on every save automatically - no
 commands to run. In CI or scripting contexts, `autotranslate translate` drives
-the same logic explicitly. The CLI handles batching, concurrency, caching, and
+the same logic explicitly. The CLI handles diffing, batching, concurrency, and
 override application regardless of how it's invoked.
 
 ## Built-in providers
@@ -12,6 +12,7 @@ override application regardless of how it's invoked.
 | -------- | ------------------------------------------------------------------------------------ |
 | `stub`   | CI, tests, dev mode without credentials.                                             |
 | `ai`     | Production. Anthropic / OpenAI / Google / OpenRouter via Vercel AI SDK.              |
+| `agent`  | Local dev with no API key - drives Claude Code or Codex on your existing plan.       |
 | `deepl`  | Plain-string copy. Excellent quality on supported pairs.                             |
 | `google` | Plain-string copy. Cheap and fast.                                                   |
 | `custom` | Any service not listed above. See [Custom provider](../cookbook/custom-provider.md). |
@@ -48,8 +49,8 @@ placeholders, plurals, select arms, and tag wrappers all pass through verbatim.
 ## `ai`
 
 Vercel AI SDK-backed. Linearises every source entry to ICU MessageFormat,
-batches up to `maxBatchSize` (default 50) per `generateObject` call, and parses
-the returned ICU back into the structured tree.
+batches per `generateObject` call, and parses the returned ICU back into the
+structured tree.
 
 ```ts
 provider: {
@@ -87,6 +88,50 @@ pnpm add ai @ai-sdk/anthropic
 ICU is the wire format because every modern frontier model knows it.
 Placeholders, plurals, and tag wrappers survive round-trips reliably without
 prompt-engineering gymnastics.
+
+## `agent`
+
+Drives a headless coding-agent CLI already installed and signed in on the
+machine - [Claude Code](https://claude.com/claude-code) or
+[Codex](https://developers.openai.com/codex/cli). No API key, no separate
+billing: translation runs on the subscription you already pay for.
+
+```ts
+provider: {
+  name: 'agent',
+  agent: 'claude',            // or 'codex'
+  model: 'claude-haiku-4-5',  // optional; the agent's default otherwise
+}
+```
+
+| Option      | Type                  | Notes                                             |
+| ----------- | --------------------- | ------------------------------------------------- |
+| `name`      | `'agent'`             | (required)                                        |
+| `agent`     | `'claude' \| 'codex'` | Default `'claude'`.                               |
+| `model`     | `string`              | Passed through to the CLI.                        |
+| `command`   | `string`              | Override the executable when it is not on `PATH`. |
+| `args`      | `string[]`            | Extra CLI arguments.                              |
+| `timeoutMs` | `number`              | Hard timeout per invocation. Default `300000`.    |
+
+The agent is used strictly as a text transformer: tools are disabled, the
+sandbox is read-only, and the prompt goes in on stdin. It cannot touch your
+repository.
+
+- **Claude Code** runs `claude -p --output-format json --disallowedTools '*'`.
+- **Codex** runs `codex exec --sandbox read-only` with `--output-schema`, so the
+  response shape is enforced by the API rather than by prompt discipline.
+
+Each batch is a process spawn, so this is slower than `ai` and suits local
+development and small-to-medium catalogs rather than bulk runs. Keep
+`concurrency` modest (2-4). CI runners do not carry your agent login, so use a
+key there:
+
+```ts
+provider:
+  process.env.CI === 'true'
+    ? { name: 'ai', model: 'anthropic:claude-haiku-4-5' }
+    : { name: 'agent', agent: 'claude' },
+```
 
 ## `deepl`
 
@@ -150,6 +195,26 @@ walk-through.
 - **Use `$context` and `$description`.** Translators (and AI models) use them as
   disambiguation. The CLI passes both through to the provider.
 
-- **Cache invalidates per provider signature.** Switching from
-  `anthropic:claude-haiku-4-5` to `openai:gpt-4o-mini` re-translates everything.
-  That's by design.
+- **Switching providers does not re-translate.** Translations on disk stay valid
+  whichever model produced them. To deliberately redo a locale, delete its
+  catalog and `.state/` directories.
+
+## Batching and failure handling
+
+The CLI, not the provider, decides how work is split:
+
+1. Each locale is diffed against its committed catalog; unchanged strings are
+   never re-sent.
+2. Identical copy is collapsed to one request item, then fanned back out across
+   every key sharing it.
+3. The remainder is split into uniform `batchSize` batches (default 25) and run
+   at `concurrency`.
+
+`batchSize` is the lever when a model starts dropping items from large
+responses. Short batches cost more requests; long ones cost accuracy.
+
+Batches fail independently: a failed batch leaves its keys at their previous
+translation and is reported at the end, while the rest of the run commits. Keys
+a model silently omits are never written as holes - they stay out of the state
+file, so the next run retries exactly those. `translate` exits non-zero when any
+batch failed, so CI does not mistake a partial run for a green one.

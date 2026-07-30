@@ -104,10 +104,12 @@ describe('init - Next.js project', () => {
     const tsconfigContent = await readFile(join(cwd, 'tsconfig.json'), 'utf8');
     expect(tsconfigContent).toContain('.translations/types.d.ts');
 
+    // Nothing under outDir is ignored: the catalogs and the diff state that
+    // decides what to retranslate both belong in version control.
     const gitignoreStep = result.steps.find((s) => s.label.includes('.gitignore'));
-    expect(gitignoreStep?.status).toBe('done');
+    expect(gitignoreStep?.status).toBe('already-configured');
     const gitignoreContent = await readFile(join(cwd, '.gitignore'), 'utf8');
-    expect(gitignoreContent).toContain('.translations/.cache/');
+    expect(gitignoreContent).not.toContain('.translations');
 
     const layoutStep = result.steps.find((s) => s.label.includes('layout.tsx'));
     expect(layoutStep?.status).toBe('skipped');
@@ -146,6 +148,11 @@ describe('init - Next.js project', () => {
       if (step.label.includes('layout.tsx')) {
         // Layout is always skipped (manual diff)
         expect(step.status).toBe('skipped');
+      } else if (step.label.includes('merge driver')) {
+        // The fixture is not a git repo, so the local driver cannot be
+        // registered; the .gitattributes half is still in place.
+        expect(step.status).toBe('skipped');
+        expect(step.detail).toContain('git config merge.autotranslate.driver');
       } else {
         expect(step.status).toBe('already-configured');
       }
@@ -387,26 +394,92 @@ describe('init - tsconfig edge cases', () => {
   });
 });
 
-describe('init - gitignore edge cases', () => {
-  it('creates .gitignore if absent', async () => {
+describe('init - merge driver', () => {
+  it('writes .gitattributes rules for the generated catalogs', async () => {
     const cwd = await tempDir();
     await makeViteProject(cwd);
     await init({ cwd });
 
-    const content = await readFile(join(cwd, '.gitignore'), 'utf8');
-    expect(content).toContain('.translations/.cache/');
+    const content = await readFile(join(cwd, '.gitattributes'), 'utf8');
+    expect(content).toContain('.translations/**/*.json merge=autotranslate');
+    expect(content).toContain('.translations/.meta.json merge=autotranslate');
   });
 
-  it('appends to existing .gitignore without duplication', async () => {
+  it('does not duplicate rules on a second run', async () => {
+    const cwd = await tempDir();
+    await makeViteProject(cwd);
+    await init({ cwd });
+    await init({ cwd });
+
+    const lines = (await readFile(join(cwd, '.gitattributes'), 'utf8')).split('\n');
+    const matches = lines.filter((l) => l.trim() === '.translations/**/*.json merge=autotranslate');
+    expect(matches).toHaveLength(1);
+  });
+
+  it('preserves unrelated .gitattributes rules', async () => {
+    const cwd = await tempDir();
+    await makeViteProject(cwd);
+    await writeFile(join(cwd, '.gitattributes'), '*.png binary\n', 'utf8');
+    await init({ cwd });
+
+    const content = await readFile(join(cwd, '.gitattributes'), 'utf8');
+    expect(content).toContain('*.png binary');
+    expect(content).toContain('merge=autotranslate');
+  });
+
+  it('registers the driver in the local git config inside a repo', async () => {
+    const cwd = await tempDir();
+    await makeViteProject(cwd);
+    const { execFileSync } = await import('node:child_process');
+    execFileSync('git', ['init', '-q'], { cwd });
+
+    const result = await init({ cwd });
+
+    const driver = execFileSync('git', ['config', 'merge.autotranslate.driver'], {
+      cwd,
+      encoding: 'utf8',
+    }).trim();
+    expect(driver).toBe('npx autotranslate merge-driver %O %A %B %P');
+    expect(result.steps.find((s) => s.label.includes('merge driver'))?.status).toBe('done');
+  });
+});
+
+describe('init - gitignore edge cases', () => {
+  it('does not create a .gitignore just to ignore nothing', async () => {
+    const cwd = await tempDir();
+    await makeViteProject(cwd);
+    const result = await init({ cwd });
+
+    expect(existsSync(join(cwd, '.gitignore'))).toBe(false);
+    const step = result.steps.find((s) => s.label.includes('.gitignore'));
+    expect(step?.status).toBe('already-configured');
+  });
+
+  it('leaves an unrelated .gitignore untouched', async () => {
     const cwd = await tempDir();
     await makeViteProject(cwd);
     await writeFile(join(cwd, '.gitignore'), 'node_modules\n', 'utf8');
 
     await init({ cwd });
-    await init({ cwd }); // second run
+
+    expect(await readFile(join(cwd, '.gitignore'), 'utf8')).toBe('node_modules\n');
+  });
+
+  it('removes the legacy ignored cache entry so state gets committed', async () => {
+    const cwd = await tempDir();
+    await makeViteProject(cwd);
+    await writeFile(
+      join(cwd, '.gitignore'),
+      'node_modules\n\n# autotranslate\n.translations/.cache/\n',
+      'utf8',
+    );
+
+    const result = await init({ cwd });
 
     const content = await readFile(join(cwd, '.gitignore'), 'utf8');
-    const matches = content.split('\n').filter((l) => l.trim() === '.translations/.cache/');
-    expect(matches).toHaveLength(1);
+    expect(content).not.toContain('.translations/.cache/');
+    expect(content).not.toContain('# autotranslate');
+    expect(content).toContain('node_modules');
+    expect(result.steps.find((s) => s.label.includes('.gitignore'))?.status).toBe('done');
   });
 });

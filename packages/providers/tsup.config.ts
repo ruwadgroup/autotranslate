@@ -3,6 +3,7 @@ import { defineConfig } from 'tsup';
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
+    agent: 'src/agent.ts',
     ai: 'src/ai.ts',
     deepl: 'src/deepl.ts',
     google: 'src/google.ts',

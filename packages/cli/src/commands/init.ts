@@ -447,24 +447,111 @@ async function stepUpdateTsconfig(cwd: string, outDir: string): Promise<StepResu
   return { status: 'done', label: `tsconfig.json: added ${entry} to include` };
 }
 
+/**
+ * Everything under `outDir` is committed - the catalogs AND `.state/`, which
+ * records the source hash each translation was produced from. That state is
+ * the diff input: ignoring it makes every fresh clone and every CI run
+ * retranslate the whole catalog. Older versions ignored `<outDir>/.cache/`,
+ * so drop that line if it is still there.
+ */
 async function stepUpdateGitignore(cwd: string, outDir: string): Promise<StepResult> {
   const gitignorePath = join(cwd, '.gitignore');
-  const cacheEntry = `${outDir}/.cache/`;
+  const legacyEntry = `${outDir}/.cache/`;
 
-  if (existsSync(gitignorePath)) {
-    const content = await readFile(gitignorePath, 'utf8');
-    if (content.split('\n').some((line) => line.trim() === cacheEntry)) {
-      return { status: 'already-configured', label: `.gitignore already has ${cacheEntry}` };
-    }
-    const newContent = content.endsWith('\n')
-      ? `${content}${cacheEntry}\n`
-      : `${content}\n${cacheEntry}\n`;
-    await writeFile(gitignorePath, newContent, 'utf8');
-  } else {
-    await writeFile(gitignorePath, `# autotranslate\n${cacheEntry}\n`, 'utf8');
+  if (!existsSync(gitignorePath)) {
+    return { status: 'already-configured', label: '.gitignore: nothing to ignore' };
   }
 
-  return { status: 'done', label: `.gitignore: added ${cacheEntry}` };
+  const content = await readFile(gitignorePath, 'utf8');
+  const lines = content.split('\n');
+  if (!lines.some((line) => line.trim() === legacyEntry)) {
+    return { status: 'already-configured', label: '.gitignore: nothing to ignore' };
+  }
+
+  const kept = lines.filter((line) => line.trim() !== legacyEntry);
+  // Drop the "# autotranslate" header too if it now heads nothing.
+  const cleaned = kept
+    .filter((line, i) => {
+      if (line.trim() !== '# autotranslate') return true;
+      const next = kept[i + 1]?.trim();
+      return next !== undefined && next !== '';
+    })
+    .join('\n');
+  await writeFile(gitignorePath, cleaned, 'utf8');
+
+  return {
+    status: 'done',
+    label: `.gitignore: removed ${legacyEntry} (translation state must be committed)`,
+  };
+}
+
+const MERGE_DRIVER_NAME = 'autotranslate';
+
+/**
+ * Catalogs and translation state are committed, so parallel branches will edit
+ * the same generated JSON. Git's line-based merge conflicts on adjacent keys
+ * and writes conflict markers into JSON, which breaks every consumer. Register
+ * a key-wise merge driver instead.
+ *
+ * `.gitattributes` is committed so the whole team gets the routing; the driver
+ * command itself lives in `.git/config`, which git deliberately does not share.
+ * Teammates enable it by running `autotranslate init` (or the printed command).
+ */
+async function stepConfigureMergeDriver(cwd: string, outDir: string): Promise<StepResult> {
+  const attributesPath = join(cwd, '.gitattributes');
+  const rules = [
+    `${outDir}/**/*.json merge=${MERGE_DRIVER_NAME}`,
+    `${outDir}/.meta.json merge=${MERGE_DRIVER_NAME}`,
+    `${outDir}/index.ts merge=${MERGE_DRIVER_NAME}`,
+  ];
+  const configCommand = `git config merge.${MERGE_DRIVER_NAME}.driver 'npx autotranslate merge-driver %O %A %B %P'`;
+
+  const existing = existsSync(attributesPath) ? await readFile(attributesPath, 'utf8') : '';
+  const lines = existing.split('\n').map((l) => l.trim());
+  const missing = rules.filter((rule) => !lines.includes(rule));
+
+  const configured = await configureGitMergeDriver(cwd);
+
+  if (missing.length === 0) {
+    return {
+      status: configured ? 'already-configured' : 'skipped',
+      label: `.gitattributes already routes ${outDir} through the ${MERGE_DRIVER_NAME} merge driver`,
+      ...(configured ? {} : { detail: `run: ${configCommand}` }),
+    };
+  }
+
+  const prefix = existing === '' ? '' : existing.endsWith('\n') ? existing : `${existing}\n`;
+  await writeFile(
+    attributesPath,
+    `${prefix}\n# autotranslate: merge generated catalogs by key, not by line\n${missing.join('\n')}\n`,
+    'utf8',
+  );
+
+  return {
+    status: 'done',
+    label: `.gitattributes: routed ${outDir} through the ${MERGE_DRIVER_NAME} merge driver`,
+    ...(configured
+      ? { detail: 'teammates must run `autotranslate init` once to enable it locally' }
+      : { detail: `not a git repo yet - after \`git init\`, run: ${configCommand}` }),
+  };
+}
+
+/** Registers the driver in the local `.git/config`. Returns false outside a repo. */
+async function configureGitMergeDriver(cwd: string): Promise<boolean> {
+  const { execFile } = await import('node:child_process');
+  const run = (args: string[]): Promise<boolean> =>
+    new Promise((resolve) => {
+      execFile('git', args, { cwd }, (error) => resolve(!error));
+    });
+
+  if (!(await run(['rev-parse', '--git-dir']))) return false;
+  const ok = await run([
+    'config',
+    `merge.${MERGE_DRIVER_NAME}.driver`,
+    'npx autotranslate merge-driver %O %A %B %P',
+  ]);
+  if (!ok) return false;
+  return run(['config', `merge.${MERGE_DRIVER_NAME}.name`, 'autotranslate catalog merge']);
 }
 
 function buildLayoutDiff(source: string, targets: string[], outDir: string): string {
@@ -541,6 +628,8 @@ export async function init(options: InitOptions = {}): Promise<InitResult> {
   steps.push(await stepUpdateTsconfig(cwd, outDir));
 
   steps.push(await stepUpdateGitignore(cwd, outDir));
+
+  steps.push(await stepConfigureMergeDriver(cwd, outDir));
 
   if (framework === 'next') {
     steps.push({

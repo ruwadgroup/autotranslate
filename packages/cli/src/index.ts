@@ -20,6 +20,7 @@ export type {
   ExtractResult,
   LocaleStats,
   ResolvedConfig,
+  TranslateFailure,
   TranslateResult,
   TranslateStats,
 } from './types';

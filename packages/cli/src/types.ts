@@ -27,8 +27,21 @@ export interface TranslateStats {
 
 export type LocaleStats = Record<string, TranslateStats>;
 
+export interface TranslateFailure {
+  readonly target: string;
+  /** Catalog keys this batch covered. They keep their previous translation. */
+  readonly keys: ReadonlyArray<string>;
+  readonly error: Error;
+}
+
 export interface TranslateResult {
   readonly stats: LocaleStats;
+  /**
+   * Chunks the provider failed on. The run still writes every chunk that
+   * succeeded and leaves failed keys at their previous translation, so a
+   * partial outage never regresses the committed catalogs.
+   */
+  readonly failures: ReadonlyArray<TranslateFailure>;
 }
 
 export interface CheckProblem {

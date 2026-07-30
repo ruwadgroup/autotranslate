@@ -10,6 +10,7 @@ import { init } from './commands/init';
 import { formatParityReport, parity } from './commands/parity';
 import { translate } from './commands/translate';
 import { ConfigNotFoundError, loadConfig } from './config-loader';
+import { runMergeDriver } from './merge';
 
 const require = createRequire(import.meta.url);
 const { version } = require('../package.json') as { version: string };
@@ -112,20 +113,38 @@ program
           inFlight -= 1;
           done += 1;
         }
-        spinner.text = `translating… ${chalk.cyan(`${done}`)} done${
+        spinner.text = `translating… ${chalk.cyan(`${done}/${event.totalBatches}`)} batches${
           inFlight > 0 ? chalk.dim(`, ${inFlight} in flight`) : ''
         }`;
       },
     });
     spinner.stop();
+    const failedTargets = new Set(result.failures.map((f) => f.target));
     for (const [locale, stats] of Object.entries(result.stats)) {
       console.log(
-        chalk.green('✓'),
+        failedTargets.has(locale) ? chalk.yellow('!') : chalk.green('✓'),
         chalk.cyan(locale),
-        '—',
+        '-',
         `${stats.fetched} new`,
         chalk.dim(`(${stats.cached} cached, ${stats.overridden} overridden)`),
       );
+    }
+    if (result.failures.length > 0) {
+      // Everything that succeeded is already written; report the rest and fail
+      // the command so CI does not treat a partial run as a green build.
+      const affected = result.failures.reduce((n, f) => n + f.keys.length, 0);
+      console.error(
+        chalk.red('✗'),
+        `${result.failures.length} batch(es) failed, ${affected} key(s) kept at their previous translation:`,
+      );
+      for (const failure of result.failures) {
+        console.error(
+          chalk.dim(`  ${failure.target} (${failure.keys.length} keys):`),
+          failure.error.message,
+        );
+      }
+      console.error(chalk.dim('Re-run `autotranslate translate` to retry only the failed keys.'));
+      process.exitCode = 1;
     }
   });
 
@@ -210,6 +229,36 @@ program
       for (const o of result.occurrences) {
         console.log('  at', chalk.cyan(`${o.file}:${o.line}${o.column ? `:${o.column}` : ''}`));
       }
+    }
+  });
+
+program
+  .command('merge-driver')
+  .description(
+    'Git merge driver for the generated JSON under outDir. Merges catalogs and ' +
+      'translation state by key instead of by line. Configured by `autotranslate init`; ' +
+      'not normally run by hand.',
+  )
+  .argument('<base>', 'common ancestor (git %O)')
+  .argument('<ours>', 'our version; the merge result is written here (git %A)')
+  .argument('<theirs>', 'their version (git %B)')
+  .argument('[path]', 'path of the file being merged (git %P)')
+  .action(async (base: string, ours: string, theirs: string, path?: string) => {
+    const result = await runMergeDriver({
+      basePath: base,
+      oursPath: ours,
+      theirsPath: theirs,
+      ...(path ? { filePath: path } : {}),
+    });
+    if (result.contested.length > 0) {
+      // Resolved, not deferred: contested state keys were dropped, so the next
+      // translate re-derives exactly those from the current source.
+      console.error(
+        chalk.yellow('!'),
+        `${result.contested.length} key(s) changed on both sides of the merge in ${
+          path ?? ours
+        }; run \`autotranslate translate\` to reconcile them.`,
+      );
     }
   });
 

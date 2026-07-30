@@ -36,7 +36,7 @@ idempotently:
 + next.config.ts wrapped in withAutotranslate  (AST edit)
 + src/proxy.ts created                      (path-prefix locale routing)
 + tsconfig.json: added .translations/types.d.ts to include
-+ .gitignore: added .translations/.cache/
++ .gitattributes: routed .translations through the autotranslate merge driver
 ~ app/[lang]/layout.tsx                     (manual diff - layout too custom to edit safely)
 
 Next: run `pnpm dev` and write some copy. Translations appear on save.
@@ -105,8 +105,8 @@ translate → generate-types, writing:
 ├── ja/
 ├── index.ts                          # generated catalog module (bundler entry)
 ├── .meta.json                        # context, descriptions, occurrences
-├── .cache/
-│   └── <provider-sig>/<source-target>/<chunk>.json
+├── .state/                           # source hash per translated key - the diff input
+│   └── <locale>/<chunk>.json
 └── types.d.ts                        # narrows useT keys — typos are TS errors
 ```
 
@@ -132,10 +132,15 @@ as-is.
 ## 6. Commit `.translations/`
 
 Treat the catalog like a lockfile: commit it with the source change that
-produced it. `init` already gitignored `.translations/.cache/`; everything else
-in `.translations/` belongs in the repo. Reviewers see translation diffs next to
-code diffs — add the [PR parity report](cookbook/pr-parity.md) for a readable
-table.
+produced it. Everything in `.translations/` belongs in the repo, including
+`.state/` — that directory records which source text each translation came from
+and is what lets the next run skip work. Ignore it and every CI run retranslates
+your whole catalog.
+
+Reviewers see translation diffs next to code diffs — add the
+[PR parity report](cookbook/pr-parity.md) for a readable table. `init` also
+registers a merge driver so two branches adding copy merge without conflicts;
+see [Concepts](concepts.md#merging-translations-between-branches).
 
 ## 7. Build verifies — never translates
 

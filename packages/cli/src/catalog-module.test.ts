@@ -36,8 +36,14 @@ describe('writeCatalogModule', () => {
       export const locales = ['en', 'es'] as const;
 
       const chunks: Record<string, ReadonlyArray<() => Promise<{ default: Catalog }>>> = {
-        en: [() => import('./en/0.json') as Promise<{ default: Catalog }>, () => import('./en/f.json') as Promise<{ default: Catalog }>],
-        es: [() => import('./es/0.json') as Promise<{ default: Catalog }>, () => import('./es/f.json') as Promise<{ default: Catalog }>],
+        en: [
+          () => import('./en/0.json') as Promise<{ default: Catalog }>,
+          () => import('./en/f.json') as Promise<{ default: Catalog }>,
+        ],
+        es: [
+          () => import('./es/0.json') as Promise<{ default: Catalog }>,
+          () => import('./es/f.json') as Promise<{ default: Catalog }>,
+        ],
       };
 
       export async function loadCatalog(locale: Locale): Promise<Catalog> {
@@ -75,8 +81,22 @@ describe('writeCatalogModule', () => {
     const text = await readFile(join(outDir, 'index.ts'), 'utf8');
 
     expect(text).toContain("export const locales = ['en', 'ja'] as const;");
-    expect(text).toContain("en: [() => import('./en/0.json') as Promise<{ default: Catalog }>]");
+    expect(text).toContain("    () => import('./en/0.json') as Promise<{ default: Catalog }>,");
     expect(text).not.toContain('ja:');
+  });
+
+  it('emits one import per line so branches merge without conflicts', async () => {
+    const outDir = await makeFixture();
+    await writeCatalogModule(outDir, 'en', ['en', 'es']);
+    const text = await readFile(join(outDir, 'index.ts'), 'utf8');
+
+    const importLines = text.split('\n').filter((l) => l.includes('import('));
+    expect(importLines).toHaveLength(4);
+    // Every chunk sits on its own line, so adding a bucket on two branches
+    // touches two different lines and git merges them itself.
+    for (const line of importLines) {
+      expect(line.match(/import\(/g)).toHaveLength(1);
+    }
   });
 
   it('returns { written: false } on a second identical call (idempotent)', async () => {

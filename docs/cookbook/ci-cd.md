@@ -64,23 +64,23 @@ npx autotranslate parity --base origin/main --format github
 
 See [PR parity](pr-parity.md) for the full GitHub Actions workflow.
 
-## Caching the provider cost
+## Keeping the provider cost down
 
-When a developer runs `autotranslate translate` locally, the per-chunk cache
-lives in `.translations/.cache/`. Cache the `.cache/` directory across CI runs
-when you do occasional bulk retranslations:
+There is no CI cache to configure. The diff input - `.translations/.state/`,
+which records the source hash behind every translation - is committed alongside
+the catalogs, so a fresh clone already knows what is current. A PR with no
+source-string changes makes zero model calls, on the first run, with a cold
+runner.
 
-```yaml
-- name: Cache translation cache
-  uses: actions/cache@v4
-  with:
-    path: .translations/.cache
-    key: i18n-${{ hashFiles('src/**/*.{ts,tsx}', 'autotranslate.config.ts') }}
-    restore-keys: |
-      i18n-
-```
+This is the single most important thing to get right: if `.translations/.state/`
+is gitignored, every CI run retranslates the entire catalog at full cost. `init`
+does not ignore it, and older projects that still ignore `.translations/.cache/`
+are migrated automatically on the next `translate`.
 
-A PR with no source-string changes hits zero model calls.
+If a run does hit the provider, failures are per-batch: keys in a failed batch
+keep their previous translation, everything else commits, and the command exits
+non-zero so the job goes red rather than silently shipping a half-translated
+catalog.
 
 ## Escape hatch: translateOnBuild
 
@@ -131,11 +131,11 @@ The build proceeds regardless of catalog completeness.
 - **Fresh projects pass automatically.** When `.translations/<source>/` does not
   exist on disk, `checkFrozen` returns `{ ok: true, catalogAbsent: true }` so
   example projects and first-run CI never fail.
-- **Commit `.translations/` except `.cache/`.** `init` already gitignores
-  `.translations/.cache/`; commit everything else.
-- **Switch providers carefully.** Changing the provider signature (model name or
-  vendor) invalidates the per-chunk cache and re-translates everything on the
-  next `translate` run.
+- **Commit all of `.translations/`, `.state/` included.** It is the diff input;
+  ignoring it means a full retranslation on every clone and every CI run.
+- **Switching providers is free.** A committed translation stays valid whichever
+  model produced it, so changing model or vendor does not re-translate anything.
+  To deliberately redo a locale, delete its catalog and `.state/` directories.
 - **Combine with `autotranslate check` for scripted verification.** The CLI
   `check` command verifies parity (missing/orphan/invalid-ICU) without the
   source-extraction comparison that `checkFrozen` adds.
