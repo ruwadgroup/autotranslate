@@ -1,5 +1,14 @@
 # @autotranslate/react
 
+## 1.0.0-beta.11
+
+### Patch Changes
+
+- Updated dependencies
+  [[`bb38cd5`](https://github.com/ruwadgroup/autotranslate/commit/bb38cd5068496b5d7474c1d8bb2311b0b13358cd),
+  [`bb38cd5`](https://github.com/ruwadgroup/autotranslate/commit/bb38cd5068496b5d7474c1d8bb2311b0b13358cd)]:
+  - @autotranslate/core@1.0.0-beta.10
+
 ## 1.0.0-beta.10
 
 ### Patch Changes

@@ -15,7 +15,9 @@
     "@autotranslate/zod": "0.2.0"
   },
   "changesets": [
+    "agent-provider",
     "auto-attribute-translation",
+    "catalog-merge-driver",
     "clean-directives-first",
     "detect-industry-copy-fields",
     "detect-semantic-copy",
@@ -26,6 +28,7 @@
     "hash-bucketed-catalogs",
     "ignore-jsx-styling-props",
     "ignore-styling-config-copy",
+    "incremental-translation-state",
     "migration-guides-cookbook",
     "next-streaming-dev-mode",
     "null-safe-forwarded-copy",

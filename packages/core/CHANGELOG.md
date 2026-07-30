@@ -1,5 +1,100 @@
 # @autotranslate/core
 
+## 1.0.0-beta.10
+
+### Minor Changes
+
+- [`bb38cd5`](https://github.com/ruwadgroup/autotranslate/commit/bb38cd5068496b5d7474c1d8bb2311b0b13358cd)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Add the `agent`
+  provider - translate with Claude Code or Codex
+
+  Drives a headless coding-agent CLI already installed and signed in on the
+  machine, instead of calling a model API. No API key, no separate billing.
+
+  ```ts
+  provider: {
+    name: 'agent',
+    agent: 'claude',            // or 'codex'
+    model: 'claude-haiku-4-5',  // optional
+  }
+  ```
+
+  The agent is used strictly as a text transformer - tools disabled, sandbox
+  read-only, prompt on stdin, JSON out. It cannot touch your repository.
+
+  - **Claude Code**: `claude -p --output-format json --disallowedTools '*'`.
+    Fenced or prose-wrapped answers are unwrapped by a balanced-brace scan.
+  - **Codex**: `codex exec --sandbox read-only --output-schema`, so the response
+    shape is enforced by the API rather than by prompt discipline.
+
+  Options: `agent`, `model`, `command`, `args`, `timeoutMs` (default 300000).
+
+  Each batch is a process spawn, so this suits local development and
+  small-to-medium catalogs rather than bulk runs; keep `concurrency` modest. CI
+  runners do not carry your agent login, so prefer `ai` with a key there.
+
+  Batching, retry with backoff, and re-asking for omitted keys are shared with
+  the `ai` provider.
+
+- [`bb38cd5`](https://github.com/ruwadgroup/autotranslate/commit/bb38cd5068496b5d7474c1d8bb2311b0b13358cd)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Fix incremental
+  translation: committed catalogs are now the diff baseline
+
+  `init` gitignored `.translations/.cache/`, and `translate` used that cache as
+  its only record of what had been translated - it never consulted the committed
+  catalogs. On any machine without the cache (fresh clone, new teammate, every
+  CI run) the entire catalog was re-sent to the provider despite valid
+  translations sitting in the repo.
+
+  Three defects compounded it:
+
+  - **Omitted keys deleted committed translations.** A key missing from a
+    provider response (routine on large batches) was pruned from the catalog on
+    write.
+  - **One failed chunk discarded the run.** Catalogs were written only after
+    every task settled, so a single 429 threw away every other chunk's work.
+  - **Reference context was unbounded.** Every cached neighbour rode along on
+    every request, growing prompts with catalog size - which is what pushed
+    large batches past the point where models answer completely.
+
+  ### Changes
+  - Translation state moves to `.translations/.state/<locale>/<chunk>.json`,
+    recording the source hash behind each translation. **Commit it** - `init` no
+    longer ignores anything under `outDir` and strips a stale `.cache/` line if
+    it finds one. Existing `.cache/` layouts migrate on the next `translate`.
+  - Switching provider or model no longer invalidates anything.
+  - Omitted keys keep their previous translation and stay out of state, so the
+    next run retries exactly those.
+  - Batches fail independently. `TranslateResult` gains `failures`; the CLI
+    exits non-zero when any batch failed.
+  - Reference context is capped at 8 items.
+
+  ### Batching moves to the CLI
+
+  `translate` now plans the whole run, collapses duplicate copy, and splits the
+  remainder into uniform batches instead of inheriting whatever landed in a hash
+  bucket.
+
+  - New `batchSize` config option (default 25). This is the lever when a model
+    drops items.
+  - Identical copy under several keys is translated once and fanned out; copy
+    with differing context or description still translates separately.
+  - The `ai` provider retries transient failures with backoff and re-asks for
+    omitted keys in smaller slices.
+
+  `TranslateProgress` reports `batch` / `totalBatches` / `items` instead of
+  `chunkPath`.
+
+  ### Upgrading
+
+  Run `npx autotranslate init` once, then commit `.translations/`. `init`
+  removes the stale `.gitignore` entry and the next `translate` migrates
+  `.cache/` into `.state/`, so no retranslation is needed.
+
+  Until `.state/` is committed, CI still has no diff input and will retranslate
+  the full catalog on each run - exactly the old behaviour, no worse. Projects
+  that never commit `.translations/` at all are unaffected.
+
 ## 1.0.0-beta.9
 
 ### Patch Changes
