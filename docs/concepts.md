@@ -69,7 +69,8 @@ the key hash:
   index.ts                              # generated catalog module (static import()s)
   types.d.ts                            # generated TS key augmentation
   .meta.json                            # per-key context, description, occurrences
-  .cache/                               # gitignored - provider translation cache
+  .state/                               # per-key source hash at translation time
+    es/  0.json  ...  f.json
 ```
 
 The same key always lands in the same bucket file across every locale. So
@@ -77,9 +78,56 @@ The same key always lands in the same bucket file across every locale. So
 different values. You can `diff en/3.json es/3.json` to audit cross-locale
 parity.
 
-**Commit `.translations/` to your repo (except `.cache/`).** Reviewers diff
-translations the same way they diff code. `init` already gitignores
-`.translations/.cache/`.
+## Commit all of `.translations/`
+
+Every file above belongs in the repo, `.state/` included. Reviewers diff
+translations the same way they diff code.
+
+`.state/` is what makes translation incremental. For each key it records the
+hash of the source content that produced the current translation:
+
+```jsonc
+// .translations/.state/es/3.json
+{
+  "version": 1,
+  "keys": {
+    "041c03cfcadc": "9f2b1c7ae0d4", // source hash when 'es' was last translated
+  },
+}
+```
+
+`translate` compares that hash against the current source entry. Equal means the
+translation on disk is current and the key is skipped; different or absent means
+it is re-sent. **Ignoring `.state/` makes every fresh clone and every CI run
+retranslate the entire catalog**, because nothing then records what an existing
+translation corresponds to. Nothing in it is provider-specific, so switching
+models does not invalidate translations you already have.
+
+## Merging translations between branches
+
+Two branches that both add copy will both write to `.translations/`. Git's
+line-based merge conflicts on adjacent keys and would leave conflict markers
+inside JSON, so `init` registers a merge driver that merges these files by key
+instead:
+
+```
+.gitattributes
+  .translations/**/*.json merge=autotranslate
+  .translations/.meta.json merge=autotranslate
+  .translations/index.ts  merge=autotranslate
+```
+
+- **Catalogs** take the union of both sides' keys. Deletions are honoured.
+- **State** drops any key both branches retranslated, so the next `translate`
+  re-derives that one key from the merged source instead of picking a winner.
+- **`index.ts`** is regenerated from the union of both sides' chunk files.
+
+Real conflicts in your own source code still surface normally. Only the
+generated catalog files resolve automatically.
+
+The `.gitattributes` file is committed, but the driver command itself lives in
+`.git/config`, which git does not share. Each teammate runs `autotranslate init`
+once (or the single `git config` line it prints) to enable it locally.
 
 ## The generated catalog module
 

@@ -49,7 +49,7 @@ describe('translate', () => {
     });
   });
 
-  it('skips already-cached entries on a second run via chunk-hash short-circuit', async () => {
+  it('skips entries whose source is unchanged on a second run', async () => {
     const { resolved } = await setupFixture({
       [SIGN_OUT]: 'Sign out',
       [GREETING]: 'Hello, {name}!',

@@ -1,5 +1,6 @@
 import type { CatalogEntry } from '@autotranslate/core';
 import { z } from 'zod';
+import { translateInBatches } from './batching';
 import { icuToTree, treeToICU } from './tree-icu';
 import type { Provider, TranslationItem, TranslationRequest } from './types';
 
@@ -12,22 +13,29 @@ export interface AIProviderOptions {
   /** Falls back to vendor-default env vars when omitted. */
   readonly apiKey?: string;
   readonly instruction?: string;
-  /** Items per `generateObject` call. Default 50. */
+  /** Items per `generateObject` call. Default 25. */
   readonly maxBatchSize?: number;
+  /** Attempts per batch before giving up. Default 3. */
+  readonly maxRetries?: number;
+  /** Base delay in ms for exponential backoff between retries. Default 500. */
+  readonly retryDelayMs?: number;
   /** Escape hatch returning an `ai-sdk`-compatible `LanguageModel`. */
   readonly resolveModel?: (model: string, apiKey?: string) => Promise<unknown>;
+  /** Test seam for backoff sleeps. */
+  readonly sleep?: (ms: number) => Promise<void>;
 }
-
-const DEFAULT_BATCH_SIZE = 50;
 
 /**
  * Vercel AI SDK-backed translation provider. Linearizes each entry to ICU,
- * batches into one `generateObject` call, then reconstructs the tree post-
+ * batches into `generateObject` calls, then reconstructs the tree post-
  * translation. ICU is a far better wire format than custom JSON because the
  * model already knows it.
+ *
+ * Batching, retry and repair of short responses are handled by
+ * `translateInBatches`.
  */
 export function createAIProvider(options: AIProviderOptions): Provider {
-  const { model, apiKey, instruction, maxBatchSize = DEFAULT_BATCH_SIZE, resolveModel } = options;
+  const { model, apiKey, instruction, resolveModel } = options;
   const signature = `ai:${model}${instruction ? `:${shortHash(instruction)}` : ''}`;
 
   return {
@@ -40,12 +48,16 @@ export function createAIProvider(options: AIProviderOptions): Provider {
       const resolved = resolveModel
         ? await resolveModel(model, apiKey)
         : await defaultResolveModel(model, apiKey);
-      const batches = chunk(request.items, maxBatchSize);
-      const translations: Record<string, CatalogEntry> = {};
-      for (const batch of batches) {
-        const partial = await translateBatch(resolved, batch, request, instruction);
-        Object.assign(translations, partial);
-      }
+      const translations = await translateInBatches(
+        request,
+        (items, req) => translateBatch(resolved, items, req, instruction),
+        {
+          ...(options.maxBatchSize !== undefined ? { batchSize: options.maxBatchSize } : {}),
+          ...(options.maxRetries !== undefined ? { maxRetries: options.maxRetries } : {}),
+          ...(options.retryDelayMs !== undefined ? { retryDelayMs: options.retryDelayMs } : {}),
+          ...(options.sleep ? { sleep: options.sleep } : {}),
+        },
+      );
       return { translations };
     },
   };
@@ -177,15 +189,6 @@ async function defaultResolveModel(model: string, apiKey?: string): Promise<unkn
         `Unknown AI vendor '${vendor}'. Expected one of: anthropic, openai, google, openrouter.`,
       );
   }
-}
-
-function chunk<T>(items: ReadonlyArray<T>, size: number): T[][] {
-  if (size <= 0) return [items.slice()];
-  const out: T[][] = [];
-  for (let i = 0; i < items.length; i += size) {
-    out.push(items.slice(i, i + size));
-  }
-  return out;
 }
 
 // FNV-1a 32-bit. Non-cryptographic; used only to give the instruction a

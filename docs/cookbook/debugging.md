@@ -53,15 +53,16 @@ more often, the cache hasn't been invalidated.
    `.translations/en/` (e.g. `.translations/en/3.json`) and confirm the entry
    matches the current source. Stale entries point at outdated cache state.
 
-2. **Check the cache.**
-   `.translations/.cache/<provider-sig>/<source-fr>/<chunk>.json` keys by source
-   hash. If the source changed and the hash didn't move, ICU formatting may have
-   changed but the canonical-key derivation didn't catch it. File a bug.
+2. **Check the recorded state.** `.translations/.state/<locale>/<chunk>.json`
+   holds the source hash each translation was produced from. If the source
+   changed but the recorded hash did not move, ICU formatting may have changed
+   without the canonical-key derivation catching it. File a bug.
 
-3. **The cache is doing its job.** Only changed strings re-translate; the
-   per-chunk cache keys on the source hash. If the AI got it wrong on the first
-   run and your source didn't change, lock the correct value in `overrides` - it
-   wins over both the cache and the provider on the next run.
+3. **The diff is doing its job.** Only changed strings re-translate. If the
+   model got one wrong on the first run and your source has not changed, lock
+   the correct value in `overrides` - it wins over both the recorded state and
+   the provider on the next run. To force a single key, delete its entry from
+   the state chunk; to force a locale, delete its catalog and state directories.
 
 ## Symptom 3 - `[autotranslate] No active translator`
 

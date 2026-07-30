@@ -10,8 +10,8 @@ import { translate } from './translate';
 const FIXTURE_FILE_A = 'src/A.tsx';
 const FIXTURE_FILE_B = 'src/B.tsx';
 
-describe('translate — parallelism + progress', () => {
-  it('runs chunks concurrently up to the configured limit', async () => {
+describe('translate - parallelism + progress', () => {
+  it('runs batches concurrently up to the configured limit', async () => {
     const cwd = await mkdtemp(join(tmpdir(), 'autotranslate-parallel-'));
     const outDir = join(cwd, '.translations');
     const manifest = {
@@ -44,13 +44,13 @@ describe('translate — parallelism + progress', () => {
       provider: { name: 'stub' },
       concurrency: 8,
     });
-    await translate({ cwd, config, outDir }, { provider });
+    // batchSize 1 -> 2 targets x 2 keys = 4 batches; concurrency 8 overlaps them.
+    await translate({ cwd, config, outDir }, { provider, batchSize: 1 });
 
-    // 2 targets × 2 chunks = 4 tasks; with concurrency 8 they all overlap.
     expect(inFlight.peak).toBeGreaterThanOrEqual(2);
   });
 
-  it('emits started/completed progress events for every chunk', async () => {
+  it('emits started/completed progress events for every batch', async () => {
     const cwd = await mkdtemp(join(tmpdir(), 'autotranslate-progress-'));
     const outDir = join(cwd, '.translations');
     const manifest = {
@@ -79,16 +79,18 @@ describe('translate — parallelism + progress', () => {
       { cwd, config, outDir },
       {
         provider,
+        batchSize: 1,
         onProgress: (event) => {
-          events.push(`${event.status}:${event.target}:${event.chunkPath}`);
+          events.push(`${event.status}:${event.target}:${event.batch}/${event.totalBatches}`);
         },
       },
     );
-    // 1 target × 2 chunks × 2 events (started + completed) = 4
+    // 1 target x 2 batches x 2 events (started + completed) = 4
     expect(events).toHaveLength(4);
     const startedCount = events.filter((e) => e.startsWith('started')).length;
     const completedCount = events.filter((e) => e.startsWith('completed')).length;
     expect(startedCount).toBe(2);
     expect(completedCount).toBe(2);
+    expect(events.every((e) => e.endsWith('/2'))).toBe(true);
   });
 });

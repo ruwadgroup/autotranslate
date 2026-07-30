@@ -1,4 +1,5 @@
 import type {
+  AgentProviderConfig,
   AIProviderConfig,
   DeepLProviderConfig,
   GoogleProviderConfig,
@@ -18,6 +19,8 @@ async function instantiate(provider: ResolvedConfig['config']['provider']): Prom
       return createStubProvider({ ...(provider.pseudo ? { pseudo: true } : {}) });
     case 'ai':
       return makeAi(provider);
+    case 'agent':
+      return makeAgent(provider);
     case 'deepl':
       return makeDeepl(provider);
     case 'google':
@@ -35,6 +38,17 @@ async function makeAi(config: AIProviderConfig): Promise<Provider> {
   return createAIProvider({
     model: config.model,
     ...(config.apiKey ? { apiKey: config.apiKey } : {}),
+  });
+}
+
+async function makeAgent(config: AgentProviderConfig): Promise<Provider> {
+  const { createAgentProvider } = await import('@autotranslate/providers/agent');
+  return createAgentProvider({
+    agent: config.agent,
+    ...(config.model ? { model: config.model } : {}),
+    ...(config.command ? { command: config.command } : {}),
+    ...(config.args ? { args: config.args } : {}),
+    ...(config.timeoutMs ? { timeoutMs: config.timeoutMs } : {}),
   });
 }
 
