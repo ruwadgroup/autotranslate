@@ -26,7 +26,7 @@ jobs:
 
       # Node 24 ships npm 11+ which is required for Trusted Publishing OIDC
       # (Node 22 only ships npm 10.x; in-place self-upgrade is unreliable).
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
           registry-url: https://registry.npmjs.org
