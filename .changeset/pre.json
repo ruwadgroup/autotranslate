@@ -41,6 +41,7 @@
     "remove-mcp",
     "rendered-conditional-copy",
     "safe-host-copy-attributes",
+    "skip-source-catalog",
     "streaming-dev-mode",
     "translate-concise-forwarded-copy",
     "translate-interpolated-attributes",
