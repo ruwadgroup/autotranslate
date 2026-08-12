@@ -1,5 +1,13 @@
 # @autotranslate/providers
 
+## 1.0.0-beta.11
+
+### Patch Changes
+
+- Updated dependencies
+  [[`ad1d5a9`](https://github.com/ruwadgroup/autotranslate/commit/ad1d5a91b05af24a5fb3ca8f58375cf9310c3880)]:
+  - @autotranslate/core@1.0.0-beta.11
+
 ## 1.0.0-beta.10
 
 ### Minor Changes
