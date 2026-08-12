@@ -47,7 +47,7 @@
     "lint-staged": "^17.0.8",
     "prettier": "^3.9.4",
     "publint": "^0.3.21",
-    "turbo": "^2.10.5",
+    "turbo": "^2.10.8",
     "typescript": "^5.9.3",
     "vitest": "^4.1.9"
   },
