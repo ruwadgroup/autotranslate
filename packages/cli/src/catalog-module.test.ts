@@ -46,7 +46,17 @@ describe('writeCatalogModule', () => {
         ],
       };
 
+      /**
+       * The catalog for a locale, or an empty one for the source locale.
+       *
+       * Source-locale entries are never consulted: \`<T>\` falls back to its own
+       * children and \`t()\` falls back to the key, both of which ARE the source
+       * text. Loading the source catalog therefore buys nothing and costs a lot -
+       * in a server-rendered app it is serialised into the payload of every
+       * navigation, which for a mid-sized app is hundreds of kilobytes per page.
+       */
       export async function loadCatalog(locale: Locale): Promise<Catalog> {
+        if (locale === source) return {};
         const parts = await Promise.all((chunks[locale] ?? []).map((load) => load()));
         return Object.assign({}, ...parts.map((m) => m.default));
       }
@@ -148,5 +158,18 @@ describe('writeCatalogModule', () => {
 
     const third = await writeCatalogModule(outDir, 'en', ['en', 'es']);
     expect(third.written).toBe(false);
+  });
+
+  it('returns an empty catalog for the source locale', async () => {
+    // The generated module is what an app calls on every server render, so the
+    // short-circuit has to be in the emitted text, not only in the docs.
+    const outDir = await mkdtemp(join(tmpdir(), 'autotranslate-source-'));
+    await mkdir(join(outDir, 'en'), { recursive: true });
+    await writeFile(join(outDir, 'en', '0.json'), '{}', 'utf8');
+
+    await writeCatalogModule(outDir, 'en', ['en']);
+    const text = await readFile(join(outDir, 'index.ts'), 'utf8');
+
+    expect(text).toContain('if (locale === source) return {};');
   });
 });

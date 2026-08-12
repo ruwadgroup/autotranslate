@@ -15,6 +15,16 @@ export interface TranslatorOptions {
   readonly catalog: Catalog;
   readonly fallback?: Catalog;
   readonly onMissing?: (key: string, locale: Locale) => string;
+  /**
+   * The project's source locale, when known.
+   *
+   * Rendering the source locale is not a translation: the key IS the source
+   * string, so a miss is the expected and correct outcome rather than a gap to
+   * report. Passing this suppresses the miss bookkeeping for that locale, which
+   * is what lets an app ship an empty source catalog instead of shipping the
+   * source text back to itself.
+   */
+  readonly source?: Locale;
 }
 
 export interface Translator {
@@ -65,7 +75,8 @@ function splitParams(params: Readonly<Record<string, unknown>> | undefined): {
 }
 
 export function createTranslator(options: TranslatorOptions): Translator {
-  const { locale, catalog, fallback, onMissing } = options;
+  const { locale, catalog, fallback, onMissing, source } = options;
+  const isSourceLocale = source !== undefined && source === locale;
 
   const lookup = (key: string): CatalogEntry | undefined => {
     const hit = catalog[key];
@@ -93,7 +104,7 @@ export function createTranslator(options: TranslatorOptions): Translator {
         lookup(lookupKey) ?? (!isTreeKey && context ? lookup(sourceKey(key)) : undefined);
       if (entry === undefined) {
         if (onMissing) return onMissing(lookupKey, locale);
-        recordMiss(lookupKey, locale);
+        if (!isSourceLocale) recordMiss(lookupKey, locale);
         // For plain strings the key IS the source, so format it — otherwise
         // ICU placeholders leak to the UI on miss. Tree keys are opaque.
         return isTreeKey ? key : formatICU(key, locale, args);

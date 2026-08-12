@@ -26,6 +26,17 @@ export interface TranslationProviderProps {
   readonly catalog?: Catalog;
   /** Source-locale catalog used as fallback when `catalog` misses a key. */
   readonly fallback?: Catalog;
+  /**
+   * The project's source locale.
+   *
+   * When it equals `locale` the catalog is not consulted for anything a miss
+   * would not already produce - `<T>` renders its own children and `t()` its
+   * own key, both of which are the source text. Declaring it lets an app pass
+   * an empty catalog for that locale and skip shipping the source strings a
+   * second time, and stops every render being reported as a missing
+   * translation.
+   */
+  readonly source?: Locale;
   /** Called when a key misses both `catalog` and `fallback`. Dev-only hooks live here. */
   readonly onMissing?: (key: string, locale: Locale) => string;
   /** Wrap `<T>` in `<span data-autotranslate="<hex12>">` for devtools. Pair with `autotranslate find <hex12>`. Dev only. */
@@ -39,6 +50,7 @@ export function TranslationProvider({
   fallback,
   onMissing,
   debugMarkers,
+  source,
   children,
 }: TranslationProviderProps): ReactElement {
   assertVersionHandshake();
@@ -46,11 +58,15 @@ export function TranslationProvider({
     () => ({
       locale,
       catalog: catalog ?? {},
-      ...(fallback ? { fallback } : {}),
+      // A fallback that IS the active catalog is dead weight in an RSC payload:
+      // the same object serialises twice for no lookup that the first one does
+      // not already answer.
+      ...(fallback && fallback !== catalog ? { fallback } : {}),
+      ...(source ? { source } : {}),
       ...(onMissing ? { onMissing } : {}),
       ...(debugMarkers ? { debugMarkers: true } : {}),
     }),
-    [locale, catalog, fallback, onMissing, debugMarkers],
+    [locale, catalog, fallback, onMissing, debugMarkers, source],
   );
   return <TranslationContext.Provider value={value}>{children}</TranslationContext.Provider>;
 }

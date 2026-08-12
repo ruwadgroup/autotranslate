@@ -5,6 +5,8 @@ export interface TranslationContextValue {
   readonly locale: Locale;
   readonly catalog: Catalog;
   readonly fallback?: Catalog;
+  /** The project's source locale, when the app knows it. See `TranslationProviderProps`. */
+  readonly source?: Locale;
   /** Called when a key misses both `catalog` and `fallback`. Dev-only hooks live here. */
   readonly onMissing?: (key: string, locale: Locale) => string;
   /**

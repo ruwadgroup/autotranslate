@@ -38,6 +38,31 @@ describe('createTranslator', () => {
     expect(t.t('Untranslated')).toBe('Untranslated');
   });
 
+  it('renders the source locale from an empty catalog without reporting a miss', () => {
+    // The source locale is the one case where a miss is the correct answer:
+    // the key IS the source text. An app that ships an empty source catalog -
+    // which is the point of declaring `source` - would otherwise report every
+    // string on the page as missing.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const t = createTranslator({ locale: 'en', catalog: {}, source: 'en' });
+
+    expect(t.t('Sign out')).toBe('Sign out');
+    expect(t.t('Hello, {name}!', { name: 'Ada' })).toBe('Hello, Ada!');
+    expect(warn).not.toHaveBeenCalled();
+
+    warn.mockRestore();
+  });
+
+  it('still reports a miss when the locale is not the source', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const t = createTranslator({ locale: 'ar', catalog: {}, source: 'en' });
+
+    expect(t.t('Sign out')).toBe('Sign out');
+    expect(warn).toHaveBeenCalledTimes(1);
+
+    warn.mockRestore();
+  });
+
   it('invokes onMissing instead of the default path when supplied', () => {
     const onMissing = vi.fn(() => 'X');
     const t = createTranslator({ locale: 'es', catalog: {}, onMissing });

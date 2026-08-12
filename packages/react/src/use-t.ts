@@ -16,7 +16,7 @@ export type { AutotranslateCatalog, CatalogKey } from '@autotranslate/core';
  * ```
  */
 export function useT(): (key: CatalogKey, params?: Readonly<Record<string, unknown>>) => string {
-  const { locale, catalog, fallback, onMissing } = useTranslationContext();
+  const { locale, catalog, fallback, onMissing, source } = useTranslationContext();
   const translator = useMemo(
     () =>
       createTranslator({
@@ -24,8 +24,9 @@ export function useT(): (key: CatalogKey, params?: Readonly<Record<string, unkno
         catalog,
         ...(fallback ? { fallback } : {}),
         ...(onMissing ? { onMissing } : {}),
+        ...(source ? { source } : {}),
       }),
-    [locale, catalog, fallback, onMissing],
+    [locale, catalog, fallback, onMissing, source],
   );
   return useCallback((key: CatalogKey, params) => translator.t(key, params), [translator]);
 }
