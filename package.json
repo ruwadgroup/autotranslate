@@ -49,7 +49,7 @@
     "publint": "^0.3.21",
     "turbo": "^2.10.5",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.9"
+    "vitest": "^5.0.0"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json}": [
