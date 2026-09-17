@@ -1,6 +1,7 @@
 import type { StructuredMessage, TranslationNode } from '@autotranslate/core';
 import {
   BRANCH_RESERVED_PROPS,
+  claimVarName,
   FORMAT_MARKER_PREFIX,
   MARKER_NAMES,
   mergeAdjacentText,
@@ -78,6 +79,7 @@ export function serializeChildren(children: ReactNode): SerializedTree {
     tagSlots: new Map(),
     tagCount: new Map(),
     formatCount: new Map(),
+    varNames: new Set(),
   };
   const tree = walk(children, state);
   return {
@@ -96,6 +98,8 @@ interface WriterState {
   readonly tagSlots: Map<string, ReactElement>;
   readonly tagCount: Map<string, number>;
   readonly formatCount: Map<string, number>;
+  /** Var slot names already used in this message. See `claimVarName`. */
+  readonly varNames: Set<string>;
 }
 
 function walk(children: ReactNode, state: WriterState): StructuredMessage {
@@ -119,7 +123,7 @@ function walk(children: ReactNode, state: WriterState): StructuredMessage {
     }
     const kind = markerKindOf(child.type);
     if (kind === 'Var') {
-      const name = (props.name as string | undefined) ?? 'value';
+      const name = claimVarName(state.varNames, props.name as string | undefined);
       out.push({ type: 'var', name });
       state.varSlots.set(name, (props.children as ReactNode) ?? null);
       return;
@@ -167,7 +171,7 @@ function walk(children: ReactNode, state: WriterState): StructuredMessage {
       const explicit = (props.name as string | undefined) ?? null;
       const occurrence = state.formatCount.get(formatPrefix) ?? 0;
       state.formatCount.set(formatPrefix, occurrence + 1);
-      const name = explicit ?? `${formatPrefix}_${occurrence}`;
+      const name = claimVarName(state.varNames, explicit ?? `${formatPrefix}_${occurrence}`);
       out.push({ type: 'var', name });
       state.varSlots.set(name, child);
       return;

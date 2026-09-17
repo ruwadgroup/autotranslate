@@ -55,6 +55,36 @@ export const FORMAT_MARKER_PREFIX: Readonly<Record<string, string>> = {
   RelativeTime: 'rel',
 };
 
+/** The slot name an unnamed `<Var>` takes when it is the first one in a message. */
+export const DEFAULT_VAR_NAME = 'value';
+
+/**
+ * The slot name for one `<Var>`, given the names already taken in the message.
+ *
+ * A message can hold several unnamed vars - `{count} of {total}` compiles to
+ * exactly that - and each needs a slot of its own, or every one of them renders
+ * the value of the last. Unnamed vars are therefore numbered in the order they
+ * appear: `value`, `value2`, `value3`. The first keeps the bare name, so a
+ * message with a single var still hashes to the key it always had.
+ *
+ * The extractor and the runtime walk a message's children in the same order, so
+ * both arrive at the same names. Explicit names are claimed as they are seen,
+ * which is what stops an auto-numbered var from landing on a name the author
+ * used themselves.
+ */
+export function claimVarName(taken: Set<string>, explicit?: string | null): string {
+  if (explicit) {
+    taken.add(explicit);
+    return explicit;
+  }
+  let name = DEFAULT_VAR_NAME;
+  for (let index = 2; taken.has(name); index++) {
+    name = `${DEFAULT_VAR_NAME}${index}`;
+  }
+  taken.add(name);
+  return name;
+}
+
 export const BRANCH_RESERVED_PROPS: ReadonlySet<string> = new Set([
   'branch',
   'name',

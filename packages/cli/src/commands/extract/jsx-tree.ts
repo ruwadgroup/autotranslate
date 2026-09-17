@@ -1,6 +1,7 @@
 import type { StructuredMessage, TranslationNode } from '@autotranslate/core';
 import {
   BRANCH_RESERVED_PROPS,
+  claimVarName,
   FORMAT_MARKER_PREFIX,
   mergeAdjacentText,
 } from '@autotranslate/core/internal';
@@ -12,12 +13,14 @@ import type * as t from '@babel/types';
  * Mirrors the runtime walker in `@autotranslate/react/serialize-children`.
  */
 export function jsxChildrenToTree(children: ReadonlyArray<t.Node>): StructuredMessage {
-  const state: ExtractState = { formatCount: new Map() };
+  const state: ExtractState = { formatCount: new Map(), varNames: new Set() };
   return childrenToTree(children, state);
 }
 
 interface ExtractState {
   readonly formatCount: Map<string, number>;
+  /** Var slot names already used in this message. See `claimVarName`. */
+  readonly varNames: Set<string>;
 }
 
 function childrenToTree(children: ReadonlyArray<t.Node>, state: ExtractState): StructuredMessage {
@@ -64,7 +67,7 @@ function nodeToTreeNode(
 function elementToTreeNode(el: t.JSXElement, state: ExtractState): TranslationNode | null {
   const opening = el.openingElement;
   const tag = jsxNameToString(opening.name);
-  if (tag === 'Var') return varNode(opening);
+  if (tag === 'Var') return varNode(opening, state);
   if (tag === 'Plural') return pluralNode(opening, state);
   if (tag === 'Branch') return branchNode(opening, el, state);
   const formatPrefix = FORMAT_MARKER_PREFIX[tag];
@@ -84,12 +87,12 @@ function formatNode(
   const explicit = readStringAttribute(opening, 'name');
   const occurrence = state.formatCount.get(prefix) ?? 0;
   state.formatCount.set(prefix, occurrence + 1);
-  const name = explicit ?? `${prefix}_${occurrence}`;
+  const name = claimVarName(state.varNames, explicit ?? `${prefix}_${occurrence}`);
   return { type: 'var', name };
 }
 
-function varNode(opening: t.JSXOpeningElement): TranslationNode {
-  const name = readStringAttribute(opening, 'name') ?? 'value';
+function varNode(opening: t.JSXOpeningElement, state: ExtractState): TranslationNode {
+  const name = claimVarName(state.varNames, readStringAttribute(opening, 'name'));
   return { type: 'var', name };
 }
 

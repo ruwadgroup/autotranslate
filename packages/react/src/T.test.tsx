@@ -3,6 +3,7 @@ import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { Branch, Currency, DateTime, Num, Plural, Var } from './markers';
 import { TranslationProvider } from './provider';
+import { serializeChildren } from './serialize-children';
 import { T } from './T';
 
 describe('<T>', () => {
@@ -55,6 +56,24 @@ describe('<T>', () => {
       </TranslationProvider>,
     );
     expect(container.textContent).toBe('Hola, Ada!');
+  });
+
+  it('keeps unnamed Var slots apart when rendering a translated tree', () => {
+    // The catalog entry is keyed off the tree the runtime itself produces, which
+    // is what the extractor writes for this markup. Give every unnamed var the
+    // same slot name and both of them render the value of the last one.
+    const children = (
+      <>
+        <Var>Start Checkout</Var> - <Var>$24/mo</Var>
+      </>
+    );
+    const { tree } = serializeChildren(children);
+    const { container } = render(
+      <TranslationProvider locale="en" catalog={{ [canonicalKey(tree)]: tree }}>
+        <T>{children}</T>
+      </TranslationProvider>,
+    );
+    expect(container.textContent).toBe('Start Checkout - $24/mo');
   });
 
   it('preserves props on tag wrappers when translating', () => {

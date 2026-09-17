@@ -28,6 +28,37 @@ describe('serializeChildren', () => {
     expect(tree).toEqual([{ type: 'var', name: 'value' }]);
   });
 
+  it('numbers unnamed Var slots so each keeps its own value', () => {
+    const { tree, varSlots } = serializeChildren(
+      <>
+        <Var>Start Checkout</Var> - <Var>$24/mo</Var>
+      </>,
+    );
+    expect(tree).toEqual([
+      { type: 'var', name: 'value' },
+      { type: 'text', value: ' - ' },
+      { type: 'var', name: 'value2' },
+    ]);
+    expect(varSlots.get('value')).toBe('Start Checkout');
+    expect(varSlots.get('value2')).toBe('$24/mo');
+  });
+
+  it('steps an unnamed Var past a name the author already used', () => {
+    const { tree, varSlots } = serializeChildren(
+      <>
+        <Var>1</Var> of <Var name="value2">10</Var> - <Var>done</Var>
+      </>,
+    );
+    expect(tree).toEqual([
+      { type: 'var', name: 'value' },
+      { type: 'text', value: ' of ' },
+      { type: 'var', name: 'value2' },
+      { type: 'text', value: ' - ' },
+      { type: 'var', name: 'value3' },
+    ]);
+    expect(varSlots.get('value3')).toBe('done');
+  });
+
   it('captures plural arms', () => {
     const { tree, pluralSlots } = serializeChildren(
       <Plural value={3} one="1 item" other="# items" />,

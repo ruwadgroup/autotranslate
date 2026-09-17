@@ -13,6 +13,7 @@ export { buildChunkLayout } from './chunking';
 export {
   BRANCH_RESERVED_PROPS,
   canonicalize,
+  claimVarName,
   FORMAT_MARKER_PREFIX,
   MARKER_NAMES,
   mergeAdjacentText,

@@ -193,6 +193,20 @@ const x = (
     ]);
   });
 
+  it('numbers unnamed <Var> slots in source order', () => {
+    const { messages } = extractFile(
+      FILE,
+      `import { T, Var } from '@autotranslate/react';
+const x = <T><Var>{label}</Var> - <Var>{price}</Var></T>;`,
+    );
+    const tree = Object.values(messages)[0];
+    expect(tree).toEqual([
+      { type: 'var', name: 'value' },
+      { type: 'text', value: ' - ' },
+      { type: 'var', name: 'value2' },
+    ]);
+  });
+
   it('walks tag wrappers inside <T>', () => {
     const { messages } = extractFile(
       FILE,
