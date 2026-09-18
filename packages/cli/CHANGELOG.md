@@ -1,5 +1,22 @@
 # @autotranslate/cli
 
+## 1.0.0-beta.22
+
+### Patch Changes
+
+- [`ba67cce`](https://github.com/ruwadgroup/autotranslate/commit/ba67cce88624f005170d1fd4b7900aa99e4d4a0b)
+  Thanks [@tamimbinhakim](https://github.com/tamimbinhakim)! - Give every
+  unnamed `<Var>` in a message its own slot. Two or more of them - which is what
+  auto mode emits for copy like `{label} - {price}` - all shared the name
+  `value`, so the whole message rendered the last one's value in every position.
+  Unnamed vars are now numbered in source order (`value`, `value2`, `value3`) by
+  both the extractor and the runtime; the first keeps the bare name, so messages
+  with a single var keep their existing catalog keys.
+- Updated dependencies
+  [[`ba67cce`](https://github.com/ruwadgroup/autotranslate/commit/ba67cce88624f005170d1fd4b7900aa99e4d4a0b)]:
+  - @autotranslate/core@1.0.0-beta.12
+  - @autotranslate/providers@1.0.0-beta.12
+
 ## 1.0.0-beta.21
 
 ### Patch Changes

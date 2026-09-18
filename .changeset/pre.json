@@ -21,6 +21,7 @@
     "clean-directives-first",
     "detect-industry-copy-fields",
     "detect-semantic-copy",
+    "distinct-unnamed-var-slots",
     "extract-const-labels",
     "extract-enum-factory-copy",
     "fix-package-exports-types",
